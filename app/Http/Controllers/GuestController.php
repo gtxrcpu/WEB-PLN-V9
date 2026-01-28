@@ -356,121 +356,347 @@ class GuestController extends Controller
     // Laporan Keseluruhan
     public function report()
     {
-        // Cache report data for 10 minutes
-        $cacheKey = 'guest_report_data';
-        $cacheDuration = 600; // 10 minutes
+        // Real-time data - No cache for fresh data from database
+        // Optimize: Select only needed columns
+        $apars = Apar::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApars' => function ($q) {
+                    $q->select('id', 'apar_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-        $data = cache()->remember($cacheKey, $cacheDuration, function () {
-            // Optimize: Select only needed columns
-            $apars = Apar::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuApars' => function ($q) {
-                        $q->select('id', 'apar_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $apats = Apat::select('id', 'serial_no', 'lokasi', 'jenis as type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApats' => function ($q) {
+                    $q->select('id', 'apat_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $apats = Apat::select('id', 'serial_no', 'lokasi', 'jenis as type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuApats' => function ($q) {
-                        $q->select('id', 'apat_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $p3ks = P3k::select('id', 'serial_no', 'location_code', 'type as jenis', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuP3ks' => function ($q) {
+                    $q->select('id', 'p3k_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $p3ks = P3k::select('id', 'serial_no', 'location_code', 'type as jenis', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuP3ks' => function ($q) {
-                        $q->select('id', 'p3k_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $apabs = Apab::select('id', 'serial_no', 'location_code', 'isi_apab as type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApabs' => function ($q) {
+                    $q->select('id', 'apab_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $apabs = Apab::select('id', 'serial_no', 'location_code', 'isi_apab as type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuApabs' => function ($q) {
-                        $q->select('id', 'apab_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $fireAlarms = FireAlarm::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuFireAlarms' => function ($q) {
+                    $q->select('id', 'fire_alarm_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $fireAlarms = FireAlarm::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuFireAlarms' => function ($q) {
-                        $q->select('id', 'fire_alarm_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $boxHydrants = BoxHydrant::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuBoxHydrants' => function ($q) {
+                    $q->select('id', 'box_hydrant_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $boxHydrants = BoxHydrant::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuBoxHydrants' => function ($q) {
-                        $q->select('id', 'box_hydrant_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        $rumahPompas = RumahPompa::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuRumahPompas' => function ($q) {
+                    $q->select('id', 'rumah_pompa_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
 
-            $rumahPompas = RumahPompa::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
-                ->with([
-                    'unit:id,name',
-                    'kartuRumahPompas' => function ($q) {
-                        $q->select('id', 'rumah_pompa_id', 'tgl_periksa')
-                            ->latest('tgl_periksa')
-                            ->limit(1);
-                    }
-                ])
-                ->orderBy('serial_no')
-                ->get();
+        // Calculate summary
+        $summary = [
+            'total_equipment' => $apars->count() + $apats->count() + $p3ks->count() +
+                $apabs->count() + $fireAlarms->count() + $boxHydrants->count() +
+                $rumahPompas->count(),
+            'total_baik' => $apars->where('status', 'baik')->count() +
+                $apats->where('status', 'baik')->count() +
+                $p3ks->where('status', 'baik')->count() +
+                $apabs->where('status', 'baik')->count() +
+                $fireAlarms->where('status', 'baik')->count() +
+                $boxHydrants->where('status', 'baik')->count() +
+                $rumahPompas->where('status', 'baik')->count(),
+            'total_rusak' => $apars->where('status', 'rusak')->count() +
+                $apats->where('status', 'rusak')->count() +
+                $p3ks->where('status', 'rusak')->count() +
+                $apabs->where('status', '!=', 'baik')->count() +
+                $fireAlarms->where('status', 'rusak')->count() +
+                $boxHydrants->where('status', 'rusak')->count() +
+                $rumahPompas->where('status', 'rusak')->count(),
+        ];
 
-            // Calculate summary
-            $summary = [
-                'total_equipment' => $apars->count() + $apats->count() + $p3ks->count() +
-                    $apabs->count() + $fireAlarms->count() + $boxHydrants->count() +
-                    $rumahPompas->count(),
-                'total_baik' => $apars->where('status', 'baik')->count() +
-                    $apats->where('status', 'baik')->count() +
-                    $p3ks->where('status', 'baik')->count() +
-                    $apabs->where('status', 'baik')->count() +
-                    $fireAlarms->where('status', 'baik')->count() +
-                    $boxHydrants->where('status', 'baik')->count() +
-                    $rumahPompas->where('status', 'baik')->count(),
-                'total_rusak' => $apars->where('status', 'rusak')->count() +
-                    $apats->where('status', 'rusak')->count() +
-                    $p3ks->where('status', 'rusak')->count() +
-                    $apabs->where('status', '!=', 'baik')->count() +
-                    $fireAlarms->where('status', 'rusak')->count() +
-                    $boxHydrants->where('status', 'rusak')->count() +
-                    $rumahPompas->where('status', 'rusak')->count(),
-            ];
-
-            return compact('apars', 'apats', 'p3ks', 'apabs', 'fireAlarms', 'boxHydrants', 'rumahPompas', 'summary');
-        });
-
-        return view('guest.report', $data);
+        return view('guest.report', compact('apars', 'apats', 'p3ks', 'apabs', 'fireAlarms', 'boxHydrants', 'rumahPompas', 'summary'));
     }
 
+    // API endpoint for real-time data fetch
+    public function getReportData()
+    {
+        // Fetch real-time data from database
+        $apars = Apar::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApars' => function ($q) {
+                    $q->select('id', 'apar_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $apats = Apat::select('id', 'serial_no', 'lokasi', 'jenis as type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApats' => function ($q) {
+                    $q->select('id', 'apat_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $p3ks = P3k::select('id', 'serial_no', 'location_code', 'type as jenis', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuP3ks' => function ($q) {
+                    $q->select('id', 'p3k_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $apabs = Apab::select('id', 'serial_no', 'location_code', 'isi_apab as type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuApabs' => function ($q) {
+                    $q->select('id', 'apab_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $fireAlarms = FireAlarm::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuFireAlarms' => function ($q) {
+                    $q->select('id', 'fire_alarm_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $boxHydrants = BoxHydrant::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuBoxHydrants' => function ($q) {
+                    $q->select('id', 'box_hydrant_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        $rumahPompas = RumahPompa::select('id', 'serial_no', 'location_code', 'type', 'status', 'unit_id')
+            ->with([
+                'unit:id,name',
+                'kartuRumahPompas' => function ($q) {
+                    $q->select('id', 'rumah_pompa_id', 'tgl_periksa')
+                        ->latest('tgl_periksa')
+                        ->limit(1);
+                }
+            ])
+            ->orderBy('serial_no')
+            ->get();
+
+        // Calculate summary
+        $summary = [
+            'total_equipment' => $apars->count() + $apats->count() + $p3ks->count() +
+                $apabs->count() + $fireAlarms->count() + $boxHydrants->count() +
+                $rumahPompas->count(),
+            'total_baik' => $apars->where('status', 'baik')->count() +
+                $apats->where('status', 'baik')->count() +
+                $p3ks->where('status', 'baik')->count() +
+                $apabs->where('status', 'baik')->count() +
+                $fireAlarms->where('status', 'baik')->count() +
+                $boxHydrants->where('status', 'baik')->count() +
+                $rumahPompas->where('status', 'baik')->count(),
+            'total_rusak' => $apars->where('status', 'rusak')->count() +
+                $apats->where('status', 'rusak')->count() +
+                $p3ks->where('status', 'rusak')->count() +
+                $apabs->where('status', '!=', 'baik')->count() +
+                $fireAlarms->where('status', 'rusak')->count() +
+                $boxHydrants->where('status', 'rusak')->count() +
+                $rumahPompas->where('status', 'rusak')->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => compact('apars', 'apats', 'p3ks', 'apabs', 'fireAlarms', 'boxHydrants', 'rumahPompas', 'summary'),
+            'timestamp' => now()->toIso8601String()
+        ]);
+    }
+
+    // API endpoint for real-time dashboard data
+    public function getDashboardData()
+    {
+        // Get real-time statistics without caching
+        $aparStats = Apar::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $apatStats = Apat::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $apabStats = Apab::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $fireAlarmStats = FireAlarm::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $boxHydrantStats = BoxHydrant::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $rumahPompaStats = RumahPompa::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $p3kStats = P3k::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $stats = [
+            'apar' => [
+                'total' => $aparStats->sum(),
+                'baik' => $aparStats->get('baik', 0),
+                'isi_ulang' => $aparStats->get('isi ulang', 0),
+                'rusak' => $aparStats->get('rusak', 0),
+            ],
+            'apat' => [
+                'total' => $apatStats->sum(),
+                'baik' => $apatStats->get('baik', 0),
+                'rusak' => $apatStats->get('rusak', 0),
+            ],
+            'apab' => [
+                'total' => $apabStats->sum(),
+                'baik' => $apabStats->get('baik', 0),
+                'tidak_baik' => $apabStats->sum() - $apabStats->get('baik', 0),
+            ],
+            'fireAlarm' => [
+                'total' => $fireAlarmStats->sum(),
+                'baik' => $fireAlarmStats->get('baik', 0),
+                'rusak' => $fireAlarmStats->get('rusak', 0),
+            ],
+            'boxHydrant' => [
+                'total' => $boxHydrantStats->sum(),
+                'baik' => $boxHydrantStats->get('baik', 0),
+                'rusak' => $boxHydrantStats->get('rusak', 0),
+            ],
+            'rumahPompa' => [
+                'total' => $rumahPompaStats->sum(),
+                'baik' => $rumahPompaStats->get('baik', 0),
+                'rusak' => $rumahPompaStats->get('rusak', 0),
+            ],
+            'p3k' => [
+                'total' => $p3kStats->sum(),
+                'baik' => $p3kStats->get('baik', 0),
+                'rusak' => $p3kStats->get('rusak', 0),
+            ],
+        ];
+
+        // Generate trend data for the last 6 months
+        $months = [];
+        $monthLabels = [];
+        $now = now();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = $now->copy()->subMonths($i);
+            $months[] = [
+                'start' => $date->copy()->startOfMonth(),
+                'end' => $date->copy()->endOfMonth(),
+            ];
+            $monthLabels[] = $date->locale('id')->format('M');
+        }
+
+        $trendData = [
+            'labels' => $monthLabels,
+            'datasets' => [
+                'APAR' => [],
+                'APAT' => [],
+                'APAB' => [],
+                'Fire Alarm' => [],
+                'Box Hydrant' => [],
+                'Rumah Pompa' => [],
+                'P3K' => [],
+            ]
+        ];
+
+        foreach ($months as $month) {
+            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('created_at', [$month['start'], $month['end']])->count();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'stats' => $stats,
+                'trendData' => $trendData,
+            ],
+            'timestamp' => now()->toIso8601String()
+        ]);
+    }
 }

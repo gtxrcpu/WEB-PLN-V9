@@ -1,4 +1,4 @@
-{{-- resources/views/p3k/create.blade.php --}}
+﻿{{-- resources/views/p3k/create.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Tambah P3K')
@@ -22,7 +22,7 @@
                     <p class="text-emerald-100 text-sm">Input data Kotak Pertolongan Pertama. Serial otomatis: <span class="font-semibold">P3K.xxx</span></p>
                 </div>
             </div>
-            <a href="{{ route('p3k.index') }}"
+            <a href="{{ route('p3k.pilih-jenis') }}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/30 transition-all duration-200 border border-white/20">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -257,7 +257,7 @@
 
             {{-- Action Buttons --}}
             <div class="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between gap-4">
-                <a href="{{ route('p3k.index') }}"
+                <a href="{{ route('p3k.pilih-jenis') }}"
                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -276,3 +276,4 @@
     </div>
 </div>
 @endsection
+

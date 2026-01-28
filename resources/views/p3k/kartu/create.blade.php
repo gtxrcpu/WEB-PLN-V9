@@ -4,6 +4,7 @@
     backRoute="p3k.pilih-lokasi"
     :backParams="['jenis' => $jenis]"
     module="p3k-{{ $jenis }}"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO LOKASI & JENIS --}}

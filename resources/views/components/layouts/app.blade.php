@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
@@ -154,7 +154,8 @@
             @else
               <div
                 class="h-8 w-8 rounded-full bg-emerald-100 text-emerald-800 grid place-items-center ring-1 ring-emerald-200">
-                {{ $initial }}</div>
+                {{ $initial }}
+              </div>
             @endif
             <span class="text-sm hidden sm:inline">{{ $u?->name ?? 'User' }}</span>
             <svg class="w-4 h-4 text-slate-600 transition-transform" :class="{'rotate-180': open}" fill="none"
@@ -205,7 +206,7 @@
                   @if(session('viewing_unit_id'))
                     @php $viewingUnit = \App\Models\Unit::find(session('viewing_unit_id')); @endphp
                     <div class="mt-2 text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded">
-                      📍 Viewing: {{ $viewingUnit->code }}
+                      ðŸ“ Viewing: {{ $viewingUnit->code }}
                     </div>
                   @endif
                 </div>
@@ -307,7 +308,8 @@
           @else
             <div
               class="w-6 h-6 rounded-full bg-purple-100 text-purple-800 grid place-items-center ring-1 ring-purple-200 text-xs font-bold">
-              {{ $initial }}</div>
+              {{ $initial }}
+            </div>
           @endif
           <span class="text-xs font-medium">Profil</span>
         </button>
@@ -363,7 +365,8 @@
           @else
             <div
               class="w-6 h-6 rounded-full bg-green-100 text-green-800 grid place-items-center ring-1 ring-green-200 text-xs font-bold">
-              {{ $initial }}</div>
+              {{ $initial }}
+            </div>
           @endif
           <span class="text-xs font-medium">Profil</span>
         </button>
@@ -580,7 +583,7 @@
           </a>
 
           {{-- P3K --}}
-          <a href="{{ route('p3k.index') }}"
+          <a href="{{ route('p3k.pilih-jenis') }}"
             class="flex flex-col items-center gap-2 p-3 rounded-xl transition-all group {{ request()->routeIs('p3k.*') ? 'bg-green-50 ring-2 ring-green-500' : 'bg-slate-50 hover:bg-green-50' }}">
             <div
               class="w-16 h-16 rounded-xl bg-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md p-2">
@@ -599,15 +602,15 @@
           </a>
 
           {{-- Referensi --}}
-          <a href="{{ route('referensi.index') }}"
-            class="flex flex-col items-center gap-2 p-3 rounded-xl transition-all group {{ request()->routeIs('referensi.*') ? 'bg-purple-50 ring-2 ring-purple-500' : 'bg-slate-50 hover:bg-purple-50' }}">
+          <a href="{{ route('reference-videos.index') }}"
+            class="flex flex-col items-center gap-2 p-3 rounded-xl transition-all group {{ request()->routeIs('reference-videos.*') ? 'bg-purple-50 ring-2 ring-purple-500' : 'bg-slate-50 hover:bg-purple-50' }}">
             <div
               class="w-16 h-16 rounded-xl bg-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md p-2">
               <img src="{{ asset('images/referensi.png') }}" alt="Referensi" class="w-full h-full object-contain">
             </div>
             <div class="text-center">
               <p class="font-bold text-slate-900 text-sm">Referensi</p>
-              @if(request()->routeIs('referensi.*'))
+              @if(request()->routeIs('reference-videos.*'))
                 <svg class="w-4 h-4 text-purple-600 mx-auto mt-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -756,7 +759,7 @@
           </a>
 
           {{-- P3K --}}
-          <a href="{{ route('p3k.index') }}"
+          <a href="{{ route('p3k.pilih-jenis') }}"
             class="flex flex-col items-center gap-2 p-3 rounded-xl transition-all group {{ request()->routeIs('p3k.*') ? 'bg-green-50 ring-2 ring-green-500' : 'bg-slate-50 hover:bg-green-50' }}">
             <div
               class="w-16 h-16 rounded-xl bg-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md p-2">
@@ -821,7 +824,8 @@
           @else
             <div
               class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 text-white grid place-items-center ring-2 ring-purple-200 text-2xl font-bold shadow-lg">
-              {{ $initial }}</div>
+              {{ $initial }}
+            </div>
           @endif
           <div class="flex-1 min-w-0">
             <p class="text-lg font-bold text-slate-900 truncate">{{ $u?->name ?? 'User' }}</p>
@@ -1154,27 +1158,22 @@
         form.dataset.submitting = 'false';
       }, 3000);
     }, { passive: false });
-
-    // Prevent double-click on buttons and links
     document.addEventListener('click', function (e) {
-      const target = e.target.closest('button, a');
+      const target = e.target.closest('button');
       if (!target) return;
 
-      // Skip if it's a button type="button" or has data-no-debounce
-      if (target.type === 'button' && target.getAttribute('type') === 'button') return;
+      const type = (target.getAttribute('type') || 'submit').toLowerCase();
+      if (type !== 'submit') return;
       if (target.hasAttribute('data-no-debounce')) return;
 
-      // Check if already clicked recently
       if (target.dataset.clicking === 'true') {
         e.preventDefault();
         e.stopPropagation();
         return false;
       }
 
-      // Mark as clicked
       target.dataset.clicking = 'true';
 
-      // Reset after 1 second
       setTimeout(() => {
         target.dataset.clicking = 'false';
       }, 1000);

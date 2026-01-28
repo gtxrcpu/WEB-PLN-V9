@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-bold text-white mb-1">Tambah Rumah Pompa Baru</h1>
-                    <p class="text-purple-100 text-sm">Input data Hydrant Rumah Pompa. Serial otomatis: <span class="font-semibold">RP.xxx</span></p>
+                    <p class="text-purple-100 text-sm">Input data Hydrant Rumah Pompa. Serial otomatis: <span class="font-semibold">RUMAHPOMPA-{UNIT}-{NNN}</span></p>
                 </div>
             </div>
             <a href="{{ route('rumah-pompa.index') }}"
@@ -54,18 +54,8 @@
     @endif
 
     @php
-        // Generate serial berikutnya RP.001, RP.002, dst
-        $last = \App\Models\RumahPompa::orderBy('id', 'desc')->first();
-        $lastNumber = 0;
-
-        if ($last && $last->serial_no) {
-            $parts = explode('.', $last->serial_no);
-            $lastNumber = isset($parts[1]) ? (int) $parts[1] : 0;
-        }
-
-        $nextNumber  = $lastNumber + 1;
-        $nextSerial  = 'RP.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $nextBarcode = 'RUMAH POMPA ' . $nextSerial;
+        // Use $nextSerial from controller (passed via compact())
+        // Format: RUMAHPOMPA-{UNIT}-{NNN}
     @endphp
 
     {{-- Form Card --}}
@@ -89,29 +79,7 @@
             @csrf
 
             <div class="space-y-6">
-                {{-- Nama Rumah Pompa --}}
-                <div>
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-2">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        Nama Rumah Pompa
-                    </label>
-                    <input type="text" name="name"
-                           value="{{ old('name', 'Rumah Pompa ' . $nextSerial) }}"
-                           placeholder="Contoh: Rumah Pompa RP.001"
-                           class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 transition-all @error('name') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                    @error('name')
-                        <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                {{-- Serial & Barcode (readonly) --}}
+                {{-- Serial & Barcode (Auto-generated, readonly) --}}
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="relative">
                         <div class="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full"></div>
@@ -152,8 +120,7 @@
                             </svg>
                             Barcode
                         </label>
-                        <input type="text" name="barcode"
-                               value="{{ old('barcode', $nextBarcode) }}"
+                        <input type="text" value="{{ old('barcode', $nextSerial) }}"
                                readonly
                                class="block w-full rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 text-base font-mono font-bold px-4 py-3 shadow-sm">
                         @error('barcode')

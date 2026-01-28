@@ -168,14 +168,23 @@
                         <div class="font-semibold text-base">TAHUN {{ date('Y') }}</div>
                     </td>
                     @php
-                        $firstField = $template->header_fields[0] ?? null;
+                        // Override Revisi value with calculated nextRevisi
+                        $headerFields = $template->header_fields;
+                        foreach ($headerFields as &$field) {
+                            if (isset($field['label']) && strtolower($field['label']) === 'revisi') {
+                                $field['value'] = $nextRevisi ?? '00';
+                            }
+                        }
+                        unset($field); // Break reference
+                        
+                        $firstField = $headerFields[0] ?? null;
                     @endphp
                     @if($firstField)
                         <td class="border-r border-b border-gray-800 p-2 font-semibold bg-gray-100 w-1/6">{{ $firstField['label'] }}</td>
                         <td class="border-b border-gray-800 p-2">{{ $firstField['value'] }}</td>
                     @endif
                 </tr>
-                @foreach($template->header_fields as $index => $field)
+                @foreach($headerFields as $index => $field)
                     @if($index > 0)
                         <tr>
                             <td class="border-r @if($index < count($template->header_fields) - 1) border-b @endif border-gray-800 p-2 font-semibold bg-gray-100">{{ $field['label'] }}</td>
@@ -365,6 +374,35 @@
                     @error('petugas')
                         <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                     @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor Revisi</label>
+                    <div class="w-full px-4 py-2 border-2 rounded-lg 
+                        @if($nextRevisi !== '00') border-red-300 bg-red-50 @else border-gray-300 bg-gray-50 @endif">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-lg 
+                                @if($nextRevisi !== '00') text-red-700 @else text-gray-700 @endif">
+                                {{ $nextRevisi }}
+                            </span>
+                            @if($nextRevisi !== '00')
+                                <span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded">
+                                    Kartu Revisi
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-500">
+                                    Kartu Baru
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        @if($nextRevisi !== '00')
+                            Kartu sebelumnya ditolak, silakan perbaiki sesuai feedback leader
+                        @else
+                            Kartu kendali baru untuk APAR ini
+                        @endif
+                    </p>
                 </div>
 
                 <div>

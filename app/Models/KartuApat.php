@@ -22,17 +22,30 @@ class KartuApat extends Model
         'ember',
         'kesimpulan',
         'tgl_periksa',
+        'revisi',
         'tgl_surat',
         'petugas',
         'pengawas',
+        'leader_signature_id',
+        'leader_approved_by',
+        'leader_approved_at',
+        'leader_rejected_by',
+        'leader_rejected_at',
+        'leader_rejection_reason',
         'signature_id',
         'approved_by',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'tgl_periksa' => 'date',
+        'leader_approved_at' => 'datetime',
+        'leader_rejected_at' => 'datetime',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function apat()
@@ -56,6 +69,16 @@ class KartuApat extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function leaderApprover()
+    {
+        return $this->belongsTo(User::class, 'leader_approved_by');
+    }
+
+    public function leaderRejector()
+    {
+        return $this->belongsTo(User::class, 'leader_rejected_by');
+    }
+
     /**
      * Relasi ke Signature
      */
@@ -64,11 +87,16 @@ class KartuApat extends Model
         return $this->belongsTo(Signature::class);
     }
 
+    public function leaderSignature()
+    {
+        return $this->belongsTo(Signature::class, 'leader_signature_id');
+    }
+
     /**
      * Check if approved
      */
     public function isApproved()
     {
-        return !is_null($this->approved_at);
+        return ! is_null($this->approved_at);
     }
 }

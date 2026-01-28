@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
 use App\Models\Apat;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ApatController extends Controller
 {
+    use FiltersByUnit;
+
     /**
-     * List semua APAT.
+     * List semua APAT (filtered by unit)
      */
     public function index()
     {
-        $apats = Apat::orderBy('id')->get();
+        $apats = $this->getQueryForAuthUser(Apat::class)
+            ->orderBy('id')
+            ->get();
 
         return view('apat.index', compact('apats'));
     }
@@ -22,7 +28,20 @@ class ApatController extends Controller
      */
     public function create()
     {
-        return view('apat.create');
+        // Preview serial without incrementing counter
+        $nextSerial = Apat::generateNextSerial(null, false);
+
+        // Default values
+        $default = [
+            'serial_no' => $nextSerial,
+            'barcode' => $nextSerial,
+            'status' => 'BAIK',
+            'lokasi' => 'Lobby Utama / Parkir Motor',
+            'jenis' => 'Pasir, Tanah, dll.',
+            'kapasitas' => '1 Drum / 1 Bak',
+        ];
+
+        return view('apat.create', compact('nextSerial', 'default'));
     }
 
     /**
@@ -30,35 +49,42 @@ class ApatController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name'       => ['required', 'string', 'max:255'],
-            'barcode'    => ['required', 'string', 'max:255', 'unique:apats,barcode'],
-            'serial_no'  => ['required', 'string', 'max:255', 'unique:apats,serial_no'],
-            'lokasi'     => ['nullable', 'string', 'max:255'],
-            'jenis'      => ['nullable', 'string', 'max:255'],
-            'kapasitas'  => ['nullable', 'string', 'max:255'],
-            'status'     => ['nullable', 'string', 'max:50'],
-            'notes'      => ['nullable', 'string'],
+        $request->validate([
+            'lokasi' => 'required|string|max:255',
+            'jenis' => 'required|string|max:255',
+            'kapasitas' => 'required|string|max:255',
+            'status' => 'required|string|max:50',
+            'notes' => 'nullable|string',
+            'floor_plan_id' => 'nullable|exists:floor_plans,id',
+            'floor_plan_x' => 'nullable|numeric|min:0|max:100',
+            'floor_plan_y' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $apat = new Apat();
-        $apat->user_id    = auth()->id();
-        $apat->name       = $data['name'];
-        $apat->barcode    = $data['barcode'];
-        $apat->serial_no  = $data['serial_no'];
-        $apat->lokasi     = $data['lokasi'] ?? null;
-        $apat->jenis      = $data['jenis'] ?? null;
-        $apat->kapasitas  = $data['kapasitas'] ?? null;
-        $apat->status     = $data['status'] ?? 'baik';
-        $apat->notes      = $data['notes'] ?? null;
-        $apat->save();
+        // Generate serial and increment counter
+        $serial = Apat::generateNextSerial(null, true);
+        $barcode = $serial;
 
-        // 🔑 ini yang bikin QR langsung jadi
-        $apat->refreshQrSvg();
+        $apat = Apat::create([
+            'user_id' => Auth::id(),
+            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit
+            'barcode' => $barcode,
+            'serial_no' => $serial,
+            'lokasi' => $request->lokasi,
+            'jenis' => $request->jenis,
+            'kapasitas' => $request->kapasitas,
+            'status' => $request->status,
+            'notes' => $request->notes,
+            'floor_plan_id' => $request->floor_plan_id,
+            'floor_plan_x' => $request->floor_plan_x,
+            'floor_plan_y' => $request->floor_plan_y,
+        ]);
+
+        // Generate QR
+        $apat->generateQrSvg(true);
 
         return redirect()
             ->route('apat.index')
-            ->with('success', 'APAT baru berhasil ditambahkan dengan barcode ' . $apat->barcode);
+            ->with('success', 'APAT baru berhasil ditambahkan dengan barcode ' . $apat->serial_no);
     }
 
     /**
@@ -74,49 +100,70 @@ class ApatController extends Controller
      */
     public function update(Request $request, Apat $apat)
     {
-        $data = $request->validate([
-            'name'      => ['required', 'string', 'max:255'],
-            'lokasi'    => ['nullable', 'string', 'max:255'],
-            'jenis'     => ['nullable', 'string', 'max:255'],
-            'kapasitas' => ['nullable', 'string', 'max:255'],
-            'status'    => ['nullable', 'string', 'max:50'],
-            'notes'     => ['nullable', 'string'],
+        $request->validate([
+            'lokasi' => 'required|string|max:255',
+            'jenis' => 'required|string|max:255',
+            'kapasitas' => 'required|string|max:255',
+            'status' => 'required|string|max:50',
+            'notes' => 'nullable|string',
+            'floor_plan_id' => 'nullable|exists:floor_plans,id',
+            'floor_plan_x' => 'nullable|numeric|min:0|max:100',
+            'floor_plan_y' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $apat->name      = $data['name'];
-        $apat->lokasi    = $data['lokasi'] ?? null;
-        $apat->jenis     = $data['jenis'] ?? null;
-        $apat->kapasitas = $data['kapasitas'] ?? null;
-        $apat->status    = $data['status'] ?? null;
-        $apat->notes     = $data['notes'] ?? null;
-        $apat->save();
+        $apat->update([
+            'lokasi' => $request->lokasi,
+            'jenis' => $request->jenis,
+            'kapasitas' => $request->kapasitas,
+            'status' => $request->status,
+            'notes' => $request->notes,
+            'floor_plan_id' => $request->floor_plan_id,
+            'floor_plan_x' => $request->floor_plan_x,
+            'floor_plan_y' => $request->floor_plan_y,
+        ]);
+
+        // Regenerate QR (optional)
+        $apat->generateQrSvg(true);
 
         return redirect()
             ->route('apat.index')
-            ->with('success', 'APAT ' . $apat->serial_no . ' berhasil diperbarui');
+            ->with('success', 'Data APAT ' . $apat->serial_no . ' berhasil diperbarui.');
     }
 
     /**
-     * Tampilkan riwayat inspeksi APAT.
+     * Tampilkan riwayat inspeksi APAT
+     * 
+     * UNIT ACCESS CONTROL: Only allow access to APAT from same unit
      */
     public function riwayat(Request $request, Apat $apat)
     {
+        // Check unit access
+        $userUnitId = $this->getAuthUserUnitId();
+
+        // Superadmin dan Inspector bisa akses semua unit
+        if (!auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            if ($apat->unit_id != $userUnitId) {
+                abort(403, 'Anda tidak memiliki akses ke APAT dari unit lain. QR Code ini untuk unit: ' .
+                    ($apat->unit ? $apat->unit->name : 'Induk'));
+            }
+        }
+
         $query = $apat->kartuApats()->with(['user', 'approver', 'signature']);
-        
+
         // Filter by creator
         if ($request->filled('creator')) {
-            $query->whereHas('user', function($q) use ($request) {
+            $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->creator . '%');
             });
         }
-        
+
         // Filter by approver
         if ($request->filled('approver')) {
-            $query->whereHas('approver', function($q) use ($request) {
+            $query->whereHas('approver', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->approver . '%');
             });
         }
-        
+
         // Filter by approval status
         if ($request->filled('status')) {
             if ($request->status === 'approved') {
@@ -125,20 +172,33 @@ class ApatController extends Controller
                 $query->whereNull('approved_at');
             }
         }
-        
+
         $riwayatInspeksi = $query->orderBy('tgl_periksa', 'desc')->get();
-        
+
         return view('apat.riwayat', compact('apat', 'riwayatInspeksi'));
     }
 
     /**
      * View detail kartu kendali APAT (untuk print/view).
+     * 
+     * UNIT ACCESS CONTROL: Only allow access to APAT from same unit
      */
     public function viewKartu(Apat $apat, $kartuId)
     {
+        // Check unit access
+        $userUnitId = $this->getAuthUserUnitId();
+
+        // Superadmin dan Inspector bisa akses semua unit
+        if (!auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            if ($apat->unit_id != $userUnitId) {
+                abort(403, 'Anda tidak memiliki akses ke APAT dari unit lain. Kartu ini untuk unit: ' .
+                    ($apat->unit ? $apat->unit->name : 'Induk'));
+            }
+        }
+
         $kartu = \App\Models\KartuApat::with(['user', 'approver', 'signature'])->findOrFail($kartuId);
         $template = \App\Models\KartuTemplate::getTemplate('apat');
-        
+
         return view('apat.view-kartu', compact('apat', 'kartu', 'template'));
     }
 }

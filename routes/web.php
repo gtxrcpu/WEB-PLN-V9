@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SearchController;
@@ -17,9 +17,11 @@ Route::get('/qr', [\App\Http\Controllers\QrCodeController::class, 'generate'])->
 Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(function () {
     // Dashboard
     Route::get('/', [\App\Http\Controllers\GuestController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/data', [\App\Http\Controllers\GuestController::class, 'getDashboardData'])->name('dashboard.data');
 
     // Laporan Keseluruhan
     Route::get('/report', [\App\Http\Controllers\GuestController::class, 'report'])->name('report');
+    Route::get('/report/data', [\App\Http\Controllers\GuestController::class, 'getReportData'])->name('report.data');
 
     // APAR
     Route::get('/apar', [\App\Http\Controllers\GuestController::class, 'apar'])->name('apar');
@@ -83,6 +85,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::put('/kartu-templates/{module}', [\App\Http\Controllers\Admin\KartuTemplateController::class, 'update'])->name('kartu-templates.update');
 
     // Approvals - Superadmin bisa approve semua kartu
+    Route::get('/approvals/check-new', [\App\Http\Controllers\Admin\ApprovalController::class, 'checkNew'])->name('approvals.check-new');
     Route::get('/approvals', [\App\Http\Controllers\Admin\ApprovalController::class, 'index'])->name('approvals.index');
     Route::get('/approvals/{id}', [\App\Http\Controllers\Admin\ApprovalController::class, 'show'])->name('approvals.show');
     Route::post('/approvals/{id}/approve', [\App\Http\Controllers\Admin\ApprovalController::class, 'approve'])->name('approvals.approve');
@@ -93,6 +96,9 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::get('/edit-kode/{module}', [\App\Http\Controllers\Admin\KodeSettingController::class, 'edit'])->name('edit-kode.edit');
     Route::put('/edit-kode/{module}', [\App\Http\Controllers\Admin\KodeSettingController::class, 'update'])->name('edit-kode.update');
     Route::post('/edit-kode/{module}/reset-counter', [\App\Http\Controllers\Admin\KodeSettingController::class, 'resetCounter'])->name('edit-kode.reset-counter');
+
+    // Reference Videos (Superadmin only can upload/manage)
+    Route::resource('reference-videos', \App\Http\Controllers\Admin\ReferenceVideoController::class);
 });
 
 // Petugas Routes (Simple UI - Input & View Only)
@@ -106,9 +112,9 @@ Route::middleware(['auth', 'role:leader|superadmin'])->prefix('leader')->name('l
 
     // Approvals - Leader bisa approve kartu di unit-nya
     Route::get('/approvals', [\App\Http\Controllers\Leader\ApprovalController::class, 'index'])->name('approvals.index');
-    Route::get('/approvals/{id}', [\App\Http\Controllers\Leader\ApprovalController::class, 'show'])->name('approvals.show');
-    Route::post('/approvals/{id}/approve', [\App\Http\Controllers\Leader\ApprovalController::class, 'approve'])->name('approvals.approve');
-    Route::post('/approvals/{id}/reject', [\App\Http\Controllers\Leader\ApprovalController::class, 'reject'])->name('approvals.reject');
+    Route::get('/approvals/{module}/{id}', [\App\Http\Controllers\Leader\ApprovalController::class, 'show'])->name('approvals.show');
+    Route::post('/approvals/{module}/{id}/approve', [\App\Http\Controllers\Leader\ApprovalController::class, 'approve'])->name('approvals.approve');
+    Route::post('/approvals/{module}/{id}/reject', [\App\Http\Controllers\Leader\ApprovalController::class, 'reject'])->name('approvals.reject');
 
     // Floor Plans - Leader bisa kelola denah unit-nya
     Route::get('/floor-plans', [\App\Http\Controllers\Leader\FloorPlanController::class, 'index'])->name('floor-plans.index');
@@ -116,8 +122,14 @@ Route::middleware(['auth', 'role:leader|superadmin'])->prefix('leader')->name('l
     Route::post('/floor-plans/{floor_plan}/save-placement', [\App\Http\Controllers\Leader\FloorPlanController::class, 'savePlacement'])->name('floor-plans.save-placement');
     Route::post('/floor-plans/{floor_plan}/remove-placement', [\App\Http\Controllers\Leader\FloorPlanController::class, 'removePlacement'])->name('floor-plans.remove-placement');
 
+
     // Manage users di unit sendiri
     Route::resource('users', \App\Http\Controllers\Leader\UserController::class);
+
+    // Reference Videos - Leader can upload for their unit or all units
+    Route::get('/reference-videos', [\App\Http\Controllers\Leader\ReferenceVideoController::class, 'index'])->name('reference-videos.index');
+    Route::get('/reference-videos/create', [\App\Http\Controllers\Leader\ReferenceVideoController::class, 'create'])->name('reference-videos.create');
+    Route::post('/reference-videos', [\App\Http\Controllers\Leader\ReferenceVideoController::class, 'store'])->name('reference-videos.store');
 });
 
 // Inspector Routes (Read-Only Access)
@@ -302,14 +314,13 @@ Route::middleware(['auth'])->group(function () {
 
 // Ini Modul P3K
 Route::middleware(['auth'])->group(function () {
-    Route::get('/p3k', [\App\Http\Controllers\P3kController::class, 'index'])->name('p3k.index');
     Route::get('/p3k/create', [\App\Http\Controllers\P3kController::class, 'create'])->name('p3k.create');
     Route::post('/p3k', [\App\Http\Controllers\P3kController::class, 'store'])->name('p3k.store');
     Route::get('/p3k/{p3k}/edit', [\App\Http\Controllers\P3kController::class, 'edit'])->name('p3k.edit');
     Route::get('/p3k/{p3k}/riwayat', [\App\Http\Controllers\P3kController::class, 'riwayat'])->name('p3k.riwayat');
     Route::put('/p3k/{p3k}', [\App\Http\Controllers\P3kController::class, 'update'])->name('p3k.update');
 
-    // Alur baru: Pilih Jenis → Pilih Lokasi → Isi Kartu
+    // Alur baru: Pilih Jenis â†’ Pilih Lokasi â†’ Isi Kartu
     Route::get('/p3k/pilih-jenis', [\App\Http\Controllers\P3kController::class, 'pilihJenis'])->name('p3k.pilih-jenis');
     Route::get('/p3k/pilih-lokasi', [\App\Http\Controllers\P3kController::class, 'pilihLokasi'])->name('p3k.pilih-lokasi');
     Route::get('/p3k/kartu/create', [\App\Http\Controllers\KartuP3kController::class, 'create'])->name('p3k.kartu.create');
@@ -324,6 +335,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quick/rekap', [\App\Http\Controllers\QuickActionController::class, 'rekap'])->name('quick.rekap');
     Route::get('/quick/export-excel', [\App\Http\Controllers\QuickActionController::class, 'exportExcel'])->name('quick.export.excel');
     Route::get('/quick/export-pdf', [\App\Http\Controllers\QuickActionController::class, 'exportPdf'])->name('quick.export.pdf');
+
+    // Reference Videos (All authenticated users can view)
+    Route::get('/reference-videos', [\App\Http\Controllers\ReferenceVideoController::class, 'index'])->name('reference-videos.index');
+    Route::get('/reference-videos/{referenceVideo}', [\App\Http\Controllers\ReferenceVideoController::class, 'show'])->name('reference-videos.show');
 });
 
 // Floor Plan View (User Access)
@@ -358,3 +373,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__ . '/auth.php';
+

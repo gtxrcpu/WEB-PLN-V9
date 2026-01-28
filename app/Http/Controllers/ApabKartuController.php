@@ -20,7 +20,17 @@ class ApabKartuController extends Controller
         $apab = Apab::findOrFail($apabId);
         $template = \App\Models\KartuTemplate::getTemplate('apab');
 
-        return view('apab.kartu.create', compact('apab', 'template'));
+        $latestKartu = \App\Models\KartuApab::where('apab_id', $apabId)
+            ->latest('updated_at')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('apab.kartu.create', compact('apab', 'template', 'nextRevisi'));
     }
 
     public function store(Request $request)
@@ -96,6 +106,15 @@ class ApabKartuController extends Controller
 
         $data['user_id'] = auth()->id();
         
+        $latestKartu = \App\Models\KartuApab::where('apab_id', $data['apab_id'])
+            ->latest('updated_at')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $data['revisi'] = '00';
+        }
         \App\Models\KartuApab::create($data);
 
         return redirect()
@@ -103,3 +122,7 @@ class ApabKartuController extends Controller
             ->with('success', 'Kartu Kendali APAB berhasil disimpan');
     }
 }
+
+
+
+

@@ -52,10 +52,12 @@ class Apat extends Model
     /**
      * Generate next serial number for APAT using custom format from settings
      * @param int|null $unitId Unit ID (null = Induk)
+     * @param bool $incrementCounter Whether to increment counter
      */
-    public static function generateNextSerial($unitId = null): string
+    public static function generateNextSerial($unitId = null, $incrementCounter = true): string
     {
-        $format = \App\Models\AparSetting::get('apat_kode_format', 'APAT A2.{NNN}');
+        // NEW FORMAT: Include unit name for uniqueness
+        $format = \App\Models\AparSetting::get('apat_kode_format', 'APAT-{UNIT}-{NNN}');
 
         // Determine unit from auth user if not provided
         if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
@@ -66,22 +68,70 @@ class Apat extends Model
         $counterKey = $unitId ? "apat_kode_counter_{$unitId}" : "apat_kode_counter_induk";
         $counter = (int) \App\Models\AparSetting::get($counterKey, 1);
 
-        // Get unit code for format
-        $unitCode = $unitId ? (\App\Models\Unit::find($unitId)?->code ?? 'INDUK') : 'INDUK';
+        // Get unit name for format (more readable than code)
+        $unitName = $unitId ? (\App\Models\Unit::find($unitId)?->name ?? 'INDUK') : 'INDUK';
 
-        // Replace variables (tanpa tahun dan bulan)
-        $serial = str_replace([
-            '{UNIT}',
-            '{NNNN}',
-            '{NNN}',
-        ], [
-            $unitCode,
-            str_pad($counter, 4, '0', STR_PAD_LEFT),
-            str_pad($counter, 3, '0', STR_PAD_LEFT),
-        ], $format);
+        // Check existing data to ensure counter is in sync FOR THIS UNIT ONLY
+        $query = self::query();
+        if ($unitId) {
+            $query->where('unit_id', $unitId);
+        } else {
+            $query->whereNull('unit_id');
+        }
 
-        // Increment counter
-        \App\Models\AparSetting::set($counterKey, $counter + 1);
+        // Get the highest serial number from existing data FOR THIS UNIT
+        $lastApat = $query->orderByRaw('CAST(SUBSTRING_INDEX(serial_no, "-", -1) AS UNSIGNED) DESC')->first();
+
+        if ($lastApat && $lastApat->serial_no) {
+            // Extract number from last serial (e.g., "APAT-INDUK-005" -> 5)
+            $parts = explode('-', $lastApat->serial_no);
+            $lastNumber = isset($parts[2]) ? (int) ltrim($parts[2], '0') : 0;
+
+            // Use the higher value between counter and last number + 1
+            $counter = max($counter, $lastNumber + 1);
+        }
+
+        // Generate serial with retry logic for duplicate prevention
+        $maxRetries = 10;
+        $attempts = 0;
+
+        do {
+            $serial = str_replace([
+                '{UNIT}',
+                '{NNNN}',
+                '{NNN}',
+            ], [
+                $unitName,
+                str_pad($counter + $attempts, 4, '0', STR_PAD_LEFT),
+                str_pad($counter + $attempts, 3, '0', STR_PAD_LEFT),
+            ], $format);
+
+            // Check if this serial already exists IN THIS UNIT ONLY
+            // Use where closure to properly group OR conditions with unit_id filter
+            $duplicateQuery = self::where(function ($q) use ($serial) {
+                $q->where('serial_no', $serial)->orWhere('barcode', $serial);
+            });
+
+            // Filter by unit_id to ensure independence between units
+            if ($unitId) {
+                $duplicateQuery->where('unit_id', $unitId);
+            } else {
+                $duplicateQuery->whereNull('unit_id');
+            }
+
+            $exists = $duplicateQuery->exists();
+
+            if (!$exists) {
+                break;
+            }
+
+            $attempts++;
+        } while ($attempts < $maxRetries);
+
+        // Increment counter only if requested
+        if ($incrementCounter) {
+            \App\Models\AparSetting::set($counterKey, $counter + $attempts + 1);
+        }
 
         return $serial;
     }
@@ -97,10 +147,10 @@ class Apat extends Model
             'type' => 'APAT',
             'code' => $this->barcode ?? $this->serial_no,
             'serial' => $this->serial_no,
-            'location' => $this->location_code ?? '-',
+            'location' => $this->lokasi ?? '-',  // Fixed: lokasi not location_code
             'status' => $this->status ?? '-',
-            'capacity' => $this->capacity ?? '-',
-            'type_detail' => $this->type ?? '-',
+            'capacity' => $this->kapasitas ?? '-',  // Fixed: kapasitas not capacity
+            'type_detail' => $this->jenis ?? '-',  // Fixed: jenis not type
         ], JSON_UNESCAPED_UNICODE);
 
         try {

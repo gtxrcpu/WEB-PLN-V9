@@ -42,7 +42,7 @@ class P3kController extends Controller
         $p3k->save();
 
         return redirect()
-            ->route('p3k.index')
+            ->route('p3k.pilih-jenis')
             ->with('success', 'P3K baru berhasil ditambahkan dengan barcode ' . $p3k->barcode);
     }
 
@@ -69,7 +69,7 @@ class P3kController extends Controller
         $p3k->save();
 
         return redirect()
-            ->route('p3k.index')
+            ->route('p3k.pilih-jenis')
             ->with('success', 'P3K ' . $p3k->serial_no . ' berhasil diperbarui');
     }
 
@@ -166,3 +166,4 @@ class P3kController extends Controller
         return view('p3k.pilih-lokasi', compact('jenis'));
     }
 }
+

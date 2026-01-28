@@ -3,6 +3,7 @@
     :subtitle="$apab->barcode ?? $apab->serial_no"
     back-route="apab.index"
     module="apab"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO APAB --}}

@@ -21,9 +21,20 @@ class ApatKartuController extends Controller
         // Get template for APAT module
         $template = \App\Models\KartuTemplate::getTemplate('apat');
 
+        $latestKartu = KartuApat::where('apat_id', $apatId)
+            ->latest('updated_at')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
         return view('apat.kartu.create', [
             'apat' => $apat,
             'template' => $template,
+            'nextRevisi' => $nextRevisi,
         ]);
     }
 
@@ -95,6 +106,16 @@ class ApatKartuController extends Controller
         // Tambahkan user_id
         $data['user_id'] = auth()->id();
 
+        $latestKartu = KartuApat::where('apat_id', $data['apat_id'])
+            ->latest('updated_at')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $data['revisi'] = '00';
+        }
+
         KartuApat::create($data);
 
         return redirect()
@@ -102,3 +123,7 @@ class ApatKartuController extends Controller
             ->with('success', 'Kartu Kendali APAT berhasil disimpan.');
     }
 }
+
+
+
+

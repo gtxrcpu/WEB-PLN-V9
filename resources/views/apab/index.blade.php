@@ -199,7 +199,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     </svg>
-                                                    {{ $apab->location_code }}
+                                                    {{ $apab->lokasi }}
                                                 </p>
                                             @endif
                                         </div>
@@ -220,12 +220,12 @@
 
                             <div class="grid grid-cols-2 gap-3 mb-5">
                                 <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                                    <p class="text-xs text-slate-500 mb-1">Isi APAB</p>
-                                    <p class="text-sm font-semibold text-slate-900">{{ $apab->isi_apab ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500 mb-1">Jenis</p>
+                                    <p class="text-sm font-semibold text-slate-900">{{ $apab->jenis ?? '—' }}</p>
                                 </div>
                                 <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
                                     <p class="text-xs text-slate-500 mb-1">Kapasitas</p>
-                                    <p class="text-sm font-semibold text-slate-900">{{ $apab->capacity ?? '—' }}</p>
+                                    <p class="text-sm font-semibold text-slate-900">{{ $apab->kapasitas ?? '—' }}</p>
                                 </div>
                             </div>
 

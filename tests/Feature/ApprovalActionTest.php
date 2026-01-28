@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Apar;
 use App\Models\KartuApar;
-use App\Models\User;
-use App\Models\Unit;
 use App\Models\Signature;
+use App\Models\Unit;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -16,42 +16,46 @@ class ApprovalActionTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected User $leader;
+
     protected Unit $unit;
+
     protected Apar $apar;
+
     protected Signature $signature;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create roles
         Role::create(['name' => 'user']);
         Role::create(['name' => 'leader']);
         Role::create(['name' => 'superadmin']);
-        
+
         // Create unit
         $this->unit = Unit::create([
             'name' => 'Test Unit',
             'code' => 'TEST',
         ]);
-        
+
         // Create regular user (petugas)
         $this->user = User::factory()->create([
             'unit_id' => $this->unit->id,
             'position' => 'petugas',
         ]);
-        
+
         // Create leader user
         $this->leader = User::factory()->create([
             'unit_id' => $this->unit->id,
             'position' => 'leader',
         ]);
-        
+
         // Assign roles
         $this->user->assignRole('user');
         $this->leader->assignRole('superadmin');
-        
+
         // Create test APAR
         $this->apar = Apar::create([
             'user_id' => $this->user->id,
@@ -64,7 +68,7 @@ class ApprovalActionTest extends TestCase
             'location_code' => 'A-101',
             'status' => 'BAIK',
         ]);
-        
+
         // Create test signature
         $this->signature = Signature::create([
             'name' => 'Test Leader',
@@ -78,7 +82,7 @@ class ApprovalActionTest extends TestCase
     public function leader_can_approve_kartu()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -92,15 +96,15 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $response = $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $response->assertRedirect(route('admin.approvals.index'));
         $response->assertSessionHas('success');
-        
+
         // Verify kartu is approved
         $kartu->refresh();
         $this->assertNotNull($kartu->approved_at);
@@ -112,7 +116,7 @@ class ApprovalActionTest extends TestCase
     public function leader_can_reject_kartu()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -129,14 +133,15 @@ class ApprovalActionTest extends TestCase
             'approved_by' => $this->leader->id,
             'approved_at' => now(),
         ]);
-        
+
         $response = $this->post(route('admin.approvals.reject', $kartu->id), [
             'type' => 'apar',
+            'rejection_reason' => 'Perlu revisi data inspeksi.',
         ]);
-        
+
         $response->assertRedirect(route('admin.approvals.index'));
         $response->assertSessionHas('success');
-        
+
         // Verify approval is removed
         $kartu->refresh();
         $this->assertNull($kartu->approved_at);
@@ -148,7 +153,7 @@ class ApprovalActionTest extends TestCase
     public function regular_user_cannot_approve_kartu()
     {
         $this->actingAs($this->user);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -162,12 +167,12 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $response = $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $response->assertStatus(403);
     }
 
@@ -187,12 +192,12 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $response = $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $response->assertRedirect(route('login'));
     }
 
@@ -200,7 +205,7 @@ class ApprovalActionTest extends TestCase
     public function approval_requires_valid_signature()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -214,12 +219,12 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $response = $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => 99999, // Invalid signature
             'type' => 'apar',
         ]);
-        
+
         $response->assertSessionHasErrors(['signature_id']);
     }
 
@@ -227,7 +232,7 @@ class ApprovalActionTest extends TestCase
     public function approval_history_is_tracked()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -241,14 +246,14 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $kartu->refresh();
-        
+
         // Verify approval history
         $this->assertNotNull($kartu->approved_at);
         $this->assertEquals($this->leader->id, $kartu->approved_by);
@@ -259,7 +264,7 @@ class ApprovalActionTest extends TestCase
     public function approval_timestamps_are_recorded()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -273,18 +278,18 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $beforeApproval = now();
-        
+
         $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $afterApproval = now();
-        
+
         $kartu->refresh();
-        
+
         // Verify timestamp is within expected range
         $this->assertTrue($kartu->approved_at >= $beforeApproval);
         $this->assertTrue($kartu->approved_at <= $afterApproval);
@@ -294,7 +299,7 @@ class ApprovalActionTest extends TestCase
     public function approval_user_tracking_is_correct()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -308,14 +313,14 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $kartu->refresh();
-        
+
         // Verify approver relationship
         $this->assertNotNull($kartu->approver);
         $this->assertEquals($this->leader->id, $kartu->approver->id);
@@ -326,7 +331,7 @@ class ApprovalActionTest extends TestCase
     public function kartu_can_be_approved_and_rejected_multiple_times()
     {
         $this->actingAs($this->leader);
-        
+
         $kartu = KartuApar::create([
             'apar_id' => $this->apar->id,
             'user_id' => $this->user->id,
@@ -340,30 +345,31 @@ class ApprovalActionTest extends TestCase
             'tgl_periksa' => now(),
             'petugas' => 'Test Petugas',
         ]);
-        
+
         // First approval
         $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $kartu->refresh();
         $this->assertNotNull($kartu->approved_at);
-        
+
         // Reject
         $this->post(route('admin.approvals.reject', $kartu->id), [
             'type' => 'apar',
+            'rejection_reason' => 'Perlu revisi data inspeksi.',
         ]);
-        
+
         $kartu->refresh();
         $this->assertNull($kartu->approved_at);
-        
+
         // Second approval
         $this->post(route('admin.approvals.approve', $kartu->id), [
             'signature_id' => $this->signature->id,
             'type' => 'apar',
         ]);
-        
+
         $kartu->refresh();
         $this->assertNotNull($kartu->approved_at);
     }

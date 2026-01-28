@@ -24,11 +24,15 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
 {
     protected $module;
     protected $type;
+    protected $year;
+    protected $month;
 
-    public function __construct($module = 'all', $type = 'equipment')
+    public function __construct($module = 'all', $type = 'equipment', $year = null, $month = null)
     {
         $this->module = $module;
         $this->type = $type; // 'equipment' or 'kartu'
+        $this->year = $year;
+        $this->month = $month;
     }
 
     public function collection()
@@ -132,7 +136,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         $data = collect();
 
         if ($this->module === 'all' || $this->module === 'apar') {
-            $kartus = KartuApar::with(['apar', 'user', 'approver'])->get();
+            $query = KartuApar::with(['apar', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'APAR',
@@ -149,7 +162,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         }
 
         if ($this->module === 'all' || $this->module === 'apat') {
-            $kartus = KartuApat::with(['apat', 'user', 'approver'])->get();
+            $query = KartuApat::with(['apat', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'APAT',
@@ -166,7 +188,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         }
 
         if ($this->module === 'all' || $this->module === 'apab') {
-            $kartus = KartuApab::with(['apab', 'user', 'approver'])->get();
+            $query = KartuApab::with(['apab', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'APAB',
@@ -183,7 +214,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         }
 
         if ($this->module === 'all' || $this->module === 'fire_alarm') {
-            $kartus = KartuFireAlarm::with(['fireAlarm', 'user', 'approver'])->get();
+            $query = KartuFireAlarm::with(['fireAlarm', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'Fire Alarm',
@@ -200,7 +240,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         }
 
         if ($this->module === 'all' || $this->module === 'box_hydrant') {
-            $kartus = KartuBoxHydrant::with(['boxHydrant', 'user', 'approver'])->get();
+            $query = KartuBoxHydrant::with(['boxHydrant', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'Box Hydrant',
@@ -217,7 +266,16 @@ class RekapExport implements FromCollection, WithHeadings, WithStyles, WithTitle
         }
 
         if ($this->module === 'all' || $this->module === 'rumah_pompa') {
-            $kartus = KartuRumahPompa::with(['rumahPompa', 'user', 'approver'])->get();
+            $query = KartuRumahPompa::with(['rumahPompa', 'user', 'approver']);
+
+            if ($this->year) {
+                $query->whereYear('tgl_periksa', $this->year);
+            }
+            if ($this->month) {
+                $query->whereMonth('tgl_periksa', $this->month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data->push([
                     'Rumah Pompa',

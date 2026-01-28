@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-bold text-white mb-1">Tambah Fire Alarm Baru</h1>
-                    <p class="text-pink-100 text-sm">Input data Panel & Titik Alarm. Serial & Barcode otomatis: <span class="font-semibold">F1.xxx</span></p>
+                    <p class="text-pink-100 text-sm">Input data Panel & Titik Alarm. Serial otomatis: <span class="font-semibold">FIREALARM-{UNIT}-{NNN}</span></p>
                 </div>
             </div>
             <a href="{{ route('fire-alarm.index') }}"
@@ -54,17 +54,8 @@
     @endif
 
     @php
-        $last = \App\Models\FireAlarm::orderBy('id', 'desc')->first();
-        $lastNumber = 0;
-
-        if ($last && $last->serial_no) {
-            $parts = explode('.', $last->serial_no);
-            $lastNumber = isset($parts[1]) ? (int) $parts[1] : 0;
-        }
-
-        $nextNumber  = $lastNumber + 1;
-        $nextSerial  = 'F1.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $nextBarcode = $nextSerial;
+        // Use $nextSerial from controller (passed via compact())
+        // Format: FIREALARM-{UNIT}-{NNN}
     @endphp
 
     {{-- Form Card --}}
@@ -87,24 +78,7 @@
             @csrf
 
             <div class="space-y-6">
-                {{-- Nama --}}
-                <div>
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-2">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        Nama Fire Alarm
-                    </label>
-                    <input type="text" name="name"
-                           value="{{ old('name', 'Fire Alarm ' . $nextSerial) }}"
-                           placeholder="Contoh: Fire Alarm F1.001"
-                           class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('name') border-rose-500 @enderror">
-                    @error('name')
-                        <p class="mt-2 text-xs text-rose-600">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- Serial & Barcode --}}
+                {{-- Serial & Barcode (Auto-generated, readonly) --}}
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="relative">
                         <div class="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-pink-500 rounded-full"></div>
@@ -127,8 +101,7 @@
                             </svg>
                             Barcode
                         </label>
-                        <input type="text" name="barcode"
-                               value="{{ old('barcode', $nextBarcode) }}"
+                        <input type="text" value="{{ old('barcode', $nextSerial) }}"
                                readonly
                                class="block w-full rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 text-base font-mono font-bold px-4 py-3 shadow-sm">
                     </div>

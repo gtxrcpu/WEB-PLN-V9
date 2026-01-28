@@ -319,37 +319,26 @@
         <p class="text-sm text-gray-600">Kelola akun user dan role</p>
       </a>
 
-      <a href="{{ route('referensi.index') }}" class="group relative rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-200 hover:shadow-xl transition-all">
+      <a href="{{ route('admin.reference-videos.index') }}" class="group relative rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-200 hover:shadow-xl transition-all">
         <div class="flex items-start justify-between mb-3">
           <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-indigo-100">
             <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
             </svg>
           </div>
           <span class="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all">→</span>
         </div>
-        <h3 class="font-bold text-lg mb-2">Referensi Data</h3>
-        <p class="text-sm text-gray-600">Kategori, lokasi, petugas</p>
+        <h3 class="font-bold text-lg mb-2">Video Referensi</h3>
+        <p class="text-sm text-gray-600">Upload video panduan & tutorial</p>
       </a>
 
-      <a href="{{ route('admin.approvals.index') }}" class="group relative rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-200 hover:shadow-xl transition-all">
+      <a href="{{ route('admin.approvals.index') }}" class="group relative overflow-visible rounded-lg bg-white p-6 shadow-lg ring-1 ring-slate-200 hover:shadow-xl transition-all" id="pending-approvals-card">
         {{-- Notification Badge --}}
-        @php
-          $pendingCount = \App\Models\KartuApar::whereNull('approved_at')->count() +
-                         \App\Models\KartuApat::whereNull('approved_at')->count() +
-                         \App\Models\KartuApab::whereNull('approved_at')->count() +
-                         \App\Models\KartuFireAlarm::whereNull('approved_at')->count() +
-                         \App\Models\KartuBoxHydrant::whereNull('approved_at')->count() +
-                         \App\Models\KartuRumahPompa::whereNull('approved_at')->count() +
-                         \App\Models\KartuP3k::whereNull('approved_at')->count();
-        @endphp
-        @if($pendingCount > 0)
-          <div class="absolute -top-2 -right-2 z-10">
-            <span class="flex items-center justify-center w-8 h-8 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse ring-4 ring-white">
-              {{ $pendingCount > 99 ? '99+' : $pendingCount }}
+        <div id="dashboard-approval-badge" class="absolute -top-3 -right-3 z-20 {{ $pendingApprovals > 0 ? '' : 'hidden' }}">
+            <span class="flex items-center justify-center w-9 h-9 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse ring-4 ring-white">
+              {{ $pendingApprovals > 99 ? '99+' : $pendingApprovals }}
             </span>
-          </div>
-        @endif
+        </div>
         
         <div class="flex items-start justify-between mb-3">
           <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-orange-100">
@@ -361,11 +350,12 @@
         </div>
         <h3 class="font-bold text-lg mb-2">Pending Approvals</h3>
         <p class="text-sm text-gray-600">
-          @if($pendingCount > 0)
-            <span class="font-semibold text-orange-600">{{ $pendingCount }} kartu</span> menunggu approval
-          @else
-            Approve kartu kendali
-          @endif
+          <span id="dashboard-approval-text" class="{{ $pendingApprovals > 0 ? 'font-semibold text-orange-600' : '' }}">
+            {{ $pendingApprovals > 0 ? $pendingApprovals . ' kartu' : 'Approve kartu kendali' }}
+          </span>
+          <span id="dashboard-approval-suffix">
+            {{ $pendingApprovals > 0 ? 'menunggu approval' : '' }}
+          </span>
         </p>
       </a>
 
@@ -452,7 +442,7 @@
           ['Box Hydrant', 'box-hydrant.index', 'from-blue-700 to-cyan-500', 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'],
           ['Rumah Pompa', 'rumah-pompa.index', 'from-purple-600 to-indigo-600', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
           ['P3K', 'p3k.pilih-jenis', 'from-emerald-500 to-teal-500', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-          ['Referensi', 'referensi.index', 'from-purple-500 to-indigo-500', 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
+          ['Referensi', 'reference-videos.index', 'from-purple-500 to-pink-500', 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
         ];
       @endphp
 
@@ -467,6 +457,7 @@
             'Box Hydrant' => 'admin.box-hydrant.index',
             'Rumah Pompa' => 'admin.rumah-pompa.index',
             'P3K' => 'admin.p3k.index',
+            'Referensi' => 'admin.reference-videos.index',
             default => $route
           };
           
@@ -1201,5 +1192,44 @@
 
     // Initialize with APAR data
     switchModule('apar');
+
+    // Polling for Pending Approvals
+    document.addEventListener('DOMContentLoaded', function() {
+        let lastChecked = "{{ now()->toIso8601String() }}";
+        const badge = document.getElementById('dashboard-approval-badge');
+        const textSpan = document.getElementById('dashboard-approval-text');
+        const suffixSpan = document.getElementById('dashboard-approval-suffix');
+        const badgeCount = badge.querySelector('span');
+
+        setInterval(checkNewApprovals, 15000); // 15 seconds
+
+        async function checkNewApprovals() {
+            try {
+                const response = await fetch(`{{ route('admin.approvals.check-new') }}?last_checked=${lastChecked}`);
+                const data = await response.json();
+
+                if (data.total_pending !== undefined) {
+                    updateBadge(data.total_pending);
+                }
+            } catch (error) {
+                // Silently fail
+            }
+        }
+
+        function updateBadge(count) {
+            if (count > 0) {
+                badge.classList.remove('hidden');
+                badgeCount.textContent = count > 99 ? '99+' : count;
+                textSpan.textContent = count + ' kartu';
+                textSpan.className = 'font-semibold text-orange-600';
+                suffixSpan.textContent = 'menunggu approval';
+            } else {
+                badge.classList.add('hidden');
+                textSpan.textContent = 'Approve kartu kendali';
+                textSpan.className = '';
+                suffixSpan.textContent = '';
+            }
+        }
+    });
   </script>
 </x-layouts.app>

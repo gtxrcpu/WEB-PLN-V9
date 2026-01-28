@@ -93,18 +93,21 @@ class DashboardController extends Controller
         ];
 
         // Total items for KPI
-        $totalBaik = $aparData['baik'] + $apatData['baik'] + $apabData['baik'] + 
-                     $fireAlarmData['baik'] + $boxHydrantData['baik'] + $rumahPompaData['baik'];
-        $totalRusak = $aparData['rusak'] + $apatData['rusak'] + $apabData['tidak_baik'] + 
-                      $fireAlarmData['rusak'] + $boxHydrantData['rusak'] + $rumahPompaData['rusak'];
+        $totalBaik = $aparData['baik'] + $apatData['baik'] + $apabData['baik'] +
+            $fireAlarmData['baik'] + $boxHydrantData['baik'] + $rumahPompaData['baik'];
+        $totalRusak = $aparData['rusak'] + $apatData['rusak'] + $apabData['tidak_baik'] +
+            $fireAlarmData['rusak'] + $boxHydrantData['rusak'] + $rumahPompaData['rusak'];
 
-        // Pending approvals
-        $pendingApprovals = \App\Models\KartuApar::whereNull('approved_at')->count();
-        $pendingApprovalsList = \App\Models\KartuApar::with(['apar.unit', 'user'])
-            ->whereNull('approved_at')
-            ->latest()
-            ->take(10)
-            ->get();
+
+        // Pending approvals - All modules
+        $pendingApprovals = \App\Models\KartuApar::whereNull('approved_at')->count() +
+            \App\Models\KartuApat::whereNull('approved_at')->count() +
+            \App\Models\KartuApab::whereNull('approved_at')->count() +
+            \App\Models\KartuFireAlarm::whereNull('approved_at')->count() +
+            \App\Models\KartuBoxHydrant::whereNull('approved_at')->count() +
+            \App\Models\KartuRumahPompa::whereNull('approved_at')->count() +
+            \App\Models\KartuP3k::whereNull('approved_at')->count();
+
 
         // Tren inspeksi 12 bulan terakhir (gabungan semua modul)
         $monthlyInspections = [];
@@ -112,43 +115,43 @@ class DashboardController extends Controller
         for ($i = 11; $i >= 0; $i--) {
             $date = now()->subMonths($i);
             $monthLabels[] = $date->format('M Y');
-            
+
             // Hitung dari semua tabel kartu
             $countApar = DB::table('kartu_apars')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countApat = DB::table('kartu_apats')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countApab = DB::table('kartu_apabs')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countFireAlarm = DB::table('kartu_fire_alarms')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countBoxHydrant = DB::table('kartu_box_hydrants')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countRumahPompa = DB::table('kartu_rumah_pompas')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $countP3k = DB::table('kartu_p3ks')
                 ->whereYear('tgl_periksa', $date->year)
                 ->whereMonth('tgl_periksa', $date->month)
                 ->count();
-            
+
             $totalCount = $countApar + $countApat + $countApab + $countFireAlarm + $countBoxHydrant + $countRumahPompa + $countP3k;
             $monthlyInspections[] = $totalCount;
         }
@@ -180,6 +183,7 @@ class DashboardController extends Controller
             'totalItems',
             'totalBaik',
             'totalRusak',
+            'pendingApprovals',
             'monthlyInspections',
             'monthLabels'
         ));

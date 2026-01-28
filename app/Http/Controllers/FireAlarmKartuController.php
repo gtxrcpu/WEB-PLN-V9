@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FireAlarm;
+use App\Models\KartuFireAlarm;
 use Illuminate\Http\Request;
 
 class FireAlarmKartuController extends Controller
@@ -21,9 +22,19 @@ class FireAlarmKartuController extends Controller
         }
 
         $fireAlarm = FireAlarm::findOrFail($fireAlarmId);
-        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm');
+                $template = \App\Models\KartuTemplate::getTemplate('fire-alarm');
 
-        return view('fire-alarm.kartu.create', compact('fireAlarm', 'template'));
+        $latestKartu = KartuFireAlarm::where('fire_alarm_id', $fireAlarmId)
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('fire-alarm.kartu.create', compact('fireAlarm', 'template', 'nextRevisi'));
     }
 
     /**
@@ -127,15 +138,31 @@ class FireAlarmKartuController extends Controller
 
         // Tambahkan user_id
         $data['user_id'] = auth()->id();
+
+        $latestKartu = KartuFireAlarm::where('fire_alarm_id', $data['fire_alarm_id'])
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $data['revisi'] = '00';
+        }
         
         // Log final data before insert
         \Log::info('Final data before insert', ['data' => $data]);
         
         // Simpan kartu inspeksi Fire Alarm
-        \App\Models\KartuFireAlarm::create($data);
+        KartuFireAlarm::create($data);
         
         return redirect()
             ->route('fire-alarm.index')
             ->with('success', 'Kartu Kendali Fire Alarm berhasil disimpan dan menunggu approval');
     }
 }
+
+
+
+
+
+

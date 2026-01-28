@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <h1 class="text-3xl font-bold text-white mb-1">Tambah APAB Baru</h1>
-                    <p class="text-red-100 text-sm">Input data Alat Pemadam Api Berat. Serial otomatis: <span class="font-semibold">A3.xxx</span></p>
+                    <p class="text-red-100 text-sm">Input data Alat Pemadam Api Berat. Serial otomatis: <span class="font-semibold">APAB-{UNIT}-{NNN}</span></p>
                 </div>
             </div>
             <a href="{{ route('apab.index') }}"
@@ -54,17 +54,8 @@
     @endif
 
     @php
-        $last = \App\Models\Apab::orderBy('id', 'desc')->first();
-        $lastNumber = 0;
-
-        if ($last && $last->serial_no) {
-            $parts = explode('.', $last->serial_no);
-            $lastNumber = isset($parts[1]) ? (int) $parts[1] : 0;
-        }
-
-        $nextNumber  = $lastNumber + 1;
-        $nextSerial  = 'A3.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $nextBarcode = 'APAB ' . $nextSerial;
+        // Use $nextSerial from controller (passed via compact())
+        // Format: APAB-{UNIT}-{NNN}
     @endphp
 
     {{-- Form Card --}}
@@ -87,29 +78,7 @@
             @csrf
 
             <div class="space-y-6">
-                {{-- Nama APAB --}}
-                <div>
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-2">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        Nama APAB
-                    </label>
-                    <input type="text" name="name"
-                           value="{{ old('name', 'APAB ' . $nextSerial) }}"
-                           placeholder="Contoh: APAB A3.001"
-                           class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('name') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                    @error('name')
-                        <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                {{-- Serial & Barcode --}}
+                {{-- Serial & Barcode (Auto-generated, readonly) --}}
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="relative">
                         <div class="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-red-500 rounded-full"></div>
@@ -142,8 +111,7 @@
                             </svg>
                             Barcode
                         </label>
-                        <input type="text" name="barcode"
-                               value="{{ old('barcode', $nextBarcode) }}"
+                        <input type="text" value="{{ old('barcode', $nextSerial) }}"
                                readonly
                                class="block w-full rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 text-base font-mono font-bold px-4 py-3 shadow-sm">
                     </div>
@@ -153,7 +121,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    Serial dan Barcode otomatis: A3.xxx (increment). QR Code akan mengikuti barcode ini.
+                    Serial dan Barcode otomatis: APAB-{UNIT}-{NNN}. QR Code akan mengikuti format ini.
                 </p>
 
                 {{-- Grid Layout --}}
@@ -166,9 +134,9 @@
                             </svg>
                             Lokasi
                         </label>
-                        <input type="text" name="location_code"
-                               value="{{ old('location_code') }}"
-                               placeholder="Misal: Workshop G4"
+                        <input type="text" name="lokasi"
+                               value="{{ old('lokasi', $default['lokasi'] ?? '') }}"
+                               placeholder="Misal: Workshop G4 / Ruang Panel"
                                class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all">
                     </div>
 
@@ -177,11 +145,11 @@
                             <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
-                            Isi APAB
+                            Jenis
                         </label>
-                        <input type="text" name="isi_apab"
-                               value="{{ old('isi_apab') }}"
-                               placeholder="Misal: CO2, Foam"
+                        <input type="text" name="jenis"
+                               value="{{ old('jenis', $default['jenis'] ?? '') }}"
+                               placeholder="Misal: Karung Pasir / Selimut Tahan Api"
                                class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all">
                     </div>
 
@@ -192,9 +160,9 @@
                             </svg>
                             Kapasitas
                         </label>
-                        <input type="text" name="capacity"
-                               value="{{ old('capacity') }}"
-                               placeholder="Misal: 25 Kg"
+                        <input type="text" name="kapasitas"
+                               value="{{ old('kapasitas', $default['kapasitas'] ?? '') }}"
+                               placeholder="Misal: 1 Karung / 25 Kg"
                                class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all">
                     </div>
 
@@ -220,22 +188,23 @@
                         </svg>
                         Status Kondisi
                     </label>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-3 gap-3">
                         @foreach([
-                            ['baik', 'emerald', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-                            ['tidak_baik', 'rose', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z']
+                            ['BAIK', 'emerald', 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            ['ISI ULANG', 'amber', 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            ['RUSAK', 'rose', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z']
                         ] as [$status, $color, $icon])
                             <label class="relative cursor-pointer group">
                                 <input type="radio" name="status" value="{{ $status }}"
                                        {{ old('status') === $status ? 'checked' : '' }}
                                        class="peer sr-only">
-                                <div class="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-200 bg-white transition-all peer-checked:border-{{ $color }}-500 peer-checked:bg-{{ $color }}-50 peer-checked:shadow-lg peer-checked:shadow-{{ $color }}-500/20 hover:border-{{ $color }}-300">
-                                    <div class="w-10 h-10 rounded-xl bg-{{ $color }}-100 flex items-center justify-center peer-checked:bg-{{ $color }}-500 transition-colors">
-                                        <svg class="w-6 h-6 text-{{ $color }}-600 peer-checked:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="flex flex-col items-center gap-2 p-3 rounded-xl border-2 border-slate-200 bg-white transition-all peer-checked:border-{{ $color }}-500 peer-checked:bg-{{ $color }}-50 peer-checked:shadow-lg peer-checked:shadow-{{ $color }}-500/20 hover:border-{{ $color }}-300">
+                                    <div class="w-8 h-8 rounded-lg bg-{{ $color }}-100 flex items-center justify-center peer-checked:bg-{{ $color }}-500 transition-colors">
+                                        <svg class="w-5 h-5 text-{{ $color }}-600 peer-checked:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
                                         </svg>
                                     </div>
-                                    <span class="text-sm font-semibold text-slate-700 peer-checked:text-{{ $color }}-700">{{ strtoupper(str_replace('_', ' ', $status)) }}</span>
+                                    <span class="text-xs font-semibold text-slate-700 peer-checked:text-{{ $color }}-700">{{ $status }}</span>
                                 </div>
                             </label>
                         @endforeach

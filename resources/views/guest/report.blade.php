@@ -7,14 +7,34 @@
         <x-guest.back-button href="{{ route('guest.dashboard') }}" />
 
         {{-- Header --}}
-        <div class="mb-6">
-            <h1
-                class="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-                Laporan Keseluruhan Peralatan
-            </h1>
-            <p class="text-sm text-slate-600">
-                Ringkasan status semua peralatan K3
-            </p>
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1
+                    class="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+                    Laporan Keseluruhan Peralatan
+                </h1>
+                <div class="flex items-center gap-3">
+                    <p class="text-sm text-slate-600">
+                        Ringkasan status semua peralatan K3
+                    </p>
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <svg class="w-4 h-4 text-emerald-600" id="updateIcon" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Update terakhir: <span id="lastUpdated" class="font-medium">--</span></span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="refreshData()" id="refreshBtn"
+                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl">
+                <svg class="w-5 h-5" id="refreshIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh</span>
+            </button>
         </div>
 
         {{-- Summary Cards --}}
@@ -479,4 +499,66 @@
         @endif
 
     </div>
+
+    {{-- Auto-refresh Script --}}
+    <script>
+        let autoRefreshInterval;
+        let lastUpdateTime = new Date();
+
+        // Format time display
+        function formatTime(date) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Update last updated timestamp
+        function updateLastUpdatedDisplay() {
+            document.getElementById('lastUpdated').textContent = formatTime(lastUpdateTime);
+        }
+
+        // Refresh data from API
+        async function refreshData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+
+            try {
+                // Show loading state
+                refreshBtn.disabled = true;
+                refreshIcon.classList.add('animate-spin');
+
+                // Reload page with fresh data
+                window.location.reload();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            } finally {
+                refreshBtn.disabled = false;
+                refreshIcon.classList.remove('animate-spin');
+            }
+        }
+
+        // Start auto-refresh (every 30 seconds)
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing data...');
+                refreshData();
+            }, 30000); // 30 seconds
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            lastUpdateTime = new Date();
+            updateLastUpdatedDisplay();
+            startAutoRefresh();
+            console.log('Real-time monitoring activated - auto-refresh every 30 seconds');
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function () {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
 </x-guest.layouts.guest>

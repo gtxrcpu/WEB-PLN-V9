@@ -1,5 +1,5 @@
 {{-- Reusable Kartu Layout Component --}}
-@props(['title', 'subtitle' => '', 'template', 'module', 'backRoute', 'backParams' => []])
+@props(['title', 'subtitle' => '', 'template', 'module', 'backRoute', 'backParams' => [], 'nextRevisi' => null])
 
 <!DOCTYPE html>
 <html lang="id">
@@ -50,7 +50,7 @@
         
         {{-- HEADER KARTU - FROM TEMPLATE --}}
         @if($template)
-        <x-kartu-header :template="$template" />
+        <x-kartu-header :template="$template" :next-revisi="$nextRevisi" />
         @else
         {{-- FALLBACK HEADER --}}
         <div class="flex items-start justify-between mb-6 pb-4 border-b-2 border-gray-200">
@@ -70,3 +70,4 @@
 
 </body>
 </html>
+

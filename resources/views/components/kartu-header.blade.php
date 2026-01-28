@@ -1,7 +1,19 @@
 {{-- Reusable Kartu Header Component --}}
-@props(['template'])
+@props(['template', 'nextRevisi' => null])
 
 @if($template)
+@php
+    $headerFields = is_array($template->header_fields) ? $template->header_fields : [];
+
+    if ($nextRevisi !== null) {
+        foreach ($headerFields as &$field) {
+            if (isset($field['label']) && strtolower(trim((string) $field['label'])) === 'revisi') {
+                $field['value'] = $nextRevisi;
+            }
+        }
+        unset($field);
+    }
+@endphp
 {{-- Company Header with Logos --}}
 <div class="border-2 border-gray-800 mb-6">
     <div class="flex items-center justify-between p-4 border-b-2 border-gray-800">
@@ -26,7 +38,7 @@
                 @endif
             </div>
         </div>
-        
+
         {{-- 5 Logo Sertifikasi Kanan --}}
         <div class="flex items-center gap-2">
             <img src="{{ asset('images/logo1.png') }}" alt="Cert 1" class="h-12 w-auto object-contain">
@@ -36,28 +48,28 @@
             <img src="{{ asset('images/logo5.png') }}" alt="Cert 5" class="h-12 w-auto object-contain">
         </div>
     </div>
-    
+
     {{-- Title & Document Info --}}
     <table class="w-full text-sm">
         <tr>
-            <td rowspan="{{ count($template->header_fields) }}" class="border-r-2 border-gray-800 p-4 text-center align-middle w-2/3">
+            <td rowspan="{{ count($headerFields) }}" class="border-r-2 border-gray-800 p-4 text-center align-middle w-2/3">
                 <div class="font-bold text-2xl">{{ $template->title }}</div>
                 <div class="font-semibold text-lg mt-2">{{ $template->subtitle }}</div>
                 <div class="font-semibold text-base">TAHUN {{ date('Y') }}</div>
             </td>
             @php
-                $firstField = $template->header_fields[0] ?? null;
+                $firstField = $headerFields[0] ?? null;
             @endphp
             @if($firstField)
                 <td class="border-r border-b border-gray-800 p-2 font-semibold bg-gray-100 w-1/6">{{ $firstField['label'] }}</td>
                 <td class="border-b border-gray-800 p-2">{{ $firstField['value'] }}</td>
             @endif
         </tr>
-        @foreach($template->header_fields as $index => $field)
+        @foreach($headerFields as $index => $field)
             @if($index > 0)
                 <tr>
-                    <td class="border-r @if($index < count($template->header_fields) - 1) border-b @endif border-gray-800 p-2 font-semibold bg-gray-100">{{ $field['label'] }}</td>
-                    <td class="@if($index < count($template->header_fields) - 1) border-b @endif border-gray-800 p-2">{{ $field['value'] }}</td>
+                    <td class="border-r @if($index < count($headerFields) - 1) border-b @endif border-gray-800 p-2 font-semibold bg-gray-100">{{ $field['label'] }}</td>
+                    <td class="@if($index < count($headerFields) - 1) border-b @endif border-gray-800 p-2">{{ $field['value'] }}</td>
                 </tr>
             @endif
         @endforeach

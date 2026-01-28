@@ -1,5 +1,5 @@
-{{-- resources/views/p3k/index.blade.php --}}
-<x-layouts.app :title="'P3K — Kotak Pertolongan Pertama'">
+﻿{{-- resources/views/p3k/index.blade.php --}}
+<x-layouts.app :title="'P3K â€” Kotak Pertolongan Pertama'">
   <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
     {{-- Back Button --}}
@@ -133,7 +133,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @foreach($p3ks as $p3k)
           @php
-            $kodePendek = $p3k->serial_no ?? '—';
+            $kodePendek = $p3k->serial_no ?? 'â€”';
             $statusLower = strtolower($p3k->status ?? '');
             
             $statusConfig = match($statusLower) {
@@ -206,11 +206,11 @@
                 <div class="grid grid-cols-2 gap-3 mb-5">
                     <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
                         <p class="text-xs text-slate-500 mb-1">Tipe</p>
-                        <p class="text-sm font-semibold text-slate-900">{{ $p3k->type ?? '—' }}</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ $p3k->type ?? 'â€”' }}</p>
                     </div>
                     <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
                         <p class="text-xs text-slate-500 mb-1">Barcode</p>
-                        <p class="text-sm font-semibold text-slate-900">{{ $p3k->barcode ?? '—' }}</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ $p3k->barcode ?? 'â€”' }}</p>
                     </div>
                 </div>
 
@@ -272,35 +272,6 @@
             </div>
           </div>
         @endforeach
-      </div>
-    @else
-      <div class="relative rounded-2xl border-2 border-dashed border-slate-300 p-12 text-center bg-gradient-to-br from-slate-50 to-white overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-32 -mt-32"></div>
-        <div class="absolute bottom-0 left-0 w-64 h-64 bg-green-500/5 rounded-full -ml-32 -mb-32"></div>
-        
-        <div class="relative">
-            <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-xl">
-                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-            </div>
-            
-            <h3 class="text-xl font-bold text-slate-900 mb-2">Belum Ada Data P3K</h3>
-            <p class="text-slate-600 text-sm mb-1">
-                Mulai kelola P3K dengan menambahkan kotak pertama Anda
-            </p>
-            <p class="text-xs text-slate-500 mb-6">
-                Setelah menambahkan P3K, Anda dapat membuat Kartu Kendali untuk setiap kotak
-            </p>
-            
-            <a href="{{ route('p3k.create') }}"
-               class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-semibold hover:from-emerald-700 hover:to-green-700 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                <span>Tambah P3K Pertama</span>
-            </a>
-        </div>
       </div>
     @endif
 

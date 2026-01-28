@@ -54,19 +54,8 @@
     @endif
 
     @php
-        // cari serial terakhir, lalu generate berikutnya A2.001, A2.002, dst
-        $last = \App\Models\Apat::orderBy('id', 'desc')->first();
-        $lastNumber = 0;
-
-        if ($last && $last->serial_no) {
-            // asumsi format "A2.xxx"
-            $parts = explode('.', $last->serial_no);
-            $lastNumber = isset($parts[1]) ? (int) $parts[1] : 0;
-        }
-
-        $nextNumber  = $lastNumber + 1;
-        $nextSerial  = 'A2.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-        $nextBarcode = 'APAT ' . $nextSerial;
+        // Use nextSerial from controller (already passed via compact())
+        // Format: APAT-{UNIT}-{NNN}
     @endphp
 
     {{-- Form Card --}}
@@ -90,29 +79,7 @@
             @csrf
 
             <div class="space-y-6">
-                {{-- Nama APAT --}}
-                <div>
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-2">
-                        <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        Nama APAT
-                    </label>
-                    <input type="text" name="name"
-                           value="{{ old('name', 'APAT ' . $nextSerial) }}"
-                           placeholder="Contoh: APAT A2.001"
-                           class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all @error('name') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                    @error('name')
-                        <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                {{-- Serial & Barcode (readonly) --}}
+                {{-- Serial & Barcode (Auto-generated, readonly) --}}
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="relative">
                         <div class="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-500 to-sky-500 rounded-full"></div>
@@ -154,7 +121,7 @@
                             Barcode
                         </label>
                         <input type="text" name="barcode"
-                               value="{{ old('barcode', $nextBarcode) }}"
+                               value="{{ old('barcode', $nextSerial) }}"
                                readonly
                                class="block w-full rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 text-base font-mono font-bold px-4 py-3 shadow-sm">
                         @error('barcode')

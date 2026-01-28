@@ -11,7 +11,10 @@ class KartuBoxHydrant extends Model
 
     protected $casts = [
         'tgl_periksa' => 'date',
+        'leader_approved_at' => 'datetime',
+        'leader_rejected_at' => 'datetime',
         'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function boxHydrant(): BelongsTo
@@ -29,13 +32,28 @@ class KartuBoxHydrant extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function leaderApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'leader_approved_by');
+    }
+
+    public function leaderRejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'leader_rejected_by');
+    }
+
     public function signature(): BelongsTo
     {
         return $this->belongsTo(Signature::class);
     }
 
+    public function leaderSignature(): BelongsTo
+    {
+        return $this->belongsTo(Signature::class, 'leader_signature_id');
+    }
+
     public function isApproved(): bool
     {
-        return !is_null($this->approved_at);
+        return ! is_null($this->approved_at);
     }
 }

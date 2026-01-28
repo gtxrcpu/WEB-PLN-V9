@@ -3,6 +3,7 @@
     :subtitle="$boxHydrant->barcode ?? $boxHydrant->serial_no ?? 'Box Hydrant'"
     back-route="box-hydrant.index"
     module="box-hydrant"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO BOX HYDRANT --}}

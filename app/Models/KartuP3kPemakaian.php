@@ -14,6 +14,11 @@ class KartuP3kPemakaian extends Model
     protected $fillable = [
         'p3k_id',
         'user_id',
+        'bulan',
+        'nomor',
+        'lokasi',
+        'revisi',
+        'usage_entries',
         'item_digunakan',
         'jumlah',
         'keperluan',
@@ -30,6 +35,7 @@ class KartuP3kPemakaian extends Model
     protected $casts = [
         'tgl_pemakaian' => 'date',
         'approved_at' => 'datetime',
+        'usage_entries' => 'array',
     ];
 
     public function p3k()

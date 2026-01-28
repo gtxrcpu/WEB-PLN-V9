@@ -3,6 +3,7 @@
     :subtitle="$rumahPompa->barcode ?? $rumahPompa->serial_no"
     back-route="rumah-pompa.index"
     module="rumah-pompa"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO RUMAH POMPA --}}

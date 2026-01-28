@@ -83,14 +83,23 @@
                         <div class="font-semibold text-base">TAHUN {{ date('Y') }}</div>
                     </td>
                     @php
-                        $firstField = $template->header_fields[0] ?? null;
+                        // Override Revisi value with actual revisi from kartu
+                        $headerFields = $template->header_fields;
+                        foreach ($headerFields as &$field) {
+                            if (isset($field['label']) && strtolower($field['label']) === 'revisi') {
+                                $field['value'] = str_pad($kartu->revisi ?? 0, 2, '0', STR_PAD_LEFT);
+                            }
+                        }
+                        unset($field); // Break reference
+                        
+                        $firstField = $headerFields[0] ?? null;
                     @endphp
                     @if($firstField)
                         <td class="border-r border-b border-gray-800 p-2 font-semibold bg-gray-100 w-1/6">{{ $firstField['label'] }}</td>
                         <td class="border-b border-gray-800 p-2">{{ $firstField['value'] }}</td>
                     @endif
                 </tr>
-                @foreach($template->header_fields as $index => $field)
+                @foreach($headerFields as $index => $field)
                     @if($index > 0)
                         <tr>
                             <td class="border-r @if($index < count($template->header_fields) - 1) border-b @endif border-gray-800 p-2 font-semibold bg-gray-100">{{ $field['label'] }}</td>
@@ -178,7 +187,42 @@
                 </div>
 
                 {{-- Approval Status --}}
-                @if($kartu->isApproved())
+                @if($kartu->rejected_at)
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-900">Ditolak oleh</span>
+                                @if($kartu->rejector)
+                                    <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded">
+                                        {{ get_user_role_display($kartu->rejector) }}
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-sm text-gray-700 font-medium">
+                                {{ get_user_display_name($kartu->rejector, 'User Deleted') }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ $kartu->rejected_at->format('d M Y, H:i') }} WIB
+                            </p>
+                            @if($kartu->rejection_reason)
+                                <div class="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                                    <p class="text-xs font-semibold text-red-900 mb-1">Alasan Penolakan:</p>
+                                    <p class="text-sm text-red-800">{{ $kartu->rejection_reason }}</p>
+                                </div>
+                            @endif
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-700">
+                                    Ditolak - Revisi {{ str_pad($kartu->revisi, 2, '0', STR_PAD_LEFT) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @elseif($kartu->isApproved())
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

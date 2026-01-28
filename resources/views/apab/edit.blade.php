@@ -118,28 +118,6 @@
                     Serial dan Barcode tidak dapab diubah setelah apab dibuat
                 </p>
 
-                {{-- Nama apab --}}
-                <div>
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-2">
-                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7A3 2 0 010 2.828l-7 7A3 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                        Nama apab
-                    </label>
-                    <input type="text" name="name"
-                           value="{{ old('name', $apab->name) }}"
-                           placeholder="Contoh: apab A3.001"
-                           class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('name') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                    @error('name')
-                        <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
                 {{-- Grid Layout untuk Form Fields --}}
                 <div class="grid md:grid-cols-2 gap-6">
                     {{-- Lokasi --}}
@@ -151,11 +129,11 @@
                             </svg>
                             Lokasi
                         </label>
-                        <input type="text" name="location_code"
-                               value="{{ old('location_code', $apab->location_code) }}"
+                        <input type="text" name="lokasi"
+                               value="{{ old('lokasi', $apab->lokasi) }}"
                                placeholder="Misal: Lobby Utama / Parkir Motor"
-                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('location_code') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                        @error('location_code')
+                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('lokasi') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
+                        @error('lokasi')
                             <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -173,11 +151,11 @@
                             </svg>
                             Jenis
                         </label>
-                        <input type="text" name="isi_apab"
-                               value="{{ old('isi_apab', $apab->isi_apab) }}"
+                        <input type="text" name="jenis"
+                               value="{{ old('jenis', $apab->jenis) }}"
                                placeholder="Misal: Pasir, Tanah, dll."
-                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('isi_apab') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                        @error('isi_apab')
+                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('jenis') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
+                        @error('jenis')
                             <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -195,11 +173,11 @@
                             </svg>
                             Kapasitas
                         </label>
-                        <input type="text" name="capacity"
-                               value="{{ old('capacity', $apab->capacity) }}"
+                        <input type="text" name="kapasitas"
+                               value="{{ old('kapasitas', $apab->kapasitas) }}"
                                placeholder="Misal: 1 Drum / 1 Bak"
-                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('capacity') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
-                        @error('capacity')
+                               class="block w-full rounded-xl border-2 border-slate-200 text-slate-900 px-4 py-3 text-sm focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all @error('kapasitas') border-rose-500 focus:border-rose-500 focus:ring-rose-500/10 @enderror">
+                        @error('kapasitas')
                             <p class="mt-2 text-xs text-rose-600 flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>

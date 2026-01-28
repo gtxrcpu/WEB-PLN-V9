@@ -3,6 +3,7 @@
     :subtitle="$apat->barcode ?? $apat->serial_no"
     back-route="apat.index"
     module="apat"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO APAT --}}

@@ -20,27 +20,7 @@ class Apab extends Model
 
     protected static function booted(): void
     {
-        // Auto-generate serial_no & barcode APAB A3.xxx
-        static::creating(function (Apab $apab) {
-            if (empty($apab->serial_no)) {
-                $lastSerial = static::where('serial_no', 'like', 'A3.%')
-                    ->orderBy('id', 'desc')
-                    ->value('serial_no');
-
-                $nextNumber = 1;
-
-                if ($lastSerial && preg_match('/A3\.(\d+)/', $lastSerial, $m)) {
-                    $nextNumber = (int) $m[1] + 1;
-                }
-
-                $apab->serial_no = 'A3.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-            }
-
-            if (empty($apab->barcode)) {
-                $apab->barcode = 'APAB ' . $apab->serial_no;
-            }
-        });
-
+        // No auto-generation here - controller will call generateNextSerial explicitly
     }
 
     /**
@@ -54,10 +34,10 @@ class Apab extends Model
             'type' => 'APAB',
             'code' => $this->barcode ?? $this->serial_no,
             'serial' => $this->serial_no,
-            'location' => $this->location_code ?? '-',
+            'location' => $this->lokasi ?? '-',  // Fixed: lokasi not location_code
             'status' => $this->status ?? '-',
-            'capacity' => $this->capacity ?? '-',
-            'type_detail' => $this->type ?? '-',
+            'capacity' => $this->kapasitas ?? '-',  // Fixed: kapasitas not capacity
+            'type_detail' => $this->jenis ?? '-',  // Fixed: jenis not type
         ], JSON_UNESCAPED_UNICODE);
 
         try {
@@ -78,40 +58,73 @@ class Apab extends Model
     }
 
     /**
-     * Generate next serial number for APAB using custom format from settings
+     * Generate next serial number for APAB with unit-based format
+     * Format: APAB-{UNIT}-{NNN} (e.g., APAB-UP2WIII-001, APAB-INDUK-001)
+     * 
      * @param int|null $unitId Unit ID (null = Induk)
+     * @param bool $incrementCounter Whether to increment counter (false = preview only)
+     * @return string Generated serial number
      */
-    public static function generateNextSerial($unitId = null): string
+    public static function generateNextSerial($unitId = null, bool $incrementCounter = true): string
     {
-        $format = \App\Models\AparSetting::get('apab_kode_format', 'APAB A3.{NNN}');
+        // Format from settings or default
+        $format = \App\Models\AparSetting::get('apab_kode_format', 'APAB-{UNIT}-{NNN}');
 
         // Determine unit from auth user if not provided
         if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
             $unitId = auth()->user()->unit_id;
         }
 
+        // Get unit name for format
+        $unitName = $unitId ? (\App\Models\Unit::find($unitId)?->name ?? 'INDUK') : 'INDUK';
+
         // Counter key based on unit (per-unit independent counter)
         $counterKey = $unitId ? "apab_kode_counter_{$unitId}" : "apab_kode_counter_induk";
-        $counter = (int) \App\Models\AparSetting::get($counterKey, 1);
+        $currentCounter = (int) \App\Models\AparSetting::get($counterKey, 1);
 
-        // Get unit code for format
-        $unitCode = $unitId ? (\App\Models\Unit::find($unitId)?->code ?? 'INDUK') : 'INDUK';
+        // Try up to 10 times to find unique serial
+        $maxAttempts = 10;
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            $tryCounter = $currentCounter + $attempt;
 
-        // Replace variables (tanpa tahun dan bulan)
-        $serial = str_replace([
-            '{UNIT}',
-            '{NNNN}',
-            '{NNN}',
-        ], [
-            $unitCode,
-            str_pad($counter, 4, '0', STR_PAD_LEFT),
-            str_pad($counter, 3, '0', STR_PAD_LEFT),
-        ], $format);
+            // Replace placeholders
+            $serial = str_replace([
+                '{UNIT}',
+                '{NNNN}',
+                '{NNN}',
+            ], [
+                $unitName,
+                str_pad($tryCounter, 4, '0', STR_PAD_LEFT),
+                str_pad($tryCounter, 3, '0', STR_PAD_LEFT),
+            ], $format);
 
-        // Increment counter
-        \App\Models\AparSetting::set($counterKey, $counter + 1);
+            // Check for duplicates within same unit
+            $exists = static::query()
+                ->where(function ($q) use ($serial) {
+                    $q->where('serial_no', $serial)
+                        ->orWhere('barcode', $serial);
+                })
+                ->where('unit_id', $unitId)
+                ->exists();
 
-        return $serial;
+            if (!$exists) {
+                // Found unique serial!
+                if ($incrementCounter) {
+                    // Update counter for next time
+                    \App\Models\AparSetting::set($counterKey, $tryCounter + 1);
+                }
+                return $serial;
+            }
+        }
+
+        // If all attempts failed, use timestamp fallback
+        $fallback = str_replace(['{UNIT}', '{NNN}'], [$unitName, date('His')], 'APAB-{UNIT}-{NNN}');
+
+        if ($incrementCounter) {
+            \App\Models\AparSetting::set($counterKey, $currentCounter + $maxAttempts + 1);
+        }
+
+        return $fallback;
     }
 
     /**

@@ -16,11 +16,23 @@
 
   <div x-data="{
     headerFields: @js($template->header_fields ?? []),
-    inspectionFields: @js(array_map(function($field) {
-        // Backward compatibility: tambahkan section jika belum ada
-        if (!isset($field['section'])) {
-            $field['section'] = 'A';
-            $field['section_title'] = '';
+    inspectionFields: @js(array_map(function($field) use ($template) {
+        if ($template->module === 'rumah-pompa') {
+            if (!isset($field['section'])) {
+                $field['section'] = 'A';
+                $field['section_title'] = '';
+            }
+        }
+        if ($template->module === 'p3k-pemeriksaan') {
+            if (!isset($field['satuan'])) {
+                $field['satuan'] = 'Bh';
+            }
+            if (!isset($field['jumlah'])) {
+                $field['jumlah'] = 1;
+            }
+            if (!isset($field['type'])) {
+                $field['type'] = 'checkbox';
+            }
         }
         return $field;
     }, $template->inspection_fields ?? [])),
@@ -118,6 +130,7 @@
           <button type="button" 
                   @click="inspectionFields.push({
                     {{ $template->module === 'rumah-pompa' ? "section: 'A', section_title: ''," : "" }}
+                    {{ $template->module === 'p3k-pemeriksaan' ? "satuan: 'Bh', jumlah: 1," : "" }}
                     label: '', type: 'checkbox'
                   })"
                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 inline-flex items-center gap-2">
@@ -137,12 +150,18 @@
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-20">Section</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-48">Judul Section</th>
                 @endif
+                @if($template->module === 'p3k-pemeriksaan')
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Nama Barang</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Satuan</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Jumlah</th>
+                @else
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Label Pemeriksaan</th>
                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-40">Tipe Input</th>
+                @endif
                 <th class="px-4 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-24">Aksi</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200" x-data="{ isRumahPompa: {{ $template->module === 'rumah-pompa' ? 'true' : 'false' }} }">
+            <tbody class="bg-white divide-y divide-gray-200" x-data="{ isRumahPompa: {{ $template->module === 'rumah-pompa' ? 'true' : 'false' }}, isP3k: {{ $template->module === 'p3k-pemeriksaan' ? 'true' : 'false' }} }">
               <template x-for="(field, index) in inspectionFields" :key="index">
                 <tr class="hover:bg-gray-50 transition-colors">
                   <td class="px-4 py-3 text-sm text-gray-500" x-text="index + 1"></td>
@@ -166,26 +185,54 @@
                            placeholder="Contoh: PEMIPAAN DAN VALVE" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     <p class="text-xs text-gray-400 mt-1">Kosongkan jika item dalam section yang sama</p>
-                  </td>
-                  
+                  </td>                  @if($template->module === 'p3k-pemeriksaan')
                   <td class="px-4 py-3">
-                    <input type="text" 
-                           :name="'inspection_fields[' + index + '][label]'" 
-                           x-model="field.label" 
-                           placeholder="Contoh: Kondisi Tabung" 
+                    <input type="text"
+                           :name="'inspection_fields[' + index + '][label]'"
+                           x-model="field.label"
+                           placeholder="Contoh: Kasa Steril Terbungkus"
                            required
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
                   </td>
                   <td class="px-4 py-3">
-                    <select :name="'inspection_fields[' + index + '][type]'" 
-                            x-model="field.type" 
+                    <input type="text"
+                           :name="'inspection_fields[' + index + '][satuan]'"
+                           x-model="field.satuan"
+                           placeholder="Contoh: Bh"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  </td>
+                  <td class="px-4 py-3">
+                    <input type="number"
+                           :name="'inspection_fields[' + index + '][jumlah]'"
+                           x-model="field.jumlah"
+                           min="0"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <input type="hidden"
+                           :name="'inspection_fields[' + index + '][type]'"
+                           x-model="field.type">
+                  </td>
+                  @else
+                  <td class="px-4 py-3">
+                    <input type="text"
+                           :name="'inspection_fields[' + index + '][label]'"
+                           x-model="field.label"
+                           placeholder="Contoh: Kondisi Tabung"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                  </td>
+                  <td class="px-4 py-3">
+                    <select :name="'inspection_fields[' + index + '][type]'"
+                            x-model="field.type"
                             required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                      <option value="checkbox">‚úì Checkbox</option>
-                      <option value="text">üìù Text</option>
-                      <option value="textarea">üìÑ Textarea</option>
+                      <option value="checkbox">‚ú Checkbox</option>
+                      <option value="text">ü Text</option>
+                      <option value="textarea">ü Textarea</option>
                     </select>
                   </td>
+                  @endif
                   <td class="px-4 py-3 text-center">
                     <button type="button" 
                             @click="inspectionFields.splice(index, 1)" 
@@ -199,7 +246,7 @@
                 </tr>
               </template>
               <tr x-show="inspectionFields.length === 0">
-                <td :colspan="isRumahPompa ? 6 : 4" class="px-4 py-8 text-center text-gray-500">
+                <td :colspan="isRumahPompa ? 6 : (isP3k ? 5 : 4)" class="px-4 py-8 text-center text-gray-500">
                   <div class="flex flex-col items-center gap-2">
                     <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -291,3 +338,7 @@
   </form>
   </div>
 </x-layouts.app>
+
+
+
+

@@ -9,56 +9,191 @@ use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
 {
-    public function index()
+    private function getViewingUnitId(): ?int
     {
         $user = auth()->user();
-        $unitId = $user->unit_id;
 
-        // Get pending approvals untuk unit leader saja
-        $pendingApprovals = KartuApar::with(['apar', 'user', 'approver'])
-            ->whereHas('apar', function($q) use ($unitId) {
-                $q->where('unit_id', $unitId);
-            })
-            ->whereNull('approved_at')
-            ->latest()
-            ->paginate(20);
+        if ($user && $user->unit_id) {
+            return (int) $user->unit_id;
+        }
 
-        return view('leader.approvals.index', compact('pendingApprovals'));
+        $sessionUnitId = session('viewing_unit_id');
+        if ($user && !$user->unit_id && $sessionUnitId) {
+            return (int) $sessionUnitId;
+        }
+
+        return null;
+    }
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        $unitId = $this->getViewingUnitId();
+        $moduleFilter = $request->get('module');
+
+        // Define all kartu models with their equipment relationships
+        $models = [
+            'apar' => [
+                'model' => \App\Models\KartuApar::class,
+                'equipment' => 'apar',
+                'label' => 'APAR'
+            ],
+            'apat' => [
+                'model' => \App\Models\KartuApat::class,
+                'equipment' => 'apat',
+                'label' => 'APAT'
+            ],
+            'apab' => [
+                'model' => \App\Models\KartuApab::class,
+                'equipment' => 'apab',
+                'label' => 'APAB'
+            ],
+            'fire_alarm' => [
+                'model' => \App\Models\KartuFireAlarm::class,
+                'equipment' => 'fireAlarm',
+                'label' => 'Fire Alarm'
+            ],
+            'box_hydrant' => [
+                'model' => \App\Models\KartuBoxHydrant::class,
+                'equipment' => 'boxHydrant',
+                'label' => 'Box Hydrant'
+            ],
+            'rumah_pompa' => [
+                'model' => \App\Models\KartuRumahPompa::class,
+                'equipment' => 'rumahPompa',
+                'label' => 'Rumah Pompa'
+            ],
+            'p3k' => [
+                'model' => \App\Models\KartuP3k::class,
+                'equipment' => 'p3k',
+                'label' => 'P3K'
+            ],
+        ];
+
+        // Collect pending approvals from all modules (or filtered module)
+        $allPending = collect();
+
+        foreach ($models as $moduleKey => $config) {
+            // Skip if filter is active and doesn't match
+            if ($moduleFilter && $moduleFilter !== $moduleKey) {
+                continue;
+            }
+
+            $model = $config['model'];
+            $equipment = $config['equipment'];
+            $query = $model::with([$equipment, 'user', 'approver'])
+                ->whereNull('approved_at')
+                ->whereNull('rejected_at')
+                ->whereNull('leader_approved_at')
+                ->whereNull('leader_rejected_at');
+
+            if ($unitId) {
+                $query->whereHas($equipment, function ($q) use ($unitId) {
+                    $q->where('unit_id', $unitId);
+                });
+            }
+
+            $pending = $query->get()
+                ->map(function ($item) use ($moduleKey, $config) {
+                    $item->module_type = $moduleKey;
+                    $item->module_label = $config['label'];
+                    return $item;
+                });
+
+            $allPending = $allPending->merge($pending);
+        }
+
+        // Sort by created_at DESC and paginate
+        $pendingApprovals = $allPending
+            ->sortByDesc('created_at')
+            ->values();
+
+        // Manual pagination
+        $perPage = 20;
+        $currentPage = $request->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+
+        $paginatedItems = $pendingApprovals->slice($offset, $perPage)->values();
+
+        $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            $pendingApprovals->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('leader.approvals.index', [
+            'pendingApprovals' => $paginator,
+            'moduleFilter' => $moduleFilter,
+            'modules' => $models,
+        ]);
     }
 
-    public function show($id)
+    private function getModelConfig($module)
+    {
+        $models = [
+            'apar' => ['model' => \App\Models\KartuApar::class, 'equipment' => 'apar'],
+            'apat' => ['model' => \App\Models\KartuApat::class, 'equipment' => 'apat'],
+            'apab' => ['model' => \App\Models\KartuApab::class, 'equipment' => 'apab'],
+            'fire_alarm' => ['model' => \App\Models\KartuFireAlarm::class, 'equipment' => 'fireAlarm'],
+            'box_hydrant' => ['model' => \App\Models\KartuBoxHydrant::class, 'equipment' => 'boxHydrant'],
+            'rumah_pompa' => ['model' => \App\Models\KartuRumahPompa::class, 'equipment' => 'rumahPompa'],
+            'p3k' => ['model' => \App\Models\KartuP3k::class, 'equipment' => 'p3k'],
+        ];
+
+        if (!isset($models[$module])) {
+            abort(404, 'Module not found');
+        }
+
+        return $models[$module];
+    }
+
+    public function show($module, $id)
     {
         $user = auth()->user();
-        $kartu = KartuApar::with(['apar', 'user', 'approver'])->findOrFail($id);
-        
+        $unitId = $this->getViewingUnitId();
+        $config = $this->getModelConfig($module);
+        $modelClass = $config['model'];
+        $equipmentRelation = $config['equipment'];
+
+        $kartu = $modelClass::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id);
+
         // Pastikan kartu ini dari unit leader
-        if ($kartu->apar->unit_id !== $user->unit_id) {
+        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
             abort(403, 'Unauthorized action.');
         }
 
         $signatures = Signature::where('is_active', true)->get();
 
-        return view('leader.approvals.show', compact('kartu', 'signatures'));
+        return view('leader.approvals.show', compact('kartu', 'signatures', 'module', 'equipmentRelation'));
     }
 
-    public function approve(Request $request, $id)
+    public function approve(Request $request, $module, $id)
     {
         $request->validate([
             'signature_id' => 'required|exists:signatures,id',
         ]);
 
         $user = auth()->user();
-        $kartu = KartuApar::findOrFail($id);
-        
+        $unitId = $this->getViewingUnitId();
+        $config = $this->getModelConfig($module);
+        $modelClass = $config['model'];
+        $equipmentRelation = $config['equipment'];
+
+        $kartu = $modelClass::with([$equipmentRelation])->findOrFail($id);
+
         // Pastikan kartu ini dari unit leader
-        if ($kartu->apar->unit_id !== $user->unit_id) {
+        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
             abort(403, 'Unauthorized action.');
         }
-        
+
         $kartu->update([
-            'signature_id' => $request->signature_id,
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
+            'leader_signature_id' => $request->signature_id,
+            'leader_approved_by' => auth()->id(),
+            'leader_approved_at' => now(),
+            'leader_rejected_by' => null,
+            'leader_rejected_at' => null,
+            'leader_rejection_reason' => null,
         ]);
 
         return redirect()
@@ -66,24 +201,53 @@ class ApprovalController extends Controller
             ->with('success', 'Kartu kendali berhasil di-approve');
     }
 
-    public function reject($id)
+    public function reject(Request $request, $module, $id)
     {
         $user = auth()->user();
-        $kartu = KartuApar::findOrFail($id);
-        
+        $unitId = $this->getViewingUnitId();
+        $config = $this->getModelConfig($module);
+        $modelClass = $config['model'];
+        $equipmentRelation = $config['equipment'];
+
+        $kartu = $modelClass::with([$equipmentRelation])->findOrFail($id);
+
         // Pastikan kartu ini dari unit leader
-        if ($kartu->apar->unit_id !== $user->unit_id) {
+        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
             abort(403, 'Unauthorized action.');
         }
-        
+
+        // Validasi rejection reason
+        $validated = $request->validate([
+            'rejection_reason' => ['required', 'string', 'min:10', 'max:500'],
+        ], [
+            'rejection_reason.required' => 'Alasan penolakan wajib diisi',
+            'rejection_reason.min' => 'Alasan penolakan minimal 10 karakter',
+            'rejection_reason.max' => 'Alasan penolakan maksimal 500 karakter',
+        ]);
+
+        // Increment revisi (00 -> 01 -> 02...)
+        $currentRevisi = isset($kartu->revisi) ? (int) $kartu->revisi : 0;
+        $newRevisi = str_pad($currentRevisi + 1, 2, '0', STR_PAD_LEFT);
+
         $kartu->update([
-            'signature_id' => null,
-            'approved_by' => null,
-            'approved_at' => null,
+            'revisi' => $newRevisi,
+            'leader_rejected_by' => auth()->id(),
+            'leader_rejected_at' => now(),
+            'leader_rejection_reason' => $validated['rejection_reason'],
+            'leader_signature_id' => null,
+            'leader_approved_by' => null,
+            'leader_approved_at' => null,
         ]);
 
         return redirect()
             ->route('leader.approvals.index')
-            ->with('success', 'Approval dibatalkan');
+            ->with('success', "Kartu kendali ditolak. Revisi sekarang: {$newRevisi}");
     }
 }
+
+
+
+
+
+
+

@@ -39,34 +39,86 @@ class Apar extends Model
      */
     public static function generateNextSerial($unitId = null, $incrementCounter = true): string
     {
-        $format = \App\Models\AparSetting::get('apar_kode_format', 'APAR A1.{NNN}');
-
+        // NEW FORMAT: Use unit-specific settings
         // Determine unit from auth user if not provided
         if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
             $unitId = auth()->user()->unit_id;
         }
 
-        // Counter key based on unit (per-unit independent counter)
-        $counterKey = $unitId ? "apar_kode_counter_{$unitId}" : "apar_kode_counter_induk";
-        $counter = (int) \App\Models\AparSetting::get($counterKey, 1);
+        // Get unit-specific format and counter
+        $format = \App\Models\AparSetting::getByUnit('apar_kode_format', $unitId, 'APAR-{UNIT}-{NNN}');
+        $counter = (int) \App\Models\AparSetting::getByUnit('apar_kode_counter', $unitId, 1);
 
         // Get unit code for format
-        $unitCode = $unitId ? (\App\Models\Unit::find($unitId)?->code ?? 'INDUK') : 'INDUK';
+        $unit = $unitId ? \App\Models\Unit::find($unitId) : null;
+        $unitCode = $unit ? $unit->code : 'INDUK';
 
-        // Replace variables (tanpa tahun dan bulan)
-        $serial = str_replace([
-            '{UNIT}',
-            '{NNNN}',
-            '{NNN}',
-        ], [
-            $unitCode,
-            str_pad($counter, 4, '0', STR_PAD_LEFT),
-            str_pad($counter, 3, '0', STR_PAD_LEFT),
-        ], $format);
+        // Check existing data to ensure counter is in sync FOR THIS UNIT ONLY
+        $query = self::query();
+        if ($unitId) {
+            $query->where('unit_id', $unitId);
+        } else {
+            $query->whereNull('unit_id');
+        }
+
+        // Get the highest serial number from existing data FOR THIS UNIT
+        $lastApar = $query->orderByRaw('CAST(SUBSTRING_INDEX(serial_no, "-", -1) AS UNSIGNED) DESC')->first();
+
+        if ($lastApar && $lastApar->serial_no) {
+            // Extract number from last serial (e.g., "APAR-INDUK-005" -> 5)
+            $parts = explode('-', $lastApar->serial_no);
+            $lastNumber = isset($parts[2]) ? (int) ltrim($parts[2], '0') : 0;
+
+            // Use the higher value between counter and last number + 1
+            $counter = max($counter, $lastNumber + 1);
+        }
+
+        // Generate serial with retry logic for duplicate prevention
+        $maxRetries = 10;
+        $attempts = 0;
+
+        do {
+            $serial = str_replace([
+                '{UNIT}',
+                '{YYYY}',
+                '{YY}',
+                '{MM}',
+                '{NNNN}',
+                '{NNN}',
+            ], [
+                $unitCode,
+                date('Y'),
+                date('y'),
+                date('m'),
+                str_pad($counter + $attempts, 4, '0', STR_PAD_LEFT),
+                str_pad($counter + $attempts, 3, '0', STR_PAD_LEFT),
+            ], $format);
+
+            // Check if this serial already exists IN THIS UNIT ONLY
+            // Use where closure to properly group OR conditions with unit_id filter
+            $duplicateQuery = self::where(function ($q) use ($serial) {
+                $q->where('serial_no', $serial)->orWhere('barcode', $serial);
+            });
+
+            // Filter by unit_id to ensure independence between units
+            if ($unitId) {
+                $duplicateQuery->where('unit_id', $unitId);
+            } else {
+                $duplicateQuery->whereNull('unit_id');
+            }
+
+            $exists = $duplicateQuery->exists();
+
+            if (!$exists) {
+                break;
+            }
+
+            $attempts++;
+        } while ($attempts < $maxRetries);
 
         // Increment counter only if requested
         if ($incrementCounter) {
-            \App\Models\AparSetting::set($counterKey, $counter + 1);
+            \App\Models\AparSetting::setByUnit('apar_kode_counter', $counter + $attempts + 1, $unitId);
         }
 
         return $serial;

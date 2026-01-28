@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
 use App\Models\Apar;
 use App\Models\Apat;
 use App\Models\Apab;
@@ -18,6 +19,23 @@ use Illuminate\Http\Request;
 
 class QuickActionController extends Controller
 {
+    use FiltersByUnit;
+
+    /**
+     * Check if user can access equipment from given unit
+     */
+    private function canAccessEquipment($equipment): bool
+    {
+        // Superadmin and Inspector can access all units
+        if (auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            return true;
+        }
+
+        // Check if equipment unit matches user unit
+        $userUnitId = $this->getAuthUserUnitId();
+        return $equipment->unit_id == $userUnitId;
+    }
+
     // Scan QR
     public function scan()
     {
@@ -30,26 +48,55 @@ class QuickActionController extends Controller
         $request->validate([
             'qr' => 'required|string|max:1000'
         ]);
-        
+
         // Accept both GET and POST
         $qr = $request->input('qr') ?? $request->query('qr');
-        
+
         // Sanitize QR input to prevent XSS
         $qr = strip_tags($qr);
-        
+
+        // DEBUG: Log QR input untuk troubleshooting
+        \Log::info('QR Scan Attempt', [
+            'qr_input' => $qr,
+            'user_id' => auth()->id(),
+            'user_unit_id' => $this->getAuthUserUnitId(),
+            'user_role' => auth()->user()->role
+        ]);
+
         // Try to decode JSON format (new format)
         $decoded = json_decode($qr, true);
         if ($decoded && isset($decoded['type']) && isset($decoded['code'])) {
             $type = strtolower($decoded['type']);
             $code = $decoded['code'];
-            
+
+            \Log::info('QR Decoded JSON', ['type' => $type, 'code' => $code]);
+
             // Sanitize code to prevent SQL injection (additional safety)
             $code = strip_tags($code);
-            
+
             // Search by code based on type
             if ($type === 'apar') {
                 $equipment = Apar::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    \Log::info('APAR Found', [
+                        'id' => $equipment->id,
+                        'serial' => $equipment->serial_no,
+                        'unit_id' => $equipment->unit_id
+                    ]);
+
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        \Log::warning('Access Denied', [
+                            'equipment_unit' => $equipment->unit_id,
+                            'user_unit' => $this->getAuthUserUnitId()
+                        ]);
+
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAR dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apar',
@@ -59,6 +106,14 @@ class QuickActionController extends Controller
             } elseif ($type === 'apat') {
                 $equipment = Apat::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAT dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apat',
@@ -68,6 +123,14 @@ class QuickActionController extends Controller
             } elseif ($type === 'apab') {
                 $equipment = Apab::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAB dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apab',
@@ -77,6 +140,14 @@ class QuickActionController extends Controller
             } elseif ($type === 'fire alarm' || $type === 'fire-alarm') {
                 $equipment = FireAlarm::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Fire Alarm dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'fire-alarm',
@@ -86,6 +157,14 @@ class QuickActionController extends Controller
             } elseif ($type === 'box hydrant' || $type === 'box-hydrant') {
                 $equipment = BoxHydrant::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Box Hydrant dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'box-hydrant',
@@ -95,6 +174,14 @@ class QuickActionController extends Controller
             } elseif ($type === 'rumah pompa' || $type === 'rumah-pompa') {
                 $equipment = RumahPompa::where('barcode', $code)->orWhere('serial_no', $code)->first();
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Rumah Pompa dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'rumah-pompa',
@@ -103,17 +190,25 @@ class QuickActionController extends Controller
                 }
             }
         }
-        
+
         // Extract ID from URL if QR contains full URL (backward compatibility)
         // Example: http://127.0.0.1:8000/apar/2/riwayat -> extract "2" and "apar"
         if (preg_match('#/(apar|apat|apab|fire-alarm|box-hydrant|rumah-pompa)/(\d+)#', $qr, $matches)) {
             $module = $matches[1];
             $id = (int) $matches[2]; // Cast to int for safety
-            
+
             // Search by ID based on module
             if ($module === 'apar') {
                 $equipment = Apar::find($id);
                 if ($equipment) {
+                    // UNIT ACCESS CONTROL CHECK
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAR dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
+
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apar',
@@ -167,10 +262,18 @@ class QuickActionController extends Controller
                 }
             }
         }
-        
+
         // Fallback: Search by barcode or serial_no in all modules
         $apar = Apar::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($apar) {
+            // UNIT ACCESS CONTROL CHECK
+            if (!$this->canAccessEquipment($apar)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke APAR dari unit lain. QR Code ini untuk unit: ' .
+                        ($apar->unit ? $apar->unit->name : 'Induk')
+                ]);
+            }
+
             return view('quick.scan-result', [
                 'equipment' => $apar,
                 'type' => 'apar',
@@ -241,91 +344,121 @@ class QuickActionController extends Controller
     }
 
     // Rekap & Export
-    public function rekap()
+    public function rekap(Request $request)
     {
+        // Get filter parameters
+        $selectedYear = $request->input('year');
+        $selectedMonth = $request->input('month');
+
         // Helper function to safely count table
-        $safeCount = function($tableName) {
-            try {
-                return \DB::table($tableName)->count();
-            } catch (\Exception $e) {
-                return 0;
-            }
+        $safeCount = function ($tableName) {
+            return collect();
         };
 
-        // Get statistics with safe counting
+        // Get statistics
         $stats = [
             'apar' => [
                 'total' => Apar::count(),
                 'baik' => Apar::where('status', 'baik')->count(),
                 'rusak' => Apar::where('status', 'rusak')->count(),
-                'inspeksi' => $safeCount('kartu_apars'),
+                'inspeksi' => \DB::table('kartu_apars')->count(),
             ],
             'apat' => [
                 'total' => Apat::count(),
                 'baik' => Apat::where('status', 'baik')->count(),
                 'rusak' => Apat::where('status', 'rusak')->count(),
-                'inspeksi' => $safeCount('kartu_apats'),
+                'inspeksi' => \DB::table('kartu_apats')->count(),
             ],
             'apab' => [
                 'total' => Apab::count(),
                 'baik' => Apab::where('status', 'baik')->count(),
                 'rusak' => Apab::where('status', 'tidak_baik')->count(),
-                'inspeksi' => $safeCount('kartu_apabs'),
+                'inspeksi' => \DB::table('kartu_apabs')->count(),
             ],
             'fire_alarm' => [
                 'total' => FireAlarm::count(),
                 'baik' => FireAlarm::where('status', 'baik')->count(),
                 'rusak' => FireAlarm::where('status', 'rusak')->count(),
-                'inspeksi' => $safeCount('kartu_fire_alarms'),
+                'inspeksi' => \DB::table('kartu_fire_alarms')->count(),
             ],
             'box_hydrant' => [
                 'total' => BoxHydrant::count(),
                 'baik' => BoxHydrant::where('status', 'baik')->count(),
                 'rusak' => BoxHydrant::where('status', 'rusak')->count(),
-                'inspeksi' => $safeCount('kartu_box_hydrants'),
+                'inspeksi' => \DB::table('kartu_box_hydrants')->count(),
             ],
             'rumah_pompa' => [
                 'total' => RumahPompa::count(),
                 'baik' => RumahPompa::where('status', 'baik')->count(),
                 'rusak' => RumahPompa::where('status', 'rusak')->count(),
-                'inspeksi' => $safeCount('kartu_rumah_pompas'),
+                'inspeksi' => \DB::table('kartu_rumah_pompas')->count(),
             ],
         ];
 
-        return view('quick.rekap', compact('stats'));
+        // Generate year options (current year and next 5 years)
+        $currentYear = date('Y');
+        $years = [];
+        for ($i = 0; $i < 6; $i++) {
+            $years[] = $currentYear + $i;
+        }
+
+        // Month options
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
+        return view('quick.rekap', compact('stats', 'years', 'months', 'selectedYear', 'selectedMonth'));
     }
 
     public function exportExcel(Request $request)
     {
         $module = $request->input('module', 'all');
         $type = $request->input('type', 'equipment'); // 'equipment' or 'kartu'
-        $format = $request->input('format', 'excel'); // excel or pdf
-        
-        return \Excel::download(new \App\Exports\RekapExport($module, $type), 
-            "rekap_{$type}_{$module}_" . date('Y-m-d') . ".xlsx");
+        $year = $request->input('year');
+        $month = $request->input('month');
+
+        return \Excel::download(
+            new \App\Exports\RekapExport($module, $type, $year, $month),
+            "rekap_{$type}_{$module}_" . date('Y-m-d') . ".xlsx"
+        );
     }
 
     public function exportPdf(Request $request)
     {
         $module = $request->input('module', 'all');
         $type = $request->input('type', 'equipment'); // 'equipment' or 'kartu'
-        
-        // Collect data
-        $data = $type === 'kartu' 
-            ? $this->collectKartuExportData($module) 
-            : $this->collectExportData($module);
-        
+        $year = $request->input('year');
+        $month = $request->input('month');
+
+        // Collect data with period filter
+        $data = $type === 'kartu'
+            ? $this->collectKartuExportData($module, $year, $month)
+            : $this->collectExportData($module, $year, $month);
+
         $pdf = \PDF::loadView('exports.rekap-pdf', [
             'data' => $data,
             'module' => $module,
             'type' => $type,
-            'date' => date('d/m/Y')
+            'date' => date('d/m/Y'),
+            'year' => $year,
+            'month' => $month
         ]);
-        
+
         return $pdf->download("rekap_{$type}_{$module}_" . date('Y-m-d') . ".pdf");
     }
 
-    private function collectExportData($module)
+    private function collectExportData($module, $year = null, $month = null)
     {
         $data = [];
 
@@ -416,12 +549,21 @@ class QuickActionController extends Controller
         return $data;
     }
 
-    private function collectKartuExportData($module)
+    private function collectKartuExportData($module, $year = null, $month = null)
     {
         $data = [];
 
         if ($module === 'all' || $module === 'apar') {
-            $kartus = \App\Models\KartuApar::with(['apar', 'user', 'approver'])->get();
+            $query = \App\Models\KartuApar::with(['apar', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'APAR',
@@ -438,7 +580,16 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'apat') {
-            $kartus = KartuApat::with(['apat', 'user', 'approver'])->get();
+            $query = KartuApat::with(['apat', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'APAT',
@@ -455,7 +606,16 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'apab') {
-            $kartus = KartuApab::with(['apab', 'user', 'approver'])->get();
+            $query = KartuApab::with(['apab', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'APAB',
@@ -472,7 +632,16 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'fire_alarm') {
-            $kartus = KartuFireAlarm::with(['fireAlarm', 'user', 'approver'])->get();
+            $query = KartuFireAlarm::with(['fireAlarm', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'Fire Alarm',
@@ -489,7 +658,16 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'box_hydrant') {
-            $kartus = KartuBoxHydrant::with(['boxHydrant', 'user', 'approver'])->get();
+            $query = KartuBoxHydrant::with(['boxHydrant', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'Box Hydrant',
@@ -506,7 +684,16 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'rumah_pompa') {
-            $kartus = KartuRumahPompa::with(['rumahPompa', 'user', 'approver'])->get();
+            $query = KartuRumahPompa::with(['rumahPompa', 'user', 'approver']);
+
+            if ($year) {
+                $query->whereYear('tgl_periksa', $year);
+            }
+            if ($month) {
+                $query->whereMonth('tgl_periksa', $month);
+            }
+
+            $kartus = $query->get();
             foreach ($kartus as $kartu) {
                 $data[] = [
                     'modul' => 'Rumah Pompa',

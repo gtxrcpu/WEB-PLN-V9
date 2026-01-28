@@ -14,6 +14,10 @@ class KartuP3kPemeriksaan extends Model
     protected $fillable = [
         'p3k_id',
         'user_id',
+        'unit_kerja',
+        'bulan_tahun',
+        'revisi',
+        'inspection_items',
         'checklist_items',
         'kesimpulan',
         'tgl_periksa',
@@ -28,6 +32,7 @@ class KartuP3kPemeriksaan extends Model
         'tgl_periksa' => 'date',
         'approved_at' => 'datetime',
         'checklist_items' => 'array',
+        'inspection_items' => 'array',
     ];
 
     public function p3k()

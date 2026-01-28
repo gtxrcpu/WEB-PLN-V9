@@ -52,6 +52,56 @@
         </div>
     </div>
 
+    {{-- Period Filter --}}
+    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-slate-200 p-6">
+        <div class="flex flex-col md:flex-row md:items-end gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Tahun</label>
+                <select id="filterYear" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 font-medium focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100 transition-all">
+                    <option value="">Semua Tahun</option>
+                    @foreach($years as $year)
+                        <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Bulan</label>
+                <select id="filterMonth" class="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 text-slate-700 font-medium focus:border-cyan-500 focus:ring-4 focus:ring-cyan-100 transition-all">
+                    <option value="">Semua Bulan</option>
+                    @foreach($months as $monthNum => $monthName)
+                        <option value="{{ $monthNum }}" {{ $selectedMonth == $monthNum ? 'selected' : '' }}>{{ $monthName }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex-shrink-0">
+                <button id="applyFilter" class="w-full md:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-semibold hover:from-cyan-700 hover:to-blue-700 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 transition-all duration-300 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <span>Terapkan Filter</span>
+                </button>
+            </div>
+        </div>
+        @if($selectedYear || $selectedMonth)
+            <div class="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-50 border border-cyan-200">
+                <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-sm font-medium text-cyan-900">
+                    Filter aktif: 
+                    @if($selectedYear && $selectedMonth)
+                        {{ $months[$selectedMonth] }} {{ $selectedYear }}
+                    @elseif($selectedYear)
+                        Tahun {{ $selectedYear }}
+                    @else
+                        {{ $months[$selectedMonth] }}
+                    @endif
+                </span>
+                <a href="{{ route('quick.rekap') }}" class="ml-auto text-sm font-semibold text-cyan-600 hover:text-cyan-700">Reset</a>
+            </div>
+        @endif
+    </div>
+
     {{-- Summary Cards --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach([
@@ -250,4 +300,59 @@
     </div>
 
   </div>
+
+  @push('scripts')
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const applyFilterBtn = document.getElementById('applyFilter');
+      const yearSelect = document.getElementById('filterYear');
+      const monthSelect = document.getElementById('filterMonth');
+      
+      // Apply filter on button click
+      applyFilterBtn.addEventListener('click', function() {
+          const year = yearSelect.value;
+          const month = monthSelect.value;
+          
+          // Build URL with parameters
+          let url = new URL(window.location.href);
+          url.search = ''; // Clear existing params
+          
+          if (year) url.searchParams.set('year', year);
+          if (month) url.searchParams.set('month', month);
+          
+          window.location.href = url.toString();
+      });
+      
+      // Update all export links with current period filter
+      function updateExportLinks() {
+          const year = yearSelect.value;
+          const month = monthSelect.value;
+          
+          // Get all export links
+          const exportLinks = document.querySelectorAll('a[href*="quick.export"]');
+          
+          exportLinks.forEach(link => {
+              const url = new URL(link.href);
+              
+              // Remove old year/month params
+              url.searchParams.delete('year');
+              url.searchParams.delete('month');
+              
+              // Add new ones if selected
+              if (year) url.searchParams.set('year', year);
+              if (month) url.searchParams.set('month', month);
+              
+              link.href = url.toString();
+          });
+      }
+      
+      // Update links on select change
+      yearSelect.addEventListener('change', updateExportLinks);
+      monthSelect.addEventListener('change', updateExportLinks);
+      
+      // Initialize links with current filters
+      updateExportLinks();
+  });
+  </script>
+  @endpush
 </x-layouts.app>

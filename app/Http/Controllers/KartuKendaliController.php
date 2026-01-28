@@ -22,8 +22,21 @@ class KartuKendaliController extends Controller
         // Get template for APAR module
         $template = \App\Models\KartuTemplate::getTemplate('apar');
 
+        // Calculate revisi number for display
+        $latestKartu = KartuApar::where('apar_id', $aparId)
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            // Jika kartu sebelumnya ditolak, increment revisi
+            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            // Default untuk kartu pertama atau setelah approved
+            $nextRevisi = '00';
+        }
+
         // pake view yang kamu kirim: resources/views/kartu/create.blade.php
-        return view('kartu.create', compact('apar', 'template'));
+        return view('kartu.create', compact('apar', 'template', 'nextRevisi'));
     }
 
     /**
@@ -34,16 +47,16 @@ class KartuKendaliController extends Controller
     {
         // Get template untuk validasi dinamis
         $template = \App\Models\KartuTemplate::getTemplate('apar');
-        
+
         // Build validation rules
         $rules = [
-            'apar_id'        => ['required', 'exists:apars,id'],
-            'kesimpulan'     => ['required', 'string', 'max:50'],
-            'tgl_periksa'    => ['required', 'date'],
-            'petugas'        => ['required', 'string', 'max:100'],
-            'pengawas'       => ['nullable', 'string', 'max:100'],
+            'apar_id' => ['required', 'exists:apars,id'],
+            'kesimpulan' => ['required', 'string', 'max:50'],
+            'tgl_periksa' => ['required', 'date'],
+            'petugas' => ['required', 'string', 'max:100'],
+            'pengawas' => ['nullable', 'string', 'max:100'],
         ];
-        
+
         // Add dynamic inspection fields validation
         if ($template && $template->inspection_fields) {
             foreach ($template->inspection_fields as $index => $field) {
@@ -54,14 +67,14 @@ class KartuKendaliController extends Controller
             // Fallback ke field lama
             $rules = array_merge($rules, [
                 'pressure_gauge' => ['required', 'string', 'max:50'],
-                'pin_segel'      => ['required', 'string', 'max:50'],
-                'selang'         => ['required', 'string', 'max:50'],
-                'tabung'         => ['required', 'string', 'max:50'],
-                'label'          => ['required', 'string', 'max:50'],
-                'kondisi_fisik'  => ['required', 'string', 'max:50'],
+                'pin_segel' => ['required', 'string', 'max:50'],
+                'selang' => ['required', 'string', 'max:50'],
+                'tabung' => ['required', 'string', 'max:50'],
+                'label' => ['required', 'string', 'max:50'],
+                'kondisi_fisik' => ['required', 'string', 'max:50'],
             ]);
         }
-        
+
         // Custom validation messages
         $messages = [];
         if ($template && $template->inspection_fields) {
@@ -70,9 +83,9 @@ class KartuKendaliController extends Controller
                 $messages[$fieldName . '.required'] = 'Field "' . $field['label'] . '" wajib diisi.';
             }
         }
-        
+
         $data = $request->validate($rules, $messages);
-        
+
         // Jika menggunakan template, map inspection fields ke kolom database lama
         if ($template && $template->inspection_fields) {
             // Mapping KEY template ke kolom database
@@ -92,7 +105,7 @@ class KartuKendaliController extends Controller
                 'berat' => 'label',
                 'catatan' => 'kondisi_fisik',
             ];
-            
+
             // Initialize all required fields with default value
             $requiredFields = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
             foreach ($requiredFields as $field) {
@@ -100,7 +113,7 @@ class KartuKendaliController extends Controller
                     $data[$field] = '-';
                 }
             }
-            
+
             foreach ($template->inspection_fields as $index => $field) {
                 $fieldName = 'inspection_' . $index;
                 if (isset($data[$fieldName])) {
@@ -118,6 +131,22 @@ class KartuKendaliController extends Controller
         // Tambahkan user_id
         $data['user_id'] = auth()->id();
 
+        // Auto-increment revisi jika ada kartu sebelumnya yang ditolak
+        $latestKartu = KartuApar::where('apar_id', $data['apar_id'])
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            // Jika kartu sebelumnya ditolak, lanjutkan dari revisi terakhir
+            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } elseif ($latestKartu && !$latestKartu->rejected_at && $latestKartu->approved_at) {
+            // Jika kartu sebelumnya sudah approved, mulai dari 00 lagi
+            $data['revisi'] = '00';
+        } else {
+            // Default untuk kartu pertama
+            $data['revisi'] = '00';
+        }
+
         // Simpan kartu inspeksi APAR
         KartuApar::create($data);
 
@@ -126,3 +155,4 @@ class KartuKendaliController extends Controller
             ->with('success', 'Kartu Kendali berhasil disimpan untuk APAR ' . $request->apar_id);
     }
 }
+

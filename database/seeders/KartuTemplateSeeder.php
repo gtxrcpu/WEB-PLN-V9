@@ -26,12 +26,12 @@ class KartuTemplateSeeder extends Seeder
                     ['label' => 'Halaman', 'value' => '1 dari 1'],
                 ],
                 'inspection_fields' => [
-                    ['label' => 'Pressure Gauge', 'type' => 'checkbox'],
-                    ['label' => 'Pin & Segel', 'type' => 'checkbox'],
-                    ['label' => 'Selang', 'type' => 'checkbox'],
-                    ['label' => 'Tabung', 'type' => 'checkbox'],
-                    ['label' => 'Label', 'type' => 'checkbox'],
-                    ['label' => 'Kondisi Fisik', 'type' => 'checkbox'],
+                    ['label' => 'Pressure Gauge', 'type' => 'checkbox', 'key' => 'pressure_gauge'],
+                    ['label' => 'Pin & Segel', 'type' => 'checkbox', 'key' => 'pin_segel'],
+                    ['label' => 'Selang', 'type' => 'checkbox', 'key' => 'selang'],
+                    ['label' => 'Tabung', 'type' => 'checkbox', 'key' => 'tabung'],
+                    ['label' => 'Label', 'type' => 'checkbox', 'key' => 'label'],
+                    ['label' => 'Kondisi Fisik', 'type' => 'checkbox', 'key' => 'kondisi_fisik'],
                 ],
                 'footer_fields' => [
                     ['label' => 'Lokasi', 'value' => 'Surabaya'],
@@ -174,7 +174,7 @@ class KartuTemplateSeeder extends Seeder
                     // SECTION A: PEMIPAAN DAN VALVE
                     ['section' => 'A', 'section_title' => 'PEMIPAAN DAN VALVE', 'label' => 'Tidak ada kebocoran di pipa suction dan discharge pompa Electric, Diesel, dan Jockey (Tekanan Stanby di 8 Bar)', 'type' => 'checkbox'],
                     ['section' => 'A', 'section_title' => '', 'label' => 'Semua valve pada pipa suction dan discharge pompa Electric, Diesel, dan Jockey dalam kondisi Buka/Open.', 'type' => 'checkbox'],
-                    
+
                     // SECTION B: MESIN DIESEL
                     ['section' => 'B', 'section_title' => 'MESIN DIESEL', 'label' => 'Cek Level oli mesin (tambah bila kurang) Ganti Oli mesin setiap 6 bulan sekali)', 'type' => 'checkbox'],
                     ['section' => 'B', 'section_title' => '', 'label' => 'Cek level BBM mesin (tambah bila kurang)', 'type' => 'checkbox'],
@@ -191,7 +191,7 @@ class KartuTemplateSeeder extends Seeder
                     ['section' => 'B', 'section_title' => '', 'label' => 'Matikan mesin / stop engine setelah selesai', 'type' => 'checkbox'],
                     ['section' => 'B', 'section_title' => '', 'label' => 'Pastikan kondisi mesin dan sekitarnya bersih dan aman', 'type' => 'checkbox'],
                     ['section' => 'B', 'section_title' => '', 'label' => 'Pastikan ruangan mesin dan sekitarnya bersih dan aman', 'type' => 'checkbox'],
-                    
+
                     // SECTION C: PANEL DAN POMPA
                     ['section' => 'C', 'section_title' => 'PANEL DAN POMPA', 'label' => 'Cek Fisik Panel Elektric Pump dan Indikator-indikatornya', 'type' => 'checkbox'],
                     ['section' => 'C', 'section_title' => '', 'label' => 'Cek Fisik Panel Jacky Pump dan Indikator-indikatornya', 'type' => 'checkbox'],

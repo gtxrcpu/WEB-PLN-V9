@@ -3,6 +3,7 @@
     :subtitle="$fireAlarm->barcode ?? $fireAlarm->serial_no ?? 'Fire Alarm'"
     back-route="fire-alarm.index"
     module="fire-alarm"
+    :next-revisi="$nextRevisi ?? null"
     :template="$template">
 
     {{-- INFO FIRE ALARM --}}

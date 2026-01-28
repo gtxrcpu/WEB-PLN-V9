@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BoxHydrant;
+use App\Models\KartuBoxHydrant;
 use Illuminate\Http\Request;
 
 class BoxHydrantKartuController extends Controller
@@ -20,7 +21,17 @@ class BoxHydrantKartuController extends Controller
         $boxHydrant = BoxHydrant::findOrFail($boxHydrantId);
         $template = \App\Models\KartuTemplate::getTemplate('box-hydrant');
 
-        return view('box-hydrant.kartu.create', compact('boxHydrant', 'template'));
+        $latestKartu = KartuBoxHydrant::where('box_hydrant_id', $boxHydrantId)
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('box-hydrant.kartu.create', compact('boxHydrant', 'template', 'nextRevisi'));
     }
 
     public function store(Request $request)
@@ -117,15 +128,26 @@ class BoxHydrantKartuController extends Controller
 
         // Tambahkan user_id
         $data['user_id'] = auth()->id();
+
+        $latestKartu = KartuBoxHydrant::where('box_hydrant_id', $data['box_hydrant_id'])
+            ->orderBy('revisi', 'desc')
+            ->first();
+
+        if ($latestKartu && $latestKartu->rejected_at) {
+            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+        } else {
+            $data['revisi'] = '00';
+        }
         
         // Log final data before insert
         \Log::info('Final data before insert', ['data' => $data]);
         
         // Simpan kartu inspeksi Box Hydrant
-        \App\Models\KartuBoxHydrant::create($data);
+        KartuBoxHydrant::create($data);
 
         return redirect()
             ->route('box-hydrant.index')
             ->with('success', 'Kartu Kendali Box Hydrant berhasil disimpan dan menunggu approval');
     }
 }
+

@@ -1,10 +1,10 @@
-{{-- resources/views/p3k/riwayat.blade.php --}}
+﻿{{-- resources/views/p3k/riwayat.blade.php --}}
 <x-layouts.app :title="'Riwayat Inspeksi P3K ' . ($p3k->serial_no ?? '')">
   <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
     {{-- Back Button --}}
     <div class="mb-4">
-        <a href="{{ route('p3k.index') }}"
+        <a href="{{ route('p3k.pilih-jenis') }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -147,7 +147,7 @@
                                         </span>
                                     </div>
                                     <p class="text-sm text-slate-600">
-                                        {{ $kartu->tanggal->format('d M Y') }} • {{ $kartu->tanggal->diffForHumans() }}
+                                        {{ $kartu->tanggal->format('d M Y') }} â€¢ {{ $kartu->tanggal->diffForHumans() }}
                                     </p>
                                 </div>
                             </div>
@@ -232,7 +232,22 @@
                                     <p class="text-sm font-semibold text-slate-900">{{ $kartu->tanggal->format('d/m/Y') }}</p>
                                 </div>
                             </div>
-                            @if($kartu->isApproved())
+                            @if($kartu->rejected_at)
+                                <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-slate-500">Ditolak oleh</p>
+                                        <p class="text-sm font-semibold text-red-700">{{ get_user_display_name($kartu->rejector, 'Unknown Rejector') }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                                            Direvisi ({{ $kartu->revisi }})
+                                        </span>
+                                    </div>
+                                </div>
+                            @elseif($kartu->isApproved())
                                 <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
                                     <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -281,3 +296,4 @@
 
   </div>
 </x-layouts.app>
+

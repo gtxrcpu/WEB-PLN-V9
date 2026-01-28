@@ -33,14 +33,14 @@ class AparController extends Controller
         // default value kalau mau ditampilkan di form
         // Serial already contains "APAR A1.xxx"
         $default = [
-            'serial_no'     => $nextSerial,
-            'name'          => $nextSerial,
-            'barcode'       => $nextSerial,
-            'status'        => 'BAIK',
+            'serial_no' => $nextSerial,
+            'name' => $nextSerial,
+            'barcode' => $nextSerial,
+            'status' => 'BAIK',
             'location_code' => 'BDG',
-            'type'          => 'UUV',
-            'capacity'      => '5 Liter',
-            'agent'         => '500',
+            'type' => 'UUV',
+            'capacity' => '5 Liter',
+            'agent' => '500',
         ];
 
         return view('apar.create', compact('nextSerial', 'default'));
@@ -53,14 +53,14 @@ class AparController extends Controller
     {
         $request->validate([
             'location_code' => 'required|string|max:50',
-            'type'          => 'required|string|max:100',
-            'capacity'      => 'required|string|max:100',
-            'agent'         => 'nullable|string|max:100',
-            'status'        => 'required|string|max:20',
-            'notes'         => 'nullable|string',
+            'type' => 'required|string|max:100',
+            'capacity' => 'required|string|max:100',
+            'agent' => 'nullable|string|max:100',
+            'status' => 'required|string|max:20',
+            'notes' => 'nullable|string',
             'floor_plan_id' => 'nullable|exists:floor_plans,id',
-            'floor_plan_x'  => 'nullable|numeric|min:0|max:100',
-            'floor_plan_y'  => 'nullable|numeric|min:0|max:100',
+            'floor_plan_x' => 'nullable|numeric|min:0|max:100',
+            'floor_plan_y' => 'nullable|numeric|min:0|max:100',
         ]);
 
         // Generate serial and increment counter (only once, when saving)
@@ -69,20 +69,20 @@ class AparController extends Controller
         $barcode = $serial;
 
         $apar = Apar::create([
-            'user_id'       => Auth::id(),
-            'unit_id'       => $this->getAuthUserUnitId(), // Auto-assign unit dari user
-            'name'          => $serial,
-            'barcode'       => $barcode,
-            'serial_no'     => $serial,
+            'user_id' => Auth::id(),
+            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit dari user
+            'name' => $serial,
+            'barcode' => $barcode,
+            'serial_no' => $serial,
             'location_code' => $request->location_code,
-            'type'          => $request->type,
-            'capacity'      => $request->capacity,
-            'agent'         => $request->agent,
-            'status'        => $request->status,
-            'notes'         => $request->notes,
+            'type' => $request->type,
+            'capacity' => $request->capacity,
+            'agent' => $request->agent,
+            'status' => $request->status,
+            'notes' => $request->notes,
             'floor_plan_id' => $request->floor_plan_id,
-            'floor_plan_x'  => $request->floor_plan_x,
-            'floor_plan_y'  => $request->floor_plan_y,
+            'floor_plan_x' => $request->floor_plan_x,
+            'floor_plan_y' => $request->floor_plan_y,
         ]);
 
         // generate QR untuk APAR baru
@@ -108,26 +108,26 @@ class AparController extends Controller
     {
         $request->validate([
             'location_code' => 'required|string|max:50',
-            'type'          => 'required|string|max:100',
-            'capacity'      => 'required|string|max:100',
-            'agent'         => 'nullable|string|max:100',
-            'status'        => 'required|string|max:20',
-            'notes'         => 'nullable|string',
+            'type' => 'required|string|max:100',
+            'capacity' => 'required|string|max:100',
+            'agent' => 'nullable|string|max:100',
+            'status' => 'required|string|max:20',
+            'notes' => 'nullable|string',
             'floor_plan_id' => 'nullable|exists:floor_plans,id',
-            'floor_plan_x'  => 'nullable|numeric|min:0|max:100',
-            'floor_plan_y'  => 'nullable|numeric|min:0|max:100',
+            'floor_plan_x' => 'nullable|numeric|min:0|max:100',
+            'floor_plan_y' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $apar->update([
             'location_code' => $request->location_code,
-            'type'          => $request->type,
-            'capacity'      => $request->capacity,
-            'agent'         => $request->agent,
-            'status'        => $request->status,
-            'notes'         => $request->notes,
+            'type' => $request->type,
+            'capacity' => $request->capacity,
+            'agent' => $request->agent,
+            'status' => $request->status,
+            'notes' => $request->notes,
             'floor_plan_id' => $request->floor_plan_id,
-            'floor_plan_x'  => $request->floor_plan_x,
-            'floor_plan_y'  => $request->floor_plan_y,
+            'floor_plan_x' => $request->floor_plan_x,
+            'floor_plan_y' => $request->floor_plan_y,
         ]);
 
         // kalau mau bisa regenerate QR (opsional, tapi nggak masalah)
@@ -140,25 +140,40 @@ class AparController extends Controller
 
     /**
      * Tampilkan riwayat kartu kendali APAR
+     * 
+     * UNIT ACCESS CONTROL: Only allow access to APAR from same unit
      */
     public function riwayat(Request $request, Apar $apar)
     {
+        // Check unit access: petugas dan leader hanya bisa akses APAR dari unit mereka sendiri
+        $userUnitId = $this->getAuthUserUnitId();
+
+        // Superadmin dan Inspector bisa akses semua unit
+        if (!auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            // Cek apakah APAR ini dari unit yang sama
+            if ($apar->unit_id != $userUnitId) {
+                // Berbeda unit - tidak boleh akses
+                abort(403, 'Anda tidak memiliki akses ke APAR dari unit lain. QR Code ini untuk unit: ' .
+                    ($apar->unit ? $apar->unit->name : 'Induk'));
+            }
+        }
+
         $query = $apar->kartuApars()->with(['signature', 'user', 'approver']);
-        
+
         // Filter by creator
         if ($request->filled('creator')) {
-            $query->whereHas('user', function($q) use ($request) {
+            $query->whereHas('user', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->creator . '%');
             });
         }
-        
+
         // Filter by approver
         if ($request->filled('approver')) {
-            $query->whereHas('approver', function($q) use ($request) {
+            $query->whereHas('approver', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->approver . '%');
             });
         }
-        
+
         // Filter by approval status
         if ($request->filled('status')) {
             if ($request->status === 'approved') {
@@ -167,48 +182,64 @@ class AparController extends Controller
                 $query->whereNull('approved_at');
             }
         }
-        
+
         $kartuKendali = $query->latest()->get();
-        
+
         return view('apar.riwayat', compact('apar', 'kartuKendali'));
     }
 
     /**
      * View detail kartu kendali dengan TTD
+     * 
+     * UNIT ACCESS CONTROL: Only allow access to APAR from same unit
      */
     public function viewKartu($aparId, $kartuId)
     {
         $apar = Apar::findOrFail($aparId);
+
+        // Check unit access: petugas hanya bisa akses APAR dari unit mereka sendiri
+        $userUnitId = $this->getAuthUserUnitId();
+
+        // Superadmin dan Inspector bisa akses semua unit
+        if (!auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            // Cek apakah APAR ini dari unit yang sama
+            if ($apar->unit_id != $userUnitId) {
+                // Berbeda unit - tidak boleh akses
+                abort(403, 'Anda tidak memiliki akses ke APAR dari unit lain. Kartu ini untuk unit: ' .
+                    ($apar->unit ? $apar->unit->name : 'Induk'));
+            }
+        }
+
         $kartu = \App\Models\KartuApar::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
-        
+
         // Get template for APAR module
         $template = \App\Models\KartuTemplate::getTemplate('apar');
-        
+
         // Fill template with real data
         if ($template) {
             // Map data berdasarkan label field
             $labelMap = [
                 'No. Dokumen' => 'APAR-' . str_pad($kartu->id, 4, '0', STR_PAD_LEFT),
-                'Revisi' => '00',
+                'Revisi' => str_pad((string) ($kartu->revisi ?? '0'), 2, '0', STR_PAD_LEFT),
                 'Tanggal' => \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d F Y'),
                 'Halaman' => '1 dari 1',
             ];
-            
+
             // Update header fields dengan data real
-            $headerFields = collect($template->header_fields)->map(function($field) use ($labelMap) {
+            $headerFields = collect($template->header_fields)->map(function ($field) use ($labelMap) {
                 // Cek apakah label ada di map
                 if (isset($labelMap[$field['label']])) {
                     $field['value'] = $labelMap[$field['label']];
                 }
                 return $field;
             })->toArray();
-            
+
             $template->header_fields = $headerFields;
-            
+
             // Update footer fields dengan data real (lokasi tetap dari template)
             // Footer fields sudah OK dari template
         }
-        
+
         return view('apar.view-kartu', compact('apar', 'kartu', 'template'));
     }
 }
