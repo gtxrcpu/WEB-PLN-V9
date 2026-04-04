@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Apar;
 use App\Models\KartuApar;
+use App\Models\KartuTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class KartuKendaliController extends Controller
 {
@@ -45,114 +48,132 @@ class KartuKendaliController extends Controller
      */
     public function store(Request $request)
     {
-        // Get template untuk validasi dinamis
-        $template = \App\Models\KartuTemplate::getTemplate('apar');
-
-        // Build validation rules
-        $rules = [
-            'apar_id' => ['required', 'exists:apars,id'],
-            'kesimpulan' => ['required', 'string', 'max:50'],
-            'tgl_periksa' => ['required', 'date'],
-            'petugas' => ['required', 'string', 'max:100'],
-            'pengawas' => ['nullable', 'string', 'max:100'],
-        ];
-
-        // Add dynamic inspection fields validation
-        if ($template && $template->inspection_fields) {
-            foreach ($template->inspection_fields as $index => $field) {
-                $fieldName = 'inspection_' . $index;
-                $rules[$fieldName] = ['required', 'string', 'max:255'];
+        // ──────────────────────────────────────────────────────────────────────
+        // 1. IDEMPOTENCY CHECK: Cek apakah submission dengan token yang sama
+        //    sudah pernah diproses. Ini mencegah double-submit.
+        // ──────────────────────────────────────────────────────────────────────
+        $submissionToken = $request->input('_submission_token');
+        if ($submissionToken) {
+            $cacheKey = 'kartu_submit_' . auth()->id() . '_' . $submissionToken;
+            if (cache()->has($cacheKey)) {
+                Log::warning('KartuKendali: Duplicate submission detected', [
+                    'token'   => $submissionToken,
+                    'user_id' => auth()->id(),
+                    'apar_id' => $request->input('apar_id'),
+                ]);
+                return redirect()
+                    ->route('apar.riwayat', $request->input('apar_id'))
+                    ->with('warning', 'Kartu kendali sudah berhasil disimpan sebelumnya.');
             }
-        } else {
-            // Fallback ke field lama
-            $rules = array_merge($rules, [
-                'pressure_gauge' => ['required', 'string', 'max:50'],
-                'pin_segel' => ['required', 'string', 'max:50'],
-                'selang' => ['required', 'string', 'max:50'],
-                'tabung' => ['required', 'string', 'max:50'],
-                'label' => ['required', 'string', 'max:50'],
-                'kondisi_fisik' => ['required', 'string', 'max:50'],
-            ]);
+            // Tandai token ini (expire 60 detik)
+            cache()->put($cacheKey, true, 60);
         }
 
-        // Custom validation messages
+        // Get template untuk validasi dinamis
+        $template = KartuTemplate::getTemplate('apar');
+
+        // Kolom DB valid untuk kartu APAR
+        $aparDbColumns = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
+
+        // Build validation rules untuk field dasar
+        $rules = [
+            'apar_id'     => ['required', 'exists:apars,id'],
+            'kesimpulan'  => ['required', 'string', 'max:50'],
+            'tgl_periksa' => ['required', 'date'],
+            'petugas'     => ['required', 'string', 'max:100'],
+        ];
+
+        // Custom messages
         $messages = [];
+
         if ($template && $template->inspection_fields) {
             foreach ($template->inspection_fields as $index => $field) {
-                $fieldName = 'inspection_' . $index;
+                $fieldName = !empty($field['key']) ? $field['key'] : ('inspection_' . $index);
+                $rules[$fieldName] = ['required', 'string', 'max:255'];
                 $messages[$fieldName . '.required'] = 'Field "' . $field['label'] . '" wajib diisi.';
+            }
+        } else {
+            foreach ($aparDbColumns as $col) {
+                $rules[$col] = ['required', 'string', 'max:50'];
             }
         }
 
         $data = $request->validate($rules, $messages);
 
-        // Jika menggunakan template, map inspection fields ke kolom database lama
-        if ($template && $template->inspection_fields) {
-            // Mapping KEY template ke kolom database
-            $fieldMapping = [
-                // Old mapping (for backward compatibility)
-                'pressure_gauge' => 'pressure_gauge',
-                'pin_segel' => 'pin_segel',
-                'selang' => 'selang',
-                'tabung' => 'tabung',
-                'label' => 'label',
-                'kondisi_fisik' => 'kondisi_fisik',
-                // New mapping (from template keys)
-                'kondisi_tabung' => 'tabung',
-                'kondisi_selang' => 'selang',
-                'kondisi_pin' => 'pin_segel',
-                'tekanan' => 'pressure_gauge',
-                'berat' => 'label',
-                'catatan' => 'kondisi_fisik',
-            ];
-
-            // Initialize all required fields with default value
-            $requiredFields = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
-            foreach ($requiredFields as $field) {
-                if (!isset($data[$field])) {
-                    $data[$field] = '-';
-                }
-            }
-
-            foreach ($template->inspection_fields as $index => $field) {
-                $fieldName = 'inspection_' . $index;
-                if (isset($data[$fieldName])) {
-                    // Map ke kolom database menggunakan KEY
-                    $fieldKey = $field['key'] ?? null;
-                    if ($fieldKey && isset($fieldMapping[$fieldKey])) {
-                        $dbColumn = $fieldMapping[$fieldKey];
-                        $data[$dbColumn] = $data[$fieldName];
-                    }
-                    unset($data[$fieldName]);
-                }
+        // Map inspection_N fields ke kolom DB (ketika template key = NULL)
+        foreach ($aparDbColumns as $i => $col) {
+            $inspectionKey = 'inspection_' . $i;
+            if (isset($data[$inspectionKey]) && !isset($data[$col])) {
+                $data[$col] = $data[$inspectionKey];
+                unset($data[$inspectionKey]);
             }
         }
 
-        // Tambahkan user_id
-        $data['user_id'] = auth()->id();
+        // Bersihkan key yang tidak ada di kolom DB
+        $allowedKeys = array_merge($aparDbColumns, ['apar_id', 'kesimpulan', 'tgl_periksa', 'petugas']);
+        $saveData    = array_intersect_key($data, array_flip($allowedKeys));
 
-        // Auto-increment revisi jika ada kartu sebelumnya yang ditolak
-        $latestKartu = KartuApar::where('apar_id', $data['apar_id'])
-            ->orderBy('revisi', 'desc')
+        // Pastikan semua kolom APAR minimal ada
+        foreach ($aparDbColumns as $col) {
+            if (empty($saveData[$col])) {
+                $saveData[$col] = '-';
+            }
+        }
+
+        $saveData['user_id'] = auth()->id();
+
+        // ──────────────────────────────────────────────────────────────────────
+        // 2. RACE-CONDITION CHECK: Cegah duplikat dari request bersamaan
+        //    (apar_id + user_id + tgl_periksa yang sama dalam 10 detik)
+        // ──────────────────────────────────────────────────────────────────────
+        $recentDuplicate = KartuApar::where('apar_id', $saveData['apar_id'])
+            ->where('user_id', $saveData['user_id'])
+            ->where('tgl_periksa', $saveData['tgl_periksa'])
+            ->where('created_at', '>=', now()->subSeconds(10))
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            // Jika kartu sebelumnya ditolak, lanjutkan dari revisi terakhir
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } elseif ($latestKartu && !$latestKartu->rejected_at && $latestKartu->approved_at) {
-            // Jika kartu sebelumnya sudah approved, mulai dari 00 lagi
-            $data['revisi'] = '00';
-        } else {
-            // Default untuk kartu pertama
-            $data['revisi'] = '00';
+        if ($recentDuplicate) {
+            Log::warning('KartuKendali: Race-condition duplicate prevented', [
+                'existing_id' => $recentDuplicate->id,
+                'apar_id'     => $saveData['apar_id'],
+                'user_id'     => $saveData['user_id'],
+            ]);
+            return redirect()
+                ->route('apar.riwayat', $saveData['apar_id'])
+                ->with('success', 'Kartu Kendali berhasil disimpan dan menunggu persetujuan leader.');
         }
 
-        // Simpan kartu inspeksi APAR
-        KartuApar::create($data);
+        // Tentukan revisi berdasarkan kartu terakhir
+        $latestKartu = KartuApar::where('apar_id', $saveData['apar_id'])
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
+            $saveData['revisi'] = $latestKartu->revisi ?? '00';
+        } else {
+            $saveData['revisi'] = '00';
+        }
+
+        // ──────────────────────────────────────────────────────────────────────
+        // 3. SIMPAN DALAM DB TRANSACTION untuk atomic operation
+        // ──────────────────────────────────────────────────────────────────────
+        try {
+            $kartu = DB::transaction(function () use ($saveData) {
+                return KartuApar::create($saveData);
+            });
+        } catch (\Throwable $e) {
+            Log::error('KartuKendali: Gagal menyimpan kartu', [
+                'error'   => $e->getMessage(),
+                'apar_id' => $saveData['apar_id'] ?? null,
+            ]);
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal menyimpan kartu kendali. Silakan coba lagi.');
+        }
 
         return redirect()
-            ->route('apar.index')
-            ->with('success', 'Kartu Kendali berhasil disimpan untuk APAR ' . $request->apar_id);
+            ->route('apar.riwayat', $saveData['apar_id'])
+            ->with('success', 'Kartu Kendali berhasil disimpan dan menunggu persetujuan leader.');
     }
 }
 

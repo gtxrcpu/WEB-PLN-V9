@@ -6,6 +6,8 @@ use App\Http\Controllers\Traits\FiltersByUnit;
 use App\Models\Apar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AparController extends Controller
 {
@@ -51,42 +53,63 @@ class AparController extends Controller
      */
     public function store(Request $request)
     {
+        // ── Idempotency: cegah double-submit ──────────────────────────────────
+        $submissionToken = $request->input('_submission_token');
+        if ($submissionToken) {
+            $cacheKey = 'apar_create_' . Auth::id() . '_' . $submissionToken;
+            if (cache()->has($cacheKey)) {
+                Log::warning('AparController: Duplicate submission blocked', ['token' => $submissionToken]);
+                return redirect()->route('apar.index')
+                    ->with('warning', 'APAR sudah berhasil disimpan sebelumnya.');
+            }
+            cache()->put($cacheKey, true, 60);
+        }
+
         $request->validate([
             'location_code' => 'required|string|max:50',
-            'type' => 'required|string|max:100',
-            'capacity' => 'required|string|max:100',
-            'agent' => 'nullable|string|max:100',
-            'status' => 'required|string|max:20',
-            'notes' => 'nullable|string',
+            'type'          => 'required|string|max:100',
+            'capacity'      => 'required|string|max:100',
+            'agent'         => 'nullable|string|max:100',
+            'status'        => 'required|string|max:20',
+            'notes'         => 'nullable|string',
             'floor_plan_id' => 'nullable|exists:floor_plans,id',
-            'floor_plan_x' => 'nullable|numeric|min:0|max:100',
-            'floor_plan_y' => 'nullable|numeric|min:0|max:100',
+            'floor_plan_x'  => 'nullable|numeric|min:0|max:100',
+            'floor_plan_y'  => 'nullable|numeric|min:0|max:100',
         ]);
 
-        // Generate serial and increment counter (only once, when saving)
-        $serial = Apar::generateNextSerial(null, true);
-        // Serial already contains "APAR A1.xxx", so use it directly
-        $barcode = $serial;
+        try {
+            $apar = DB::transaction(function () use ($request) {
+                // Generate serial dan increment counter (hanya sekali di dalam transaksi)
+                $serial  = Apar::generateNextSerial(null, true);
+                $barcode = $serial;
 
-        $apar = Apar::create([
-            'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit dari user
-            'name' => $serial,
-            'barcode' => $barcode,
-            'serial_no' => $serial,
-            'location_code' => $request->location_code,
-            'type' => $request->type,
-            'capacity' => $request->capacity,
-            'agent' => $request->agent,
-            'status' => $request->status,
-            'notes' => $request->notes,
-            'floor_plan_id' => $request->floor_plan_id,
-            'floor_plan_x' => $request->floor_plan_x,
-            'floor_plan_y' => $request->floor_plan_y,
-        ]);
+                $apar = Apar::create([
+                    'user_id'       => Auth::id(),
+                    'unit_id'       => $this->getAuthUserUnitId(),
+                    'name'          => $serial,
+                    'barcode'       => $barcode,
+                    'serial_no'     => $serial,
+                    'location_code' => $request->location_code,
+                    'type'          => $request->type,
+                    'capacity'      => $request->capacity,
+                    'agent'         => $request->agent,
+                    'status'        => $request->status,
+                    'notes'         => $request->notes,
+                    'floor_plan_id' => $request->floor_plan_id,
+                    'floor_plan_x'  => $request->floor_plan_x,
+                    'floor_plan_y'  => $request->floor_plan_y,
+                ]);
 
-        // generate QR untuk APAR baru
-        $apar->generateQrSvg(true);
+                // generate QR untuk APAR baru
+                $apar->generateQrSvg(true);
+
+                return $apar;
+            });
+        } catch (\Throwable $e) {
+            Log::error('AparController: Gagal menyimpan APAR', ['error' => $e->getMessage()]);
+            return back()->withInput()
+                ->with('error', 'Gagal menyimpan APAR. Silakan coba lagi.');
+        }
 
         return redirect()
             ->route('apar.index')

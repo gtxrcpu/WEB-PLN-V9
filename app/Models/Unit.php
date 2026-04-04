@@ -17,6 +17,28 @@ class Unit extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Boot method to add model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Prevent duplicate codes on create/update
+        static::saving(function ($unit) {
+            // Check if code already exists (excluding current record on update)
+            $query = static::where('code', $unit->code);
+            
+            if ($unit->exists) {
+                $query->where('id', '!=', $unit->id);
+            }
+            
+            if ($query->exists()) {
+                throw new \Exception("Unit dengan code '{$unit->code}' sudah ada. Duplikasi tidak diperbolehkan.");
+            }
+        });
+    }
+
     // Relasi ke users
     public function users()
     {

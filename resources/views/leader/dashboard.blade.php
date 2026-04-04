@@ -8,7 +8,92 @@
     @endphp
     <div class="mb-4 sm:mb-6 bg-white rounded-3xl shadow-2xl border-2 border-slate-100 overflow-hidden hover:shadow-3xl transition-all duration-300">
       <div class="h-2 bg-blue-600"></div>
-      <div class="p-6 sm:p-8"><div class="grid lg:grid-cols-12 gap-6"><div class="lg:col-span-8 space-y-6"><div class="flex items-start gap-5"><div class="flex-shrink-0"><div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30 transform hover:scale-105 hover:rotate-3 transition-all"><svg class="w-11 h-11 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" /></svg></div></div><div class="flex-1"><div class="flex items-center gap-2 mb-1"><span class="text-xs font-extrabold text-blue-600 uppercase tracking-wider">Unit Kerja</span>@if(auth()->user()->position)<span class="inline-flex items-center px-2.5 py-1 bg-emerald-100 border border-emerald-300 rounded-lg"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span><span class="text-xs font-bold text-emerald-700">{{ ucfirst(auth()->user()->position) }}</span></span>@endif</div><h2 class="text-4xl font-black text-slate-900 mb-1 tracking-tight">{{ $unit->code }}</h2><p class="text-lg font-semibold text-slate-600">{{ $unit->name }}</p></div></div><div class="grid sm:grid-cols-2 gap-4"><div class="bg-slate-50 rounded-2xl p-5 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"><div class="flex items-start gap-3"><div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div><div class="flex-1 min-w-0"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat</p><p class="text-sm font-semibold text-slate-800 leading-relaxed">{{ $details['address'] }}</p></div></div></div><div class="bg-slate-50 rounded-2xl p-5 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"><div class="flex items-start gap-3"><div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></div><div class="flex-1 min-w-0"><p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Telepon</p><p class="text-base font-bold text-slate-900">{{ $details['phone'] }}</p></div></div></div></div></div><div class="lg:col-span-4 space-y-4"><div class="bg-blue-600 rounded-2xl p-5 shadow-lg shadow-blue-600/30 border-2 border-blue-700"><div class="flex items-start gap-3 mb-3"><svg class="w-5 h-5 text-blue-100 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg><div class="flex-1 min-w-0"><p class="text-xs font-bold text-blue-100 uppercase tracking-wider mb-1">Email Kantor</p><p class="text-sm font-bold text-white break-all">{{ $details['email'] }}</p></div></div></div><div class="bg-emerald-50 rounded-2xl p-5 border-2 border-emerald-300"><div class="flex items-center justify-between"><div><p class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Status Unit</p><p class="text-xl font-black text-emerald-900">Aktif</p></div><div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30"><svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></div></div></div></div></div></div>
+      <div class="p-6 sm:p-8">
+        <div class="grid lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-8 space-y-6">
+            <div class="flex items-start gap-5">
+              <div class="flex-shrink-0">
+                <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30 transform hover:scale-105 hover:rotate-3 transition-all">
+                  <svg class="w-11 h-11 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <div class="mb-2">
+                  <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Halo, {{ auth()->user()->name ?? 'User' }} 👋</h1>
+                </div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-extrabold text-blue-600 uppercase tracking-wider">Unit Kerja</span>
+                  @if(auth()->user()->position)
+                    <span class="inline-flex items-center px-2.5 py-1 bg-emerald-100 border border-emerald-300 rounded-lg">
+                      <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>
+                      <span class="text-xs font-bold text-emerald-700">{{ ucfirst(auth()->user()->position) }}</span>
+                    </span>
+                  @endif
+                </div>
+                <h2 class="text-4xl font-black text-slate-900 mb-1 tracking-tight">{{ $unit->code }}</h2>
+                <p class="text-lg font-semibold text-slate-600">{{ $unit->name }}</p>
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div class="bg-slate-50 rounded-2xl p-5 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group">
+                <div class="flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat</p>
+                    <p class="text-sm font-semibold text-slate-800 leading-relaxed">{{ $details['address'] }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-slate-50 rounded-2xl p-5 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group">
+                <div class="flex items-start gap-3">
+                  <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Telepon</p>
+                    <p class="text-base font-bold text-slate-900">{{ $details['phone'] }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-4 space-y-4">
+            <div class="bg-blue-600 rounded-2xl p-5 shadow-lg shadow-blue-600/30 border-2 border-blue-700">
+              <div class="flex items-start gap-3 mb-3">
+                <svg class="w-5 h-5 text-blue-100 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold text-blue-100 uppercase tracking-wider mb-1">Email Kantor</p>
+                  <p class="text-sm font-bold text-white break-all">{{ $details['email'] }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-emerald-50 rounded-2xl p-5 border-2 border-emerald-300">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Status Unit</p>
+                  <p class="text-xl font-black text-emerald-900">Aktif</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                  <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   @endif
 
@@ -695,7 +780,9 @@
 
         async function checkNewApprovals() {
             try {
-                const response = await fetch(`{{ route('admin.approvals.check-new') }}?last_checked=${lastChecked}`);
+                // Replace + with %2B manually to prevent it being decoded as space
+                const encodedTimestamp = encodeURIComponent(lastChecked).replace(/\+/g, '%2B');
+                const response = await fetch(`{{ route('admin.approvals.check-new') }}?last_checked=${encodedTimestamp}`);
                 const data = await response.json();
 
                 if (data.total_pending !== undefined) {

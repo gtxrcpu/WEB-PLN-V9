@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
@@ -20,7 +20,8 @@
 <body class="antialiased bg-slate-50 text-slate-900">
   {{-- Topbar --}}
   <header class="sticky top-0 z-40 bg-white/85 backdrop-blur ring-1 ring-slate-200">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
+      
       <div class="flex items-center gap-3">
         @php
           $dashboardRoute = 'petugas.dashboard'; // Default untuk petugas (simplified)
@@ -36,10 +37,18 @@
             }
           }
         @endphp
-        <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
-          <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-8 w-auto object-contain">
-        </a>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 sm:gap-4 z-10 shrink-0">
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+          </a>
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+          </a>
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+          </a>
+        </div>
+        <div class="flex items-center gap-2 z-10 hidden lg:flex">
           <span class="font-semibold">Inventaris K3 PLN</span>
           @if(auth()->check())
             @if(auth()->user()->hasRole('superadmin'))
@@ -140,7 +149,7 @@
       @endif
 
       {{-- Profile Dropdown (Desktop & Mobile) --}}
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 z-10">
         @php
           $u = auth()->user();
           $avatar = $u?->avatar ? asset('storage/' . $u->avatar) : null;
@@ -1180,6 +1189,119 @@
     }, { capture: true });
   </script>
 
-</body>
+  {{-- Stack for page-specific scripts --}}
+  @stack('scripts')
+  <!-- Universal Auto-Filter Logic -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // 1. Setup Global Loading Indicator
+      const loaderDiv = document.createElement('div');
+      loaderDiv.id = 'universal-filter-loader';
+      loaderDiv.className = 'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300';
+      loaderDiv.innerHTML = `
+        <div class="relative w-16 h-16 shadow-lg rounded-full">
+          <div class="absolute inset-0 rounded-full border-4 border-slate-200"></div>
+          <div class="absolute inset-0 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+        </div>
+        <div class="mt-4 px-4 py-2 bg-white rounded-lg shadow-md text-blue-800 font-bold tracking-wide animate-pulse border border-blue-100">
+          Memproses Filter Data...
+        </div>
+      `;
+      document.body.appendChild(loaderDiv);
 
+      // 2. Attach Auto-filter logic
+      function setupAutoFilters() {
+        const forms = document.querySelectorAll('form.auto-filter');
+        forms.forEach(form => {
+          // Hide submit buttons but keep them in DOM for standard fallback
+          const btn = form.querySelector('button[type="submit"]');
+          if (btn) btn.style.display = 'none';
+
+          // Attach listeners to all inputs and selects
+          const elements = form.querySelectorAll('select, input');
+          elements.forEach(el => {
+            if (el.dataset.autoFilterBound) return; // prevent duplicate bind
+            el.dataset.autoFilterBound = "true";
+
+            if (el.tagName === 'SELECT') {
+              el.addEventListener('change', () => runAutoFilter(form));
+            } else {
+              el.addEventListener('input', debounce(() => runAutoFilter(form), 600));
+            }
+          });
+        });
+      }
+
+      function runAutoFilter(form) {
+        // Show Loading
+        const loader = document.getElementById('universal-filter-loader');
+        loader.classList.remove('opacity-0', 'pointer-events-none');
+        loader.classList.add('opacity-100', 'pointer-events-auto');
+
+        const formData = new FormData(form);
+        const url = new URL(form.action || window.location.href);
+        const params = new URLSearchParams(formData);
+        
+        // Clean up empty params
+        for (const [key, value] of Array.from(params.entries())) {
+          if (!value) params.delete(key);
+        }
+        url.search = params.toString();
+
+        fetch(url.toString(), {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+          }
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Network error');
+          return response.text();
+        })
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Replace content of <main>
+          const newMain = doc.querySelector('main');
+          const currentMain = document.querySelector('main');
+          
+          if (newMain && currentMain) {
+            currentMain.innerHTML = newMain.innerHTML;
+            window.history.pushState({path: url.toString()}, '', url.toString());
+            // Re-setup elements inside newly replaced DOM
+            setupAutoFilters();
+          } else {
+            window.location.href = url.toString();
+          }
+        })
+        .catch(err => {
+          console.error('Filter request failed', err);
+          alert('Terjadi kesalahan koneksi saat memproses filter. Halaman akan dimuat ulang otomatis untuk mencoba lagi.');
+          window.location.href = url.toString();
+        })
+        .finally(() => {
+          loader.classList.remove('opacity-100', 'pointer-events-auto');
+          loader.classList.add('opacity-0', 'pointer-events-none');
+        });
+      }
+
+      function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func(...args), wait);
+        };
+      }
+
+      // Init on first load
+      setupAutoFilters();
+      
+      // Also intercept back/forward navigation to update content
+      window.addEventListener('popstate', function() {
+        window.location.reload();
+      });
+    });
+  </script>
+</body>
 </html>

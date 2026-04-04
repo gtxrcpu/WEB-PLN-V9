@@ -41,8 +41,12 @@ class Apar extends Model
     {
         // NEW FORMAT: Use unit-specific settings
         // Determine unit from auth user if not provided
-        if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
-            $unitId = auth()->user()->unit_id;
+        if ($unitId === null && auth()->check()) {
+            if (auth()->user()->unit_id) {
+                $unitId = auth()->user()->unit_id;
+            } elseif (session('viewing_unit_id')) {
+                $unitId = session('viewing_unit_id');
+            }
         }
 
         // Get unit-specific format and counter
@@ -65,9 +69,10 @@ class Apar extends Model
         $lastApar = $query->orderByRaw('CAST(SUBSTRING_INDEX(serial_no, "-", -1) AS UNSIGNED) DESC')->first();
 
         if ($lastApar && $lastApar->serial_no) {
-            // Extract number from last serial (e.g., "APAR-INDUK-005" -> 5)
+            // Extract number from last serial safely
             $parts = explode('-', $lastApar->serial_no);
-            $lastNumber = isset($parts[2]) ? (int) ltrim($parts[2], '0') : 0;
+            $lastStr = end($parts);
+            $lastNumber = is_numeric($lastStr) ? (int) ltrim($lastStr, '0') : 0;
 
             // Use the higher value between counter and last number + 1
             $counter = max($counter, $lastNumber + 1);
@@ -136,11 +141,7 @@ class Apar extends Model
         $url = route('apar.riwayat', $this->id);
 
         try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
 
             $filename = 'qrcodes/apar_' . $this->id . '.svg';
             Storage::disk('public')->put($filename, $qrCode);
@@ -165,32 +166,12 @@ class Apar extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        // Generate QR content with equipment info (not URL)
-        $qrContent = json_encode([
-            'type' => 'APAR',
-            'code' => $this->barcode ?? $this->serial_no,
-            'serial' => $this->serial_no,
-            'location' => $this->location_code ?? '-',
-            'status' => $this->status ?? '-',
-            'capacity' => $this->capacity ?? '-',
-            'type_detail' => $this->type ?? '-',
-        ], JSON_UNESCAPED_UNICODE);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'apar', 
+            'id' => $this->id
+        ]);
 
-        try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($qrContent);
-
-            $base64 = base64_encode($qrCode);
-            return 'data:image/svg+xml;base64,' . $base64;
-        } catch (\Exception $e) {
-            // Fallback placeholder
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#f3f4f6"/><text x="150" y="150" text-anchor="middle" font-size="14" fill="#6b7280">QR Error</text></svg>'
-            );
-        }
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     /**
@@ -204,21 +185,7 @@ class Apar extends Model
     {
         $url = route('apar.riwayat', $this->id);
 
-        try {
-            $qrCode = QrCode::format('png')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
-
-            $base64 = base64_encode($qrCode);
-            return 'data:image/png;base64,' . $base64;
-        } catch (\Exception $e) {
-            // Fallback placeholder
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#f3f4f6"/><text x="150" y="150" text-anchor="middle" font-size="14" fill="#6b7280">QR Code</text></svg>'
-            );
-        }
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     /**
@@ -231,20 +198,7 @@ class Apar extends Model
     {
         $url = route('apar.riwayat', $this->id);
 
-        try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
-
-            $base64 = base64_encode($qrCode);
-            return 'data:image/svg+xml;base64,' . $base64;
-        } catch (\Exception $e) {
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#f3f4f6"/><text x="150" y="150" text-anchor="middle" font-size="14" fill="#6b7280">QR Code</text></svg>'
-            );
-        }
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     /**

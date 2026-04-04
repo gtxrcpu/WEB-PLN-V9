@@ -9,6 +9,13 @@ use App\Models\FireAlarm;
 use App\Models\BoxHydrant;
 use App\Models\RumahPompa;
 use App\Models\P3k;
+use App\Models\KartuApar;
+use App\Models\KartuApat;
+use App\Models\KartuApab;
+use App\Models\KartuFireAlarm;
+use App\Models\KartuBoxHydrant;
+use App\Models\KartuRumahPompa;
+use App\Models\KartuP3k;
 use Illuminate\Http\Request;
 
 class GuestController extends Controller
@@ -17,33 +24,33 @@ class GuestController extends Controller
     {
         // Get real-time statistics without caching
         // Optimize: Use single query with groupBy for each model
-        $aparStats = Apar::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $aparStats = Apar::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $apatStats = Apat::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $apatStats = Apat::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $apabStats = Apab::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $apabStats = Apab::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $fireAlarmStats = FireAlarm::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $fireAlarmStats = FireAlarm::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $boxHydrantStats = BoxHydrant::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $boxHydrantStats = BoxHydrant::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $rumahPompaStats = RumahPompa::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $rumahPompaStats = RumahPompa::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $p3kStats = P3k::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $p3kStats = P3k::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
         $stats = [
             'apar' => [
@@ -126,13 +133,13 @@ class GuestController extends Controller
         ];
 
         foreach ($months as $month) {
-            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
         }
 
         return view('guest.dashboard', compact(
@@ -586,33 +593,33 @@ class GuestController extends Controller
     public function getDashboardData()
     {
         // Get real-time statistics without caching
-        $aparStats = Apar::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $aparStats = Apar::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $apatStats = Apat::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $apatStats = Apat::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $apabStats = Apab::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $apabStats = Apab::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $fireAlarmStats = FireAlarm::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $fireAlarmStats = FireAlarm::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $boxHydrantStats = BoxHydrant::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $boxHydrantStats = BoxHydrant::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $rumahPompaStats = RumahPompa::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $rumahPompaStats = RumahPompa::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
-        $p3kStats = P3k::selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
+        $p3kStats = P3k::selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
+            ->groupBy('status_lower')
+            ->pluck('count', 'status_lower');
 
         $stats = [
             'apar' => [
@@ -681,13 +688,13 @@ class GuestController extends Controller
         ];
 
         foreach ($months as $month) {
-            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('created_at', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('created_at', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
+            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
         }
 
         return response()->json([

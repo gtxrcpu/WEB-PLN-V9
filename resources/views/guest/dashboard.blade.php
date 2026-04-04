@@ -289,145 +289,151 @@
     let statusChart = null;
     let trendChart = null;
 
-    // Initialize Status Chart (Doughnut)
-    const statusCtx = document.getElementById('statusChart');
-    if (statusCtx) {
-      statusChart = new Chart(statusCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Baik', 'Rusak', 'Isi Ulang'],
-          datasets: [{
-            data: [0, 0, 0],
-            backgroundColor: [
-              'rgba(52, 211, 153, 0.85)',
-              'rgba(248, 113, 113, 0.85)',
-              'rgba(251, 191, 36, 0.85)'
-            ],
-            borderColor: [
-              'rgb(16, 185, 129)',
-              'rgb(239, 68, 68)',
-              'rgb(245, 158, 11)'
-            ],
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
+    // Initialize charts on DOM content loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Status Chart (Doughnut)
+      const statusCtx = document.getElementById('statusChart');
+      if (statusCtx) {
+        statusChart = new Chart(statusCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Baik', 'Rusak', 'Isi Ulang'],
+            datasets: [{
+              data: [0, 0, 0],
+              backgroundColor: [
+                'rgba(52, 211, 153, 0.85)',
+                'rgba(248, 113, 113, 0.85)',
+                'rgba(251, 191, 36, 0.85)'
+              ],
+              borderColor: [
+                'rgb(16, 185, 129)',
+                'rgb(239, 68, 68)',
+                'rgb(245, 158, 11)'
+              ],
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 12,
+                  font: {
+                    size: 11,
+                    family: "'Inter', sans-serif"
+                  },
+                  usePointStyle: true,
+                  pointStyle: 'circle'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.85)',
                 padding: 12,
-                font: {
-                  size: 11,
-                  family: "'Inter', sans-serif"
+                titleFont: {
+                  size: 13,
+                  weight: 'bold'
                 },
-                usePointStyle: true,
-                pointStyle: 'circle'
-              }
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              padding: 12,
-              titleFont: {
-                size: 13,
-                weight: 'bold'
-              },
-              bodyFont: {
-                size: 12
-              },
-              callbacks: {
-                label: function(context) {
-                  return context.label + ': ' + context.parsed + ' unit';
+                bodyFont: {
+                  size: 12
+                },
+                callbacks: {
+                  label: function(context) {
+                    return context.label + ': ' + context.parsed + ' unit';
+                  }
                 }
               }
-            }
-          },
-          cutout: '70%'
-        }
-      });
-    }
+            },
+            cutout: '70%'
+          }
+        });
+      }
 
-    // Initialize Trend Chart (Line)
-    const trendCtx = document.getElementById('trendChart');
-    if (trendCtx) {
-      trendChart = new Chart(trendCtx, {
-        type: 'line',
-        data: {
-          labels: {!! json_encode($trendData['labels'] ?? ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']) !!},
-          datasets: [{
-            label: 'Inspeksi',
-            data: moduleData['apar'].trendData,
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4,
-            fill: true,
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            pointBackgroundColor: 'rgb(59, 130, 246)',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointHoverBackgroundColor: 'rgb(59, 130, 246)',
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              backgroundColor: 'rgba(0, 0, 0, 0.85)',
-              padding: 12,
-              titleFont: {
-                size: 13,
-                weight: 'bold'
+      // Initialize Trend Chart (Line)
+      const trendCtx = document.getElementById('trendChart');
+      if (trendCtx) {
+        trendChart = new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: {!! json_encode($trendData['labels'] ?? ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']) !!},
+            datasets: [{
+              label: 'Inspeksi',
+              data: moduleData['apar'] ? moduleData['apar'].trendData : [0,0,0,0,0,0],
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              pointBackgroundColor: 'rgb(59, 130, 246)',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              pointHoverBackgroundColor: 'rgb(59, 130, 246)',
+              pointHoverBorderColor: '#fff',
+              pointHoverBorderWidth: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
               },
-              bodyFont: {
-                size: 12
-              },
-              callbacks: {
-                label: function(context) {
-                  return 'Inspeksi: ' + context.parsed.y + ' unit';
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                padding: 12,
+                titleFont: {
+                  size: 13,
+                  weight: 'bold'
+                },
+                bodyFont: {
+                  size: 12
+                },
+                callbacks: {
+                  label: function(context) {
+                    return 'Inspeksi: ' + context.parsed.y + ' unit';
+                  }
                 }
               }
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                font: {
-                  size: 10
-                },
-                color: '#64748b',
-                stepSize: 5
-              },
-              grid: {
-                color: 'rgba(148, 163, 184, 0.1)',
-                drawBorder: false
-              }
             },
-            x: {
-              ticks: {
-                font: {
-                  size: 10
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  font: {
+                    size: 10
+                  },
+                  color: '#64748b',
+                  stepSize: 5
                 },
-                color: '#64748b'
+                grid: {
+                  color: 'rgba(148, 163, 184, 0.1)',
+                  drawBorder: false
+                }
               },
-              grid: {
-                display: false,
-                drawBorder: false
+              x: {
+                ticks: {
+                  font: {
+                    size: 10
+                  },
+                  color: '#64748b'
+                },
+                grid: {
+                  display: false,
+                  drawBorder: false
+                }
               }
             }
           }
-        }
-      });
-    }
+        });
+      }
+
+      // Initial call to populate stats
+      switchModule('apar');
+    });
 
     // Switch Module Function
     function switchModule(module) {
@@ -540,7 +546,5 @@
       document.getElementById('moduleStats').innerHTML = statsHtml;
     }
 
-    // Initialize with APAR data
-    switchModule('apar');
   </script>
 </x-guest.layouts.guest>

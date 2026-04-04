@@ -33,7 +33,7 @@
       @endif
     </div>
     <form method="GET" action="{{ route('box-hydrant.riwayat', $boxHydrant->id) }}"
-      class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      class="auto-filter grid grid-cols-1 md:grid-cols-4 gap-4">
       <div>
         <label for="creator" class="block text-sm font-medium text-gray-700 mb-1">Dibuat oleh</label>
         <input type="text" name="creator" id="creator" value="{{ request('creator') }}" placeholder="Nama pembuat..."

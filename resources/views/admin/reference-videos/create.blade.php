@@ -1,176 +1,129 @@
-<x-layouts.app :title="'Upload Video Referensi — Admin'">
-    <div class="max-w-4xl mx-auto px-4 py-6">
-
-        {{-- Header Card --}}
-        <div
-            class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-600 to-pink-600 p-8 mb-6 shadow-2xl">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-            <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
-
-            <div class="relative flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-white">Upload Video Referensi</h1>
-                        <p class="text-white/80 text-sm mt-1">Upload video tutorial untuk unit tertentu atau semua unit
-                        </p>
-                    </div>
-                </div>
-                <a href="{{ route('admin.reference-videos.index') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white text-sm font-medium hover:bg-white/30 transition-all duration-200">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span>Kembali</span>
-                </a>
+<x-layouts.app :title="'Admin - Upload Video Referensi'">
+    {{-- Header Section --}}
+    <section class="mb-6 p-6 sm:p-8 shadow-lg rounded-xl bg-white">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="{{ route('admin.reference-videos.index') }}"
+                class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <div>
+                <h2
+                    class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    Upload Video Referensi
+                </h2>
+                <p class="text-sm text-gray-600 mt-1">Upload video tutorial untuk unit tertentu atau semua unit</p>
             </div>
         </div>
+    </section>
 
-        {{-- Form Card --}}
-        <div class="bg-white rounded-3xl shadow-xl border-2 border-slate-100 overflow-hidden">
-
-            {{-- Section Header --}}
-            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-8 py-6 border-b-2 border-slate-100">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900">Informasi Video</h2>
-                        <p class="text-sm text-slate-600">Lengkapi form di bawah untuk upload video baru</p>
-                    </div>
-                </div>
-            </div>
-
+    {{-- Main Form --}}
+    <section class="mb-6">
+        <div class="bg-white rounded-xl shadow-lg ring-1 ring-slate-200 overflow-hidden">
             <form action="{{ route('admin.reference-videos.store') }}" method="POST" enctype="multipart/form-data"
-                class="p-8 space-y-6">
+                class="p-6 sm:p-8 space-y-6">
                 @csrf
 
-                {{-- Judul Video --}}
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                        </svg>
-                        Judul Video
-                        <span class="text-red-500">*</span>
+                {{-- Title --}}
+                <div>
+                    <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Judul Video <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" name="title" value="{{ old('title') }}" required
+                    <input type="text" id="title" name="title" value="{{ old('title') }}" required
                         placeholder="Contoh: Tutorial Inspeksi APAR"
-                        class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all @error('title') border-red-500 @enderror">
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all @error('title') border-red-500 @enderror">
                     @error('title')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
-                {{-- Deskripsi --}}
-                <div class="space-y-2">
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h7" />
-                        </svg>
-                        Deskripsi
-                        <span class="text-xs text-slate-500 font-normal">(opsional)</span>
+                {{-- Description --}}
+                <div>
+                    <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Deskripsi <span class="text-gray-400 font-normal">(Opsional)</span>
                     </label>
-                    <textarea name="description" rows="4" placeholder="Tambahkan deskripsi singkat tentang video ini..."
-                        class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none">{{ old('description') }}</textarea>
+                    <textarea id="description" name="description" rows="4"
+                        placeholder="Tambahkan deskripsi singkat tentang video ini..."
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all resize-none @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
+                    @error('description')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
-                {{-- Unit Assignment --}}
-                <div class="space-y-3">
-                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
+                {{-- Unit Selector --}}
+                <div>
+                    <label for="unit_id" class="block text-sm font-semibold text-gray-700 mb-2">
                         Unit
-                        <span class="text-red-500">*</span>
                     </label>
-                    <p class="text-xs text-slate-500">Pilih unit tertentu atau kosongkan untuk semua unit</p>
-                    <select name="unit_id"
-                        class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all @error('unit_id') border-red-500 @enderror">
+                    <select id="unit_id" name="unit_id"
+                        class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all @error('unit_id') border-red-500 @enderror">
                         <option value="">-- Semua Unit --</option>
-                        @foreach($units as $unit)
+                        @foreach ($units as $unit)
                             <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
-                                {{ $unit->name }} ({{ $unit->code }})
+                                {{ $unit->code }} - {{ $unit->name }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="mt-1 text-sm text-gray-500">Pilih unit tertentu atau kosongkan untuk semua unit</p>
                     @error('unit_id')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
 
                 {{-- File Upload Section --}}
-                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-100">
+                <div class="pt-6 border-t border-slate-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        File Upload
+                    </h3>
+
                     {{-- Video File --}}
-                    <div class="space-y-3 mb-6">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                            </svg>
-                            File Video
-                            <span class="text-red-500">*</span>
+                    <div class="mb-6">
+                        <label for="video" class="block text-sm font-semibold text-gray-700 mb-2">
+                            File Video <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">
-                            <input type="file" name="video" accept="video/mp4,video/x-m4v,video/*" required
-                                class="w-full px-4 py-3 border-2 border-purple-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 @error('video') border-red-500 @enderror">
+                            <input type="file" id="video" name="video" accept="video/mp4,video/mov,video/avi,video/wmv"
+                                required
+                                class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 @error('video') border-red-500 @enderror">
                         </div>
-                        <p class="flex items-center gap-1.5 text-xs text-slate-500">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Format: MP4, MOV, AVI, WMV. Maksimal 100MB
+                        <p class="mt-1 text-sm text-gray-500">
+                            <span class="font-medium">Format:</span> MP4, MOV, AVI, WMV •
+                            <span class="font-medium">Maksimal:</span> 100MB
                         </p>
                         @error('video')
-                            <p class="text-xs text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Thumbnail (Opsional) --}}
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Thumbnail
-                            <span class="text-xs text-slate-500 font-normal">(opsional)</span>
+                    {{-- Thumbnail (Optional) --}}
+                    <div>
+                        <label for="thumbnail" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Thumbnail <span class="text-gray-400 font-normal">(Opsional)</span>
                         </label>
                         <div class="relative">
-                            <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/jpg"
-                                class="w-full px-4 py-3 border-2 border-purple-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200">
+                            <input type="file" id="thumbnail" name="thumbnail" accept="image/*"
+                                class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 @error('thumbnail') border-red-500 @enderror">
                         </div>
-                        <p class="flex items-center gap-1.5 text-xs text-slate-500">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Format: JPG, PNG. Maksimal 2MB
+                        <p class="mt-1 text-sm text-gray-500">
+                            <span class="font-medium">Format:</span> JPG, PNG •
+                            <span class="font-medium">Maksimal:</span> 2MB
                         </p>
                         @error('thumbnail')
-                            <p class="text-xs text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
                 {{-- Action Buttons --}}
-                <div class="flex items-center gap-3 pt-6 border-t-2 border-slate-100">
+                <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-slate-200">
                     <button type="submit"
-                        class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold hover:from-purple-700 hover:to-pink-700 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300">
+                        class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl hover:scale-105">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -178,7 +131,7 @@
                         <span>Upload Video</span>
                     </button>
                     <a href="{{ route('admin.reference-videos.index') }}"
-                        class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl border-2 border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+                        class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-8 py-3 bg-slate-100 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -188,6 +141,52 @@
                 </div>
             </form>
         </div>
+    </section>
 
-    </div>
+    {{-- JavaScript --}}
+    <script>
+        // Preview uploaded files
+        document.getElementById('video').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+                console.log('Video dipilih:', file.name, `(${fileSize} MB)`);
+
+                // Show warning if file is too large
+                if (file.size > 100 * 1024 * 1024) {
+                    alert('⚠️ File video terlalu besar! Maksimal 100MB.\n\nUkuran file: ' + fileSize + ' MB');
+                    this.value = '';
+                }
+            }
+        });
+
+        document.getElementById('thumbnail').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+                console.log('Thumbnail dipilih:', file.name, `(${fileSize} MB)`);
+
+                // Show warning if file is too large
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('⚠️ File thumbnail terlalu besar! Maksimal 2MB.\n\nUkuran file: ' + fileSize + ' MB');
+                    this.value = '';
+                }
+            }
+        });
+    </script>
+
+    {{-- Custom Styles --}}
+    <style>
+        /* File input styling enhancement */
+        input[type="file"]::-webkit-file-upload-button {
+            cursor: pointer;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+    </style>
 </x-layouts.app>

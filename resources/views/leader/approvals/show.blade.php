@@ -189,30 +189,37 @@
               @php $moduleKey = str_replace('-', '_', $module); @endphp
 
               @if($moduleKey === 'apar')
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Pressure Gauge</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->pressure_gauge ?? '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Pin & Segel</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->pin_segel ?? '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Selang</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->selang ?? '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Tabung</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->tabung ?? '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Label</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->label ?? '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
-                  <span class="text-sm font-medium text-gray-600">Kondisi Fisik</span>
-                  <span class="text-sm font-bold text-gray-900">{{ $kartu->kondisi_fisik ?? '-' }}</span>
-                </div>
+                @php
+                    $aparConditions = [
+                        'pressure_gauge' => 'Pressure Gauge',
+                        'pin_segel'      => 'Pin & Segel',
+                        'selang'         => 'Selang',
+                        'tabung'         => 'Tabung',
+                        'label'          => 'Label',
+                        'kondisi_fisik'  => 'Kondisi Fisik',
+                    ];
+                @endphp
+                @foreach($aparConditions as $colName => $colLabel)
+                    @php $condVal = $kartu->$colName ?? null; @endphp
+                  <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <span class="text-sm font-medium text-gray-600">{{ $colLabel }}</span>
+                    @if($condVal === 'baik')
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Baik
+                      </span>
+                    @elseif($condVal === 'tidak_baik')
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        Tidak Baik
+                      </span>
+                    @elseif($condVal && $condVal !== '-')
+                      <span class="text-sm font-bold text-gray-900">{{ ucfirst(str_replace('_', ' ', $condVal)) }}</span>
+                    @else
+                      <span class="text-xs text-gray-400 italic">Tidak diisi</span>
+                    @endif
+                  </div>
+                @endforeach
               @elseif($moduleKey === 'apat')
                 <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
                   <span class="text-sm font-medium text-gray-600">Kondisi Fisik</span>

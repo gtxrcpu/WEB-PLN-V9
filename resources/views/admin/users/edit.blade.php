@@ -79,9 +79,9 @@
           <select name="unit_id"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent @error('unit_id') border-red-500 @enderror">
             <option value="">Pilih Unit (Opsional)</option>
-            @foreach($units as $unit)
+            @foreach(\App\Models\Unit::where('is_active', true)->orderBy('id')->get() as $unit)
               <option value="{{ $unit->id }}" {{ old('unit_id', $user->unit_id) == $unit->id ? 'selected' : '' }}>
-                {{ $unit->code }} - {{ $unit->name }}
+                {{ $unit->name }}
               </option>
             @endforeach
           </select>

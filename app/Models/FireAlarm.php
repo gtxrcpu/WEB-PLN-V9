@@ -130,23 +130,12 @@ class FireAlarm extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        // Generate QR content with equipment info (not URL)
-        $qrContent = json_encode([
-            'type' => 'Fire Alarm',
-            'code' => $this->barcode ?? $this->serial_no,
-            'serial' => $this->serial_no,
-            'location' => $this->location_code ?? '-',
-            'status' => $this->status ?? '-',
-            'zone' => $this->zone ?? '-',
-        ], JSON_UNESCAPED_UNICODE);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'fire-alarm', 
+            'id' => $this->id
+        ]);
 
-        $svg = QrCode::size(300)
-            ->format('svg')
-            ->margin(1)
-            ->errorCorrection('H')
-            ->generate($qrContent);
-
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     /**
@@ -158,14 +147,13 @@ class FireAlarm extends Model
             return;
         }
 
-        $url = route('fire-alarm.riwayat', $this->id);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'fire-alarm',
+            'id' => $this->id
+        ]);
 
         try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
 
             $path = 'qrcodes/fire-alarm/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);
@@ -173,7 +161,7 @@ class FireAlarm extends Model
             $this->qr_svg_path = $path;
             $this->saveQuietly();
         } catch (\Exception $e) {
-            \Log::error('Failed to generate QR for Fire Alarm: ' . $e->getMessage());
+            \Log::error('Failed to generate QR for Fire Alarm ' . $this->id . ': ' . $e->getMessage());
         }
     }
 

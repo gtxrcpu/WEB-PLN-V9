@@ -25,19 +25,19 @@
         </div>
     </div>
 
-    {{-- FORM --}}
-    @if ($errors->any())
-        <div class="no-print mt-4 mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <div class="font-semibold mb-1">Periksa kembali:</div>
-            <ul class="list-disc pl-4 space-y-0.5">
-                @foreach ($errors->all() as $msg)
-                    <li>{{ $msg }}</li>
+    {{-- ERROR MESSAGES --}}
+    @if($errors->any())
+        <div class="no-print mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p class="font-semibold text-red-800 mb-2">Terdapat kesalahan:</p>
+            <ul class="list-disc list-inside text-sm text-red-700">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
 
-    <form method="POST" action="{{ route('box-hydrant.kartu.store') }}" class="mt-4 space-y-4">
+    <form method="POST" action="{{ route('box-hydrant.kartu.store') }}">
         @csrf
         <input type="hidden" name="box_hydrant_id" value="{{ $boxHydrant->id }}">
 
@@ -55,9 +55,7 @@
                     <tbody class="divide-y divide-gray-200">
                         @if($template && $template->inspection_fields)
                             @foreach($template->inspection_fields as $index => $field)
-                                @php
-                                    $fieldName = 'inspection_' . $index;
-                                @endphp
+                                @php $fieldName = 'inspection_' . $index; @endphp
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3 font-medium text-gray-900">{{ $field['label'] }}</td>
                                     <td class="px-4 py-3">
@@ -90,13 +88,12 @@
                                 </tr>
                             @endforeach
                         @else
-                            {{-- FALLBACK jika template tidak ada --}}
                             @foreach([
                                 'pilar_hydrant' => 'Pilar Hydrant',
-                                'box_hydrant' => 'Box Hydrant',
-                                'nozzle' => 'Nozzle',
-                                'selang' => 'Selang',
-                                'uji_fungsi' => 'Uji Fungsi'
+                                'box_hydrant'   => 'Box Hydrant',
+                                'nozzle'        => 'Nozzle',
+                                'selang'        => 'Selang',
+                                'uji_fungsi'    => 'Uji Fungsi'
                             ] as $field => $label)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3 font-medium text-gray-900">{{ $label }}</td>
@@ -135,7 +132,7 @@
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">-- Pilih Kesimpulan --</option>
                     <option value="baik" {{ old('kesimpulan') === 'baik' ? 'selected' : '' }}>Baik</option>
-                    <option value="tidak_baik" {{ old('kesimpulan') === 'tidak_baik' ? 'selected' : '' }}>Tidak Baik</option>
+                    <option value="tidak baik" {{ old('kesimpulan') === 'tidak baik' ? 'selected' : '' }}>Tidak Baik</option>
                 </select>
                 @error('kesimpulan')
                     <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
@@ -164,6 +161,31 @@
             </div>
 
             <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor Revisi</label>
+                <div class="w-full px-4 py-2 border-2 rounded-lg 
+                    @if(($nextRevisi ?? '00') !== '00') border-red-300 bg-red-50 @else border-gray-300 bg-gray-50 @endif">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-lg 
+                            @if(($nextRevisi ?? '00') !== '00') text-red-700 @else text-gray-700 @endif">
+                            {{ $nextRevisi ?? '00' }}
+                        </span>
+                        @if(($nextRevisi ?? '00') !== '00')
+                            <span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded">Kartu Revisi</span>
+                        @else
+                            <span class="text-xs text-gray-500">Kartu Baru</span>
+                        @endif
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                    @if(($nextRevisi ?? '00') !== '00')
+                        Kartu sebelumnya ditolak, silakan perbaiki sesuai feedback leader
+                    @else
+                        Kartu kendali baru untuk Box Hydrant ini
+                    @endif
+                </p>
+            </div>
+
+            <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Pengawas</label>
                 <input type="text" name="pengawas"
                     value="{{ old('pengawas') }}"
@@ -177,8 +199,8 @@
             <div class="flex justify-end">
                 <div class="text-center">
                     @php
-                        $lokasi = 'Surabaya'; // default
-                        $labelPimpinan = 'Team Leader K3L & KAM'; // default
+                        $lokasi = 'Surabaya';
+                        $labelPimpinan = 'Team Leader K3L & KAM';
                         if ($template && $template->footer_fields) {
                             $lokasiField = collect($template->footer_fields)->firstWhere('label', 'Lokasi');
                             if ($lokasiField && isset($lokasiField['value'])) {
@@ -199,18 +221,18 @@
             </div>
         </div>
 
-        {{-- FOOTER TOMBOL (HANYA LAYAR) --}}
-        <div class="no-print pt-4 mt-2 border-t border-dashed border-slate-200 flex items-center justify-between gap-3 text-xs">
-            <p class="text-slate-500">
-                <span class="text-red-600">*</span> Wajib diisi. Data akan disimpan dan menunggu approval.
+        {{-- BUTTONS --}}
+        <div class="no-print mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                <span class="text-red-600">*</span> Wajib diisi
             </p>
-            <div class="flex gap-2">
-                <a href="{{ route('box-hydrant.index') }}"
-                   class="px-3 py-2 rounded-lg border text-sm hover:bg-slate-50">
+            <div class="flex gap-3">
+                <a href="{{ route('box-hydrant.index') }}" 
+                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
                     Batal
                 </a>
-                <button type="submit"
-                        class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 shadow-md">
+                <button type="submit" 
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-md">
                     Simpan Kartu Kendali
                 </button>
             </div>

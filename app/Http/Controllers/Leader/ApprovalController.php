@@ -122,10 +122,66 @@ class ApprovalController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        $signatures = \App\Models\Signature::where('is_active', true)->get();
+
         return view('leader.approvals.index', [
             'pendingApprovals' => $paginator,
             'moduleFilter' => $moduleFilter,
             'modules' => $models,
+            'signatures' => $signatures,
+        ]);
+    }
+
+    public function batchApprove(Request $request)
+    {
+        $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.id' => ['required', 'integer'],
+            'items.*.module' => ['required', 'string'],
+            'signature_id' => ['required', 'exists:signatures,id'],
+        ]);
+
+        $user = auth()->user();
+        $unitId = $this->getViewingUnitId();
+        $approvedCount = 0;
+
+        foreach ($request->items as $item) {
+            $module = $item['module'];
+            $id = $item['id'];
+
+            try {
+                $config = $this->getModelConfig($module);
+                $modelClass = $config['model'];
+                $equipmentRelation = $config['equipment'];
+
+                $kartu = $modelClass::with([$equipmentRelation])->find($id);
+                if (!$kartu) continue;
+
+                // Pastikan kartu ini dari unit leader
+                if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                    continue;
+                }
+
+                if (!$kartu->leader_approved_at) {
+                    $kartu->update([
+                        'leader_signature_id' => $request->signature_id,
+                        'leader_approved_by' => auth()->id(),
+                        'leader_approved_at' => now(),
+                        'leader_rejected_by' => null,
+                        'leader_rejected_at' => null,
+                        'leader_rejection_reason' => null,
+                    ]);
+                    $approvedCount++;
+                }
+            } catch (\Exception $e) {
+                // Ignore missing module or other errors for individual items
+                continue;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Berhasil menyetujui {$approvedCount} kartu kendali."
         ]);
     }
 

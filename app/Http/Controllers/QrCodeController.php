@@ -24,15 +24,11 @@ class QrCodeController extends Controller
         }
         
         try {
-            // Generate QR code as PNG
-            $qrCode = QrCode::format('png')
-                ->size($size)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($data);
+            // Generate visual QR SVG
+            $qrSvg = \App\Helpers\QrCodeHelper::generateVisualSvg($data);
             
-            return response($qrCode)
-                ->header('Content-Type', 'image/png')
+            return response($qrSvg)
+                ->header('Content-Type', 'image/svg+xml')
                 ->header('Cache-Control', 'public, max-age=31536000'); // Cache 1 year
         } catch (\Exception $e) {
             abort(500, 'Failed to generate QR code');

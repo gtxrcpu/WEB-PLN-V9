@@ -9,6 +9,7 @@
           </svg>
         </div>
         <div class="flex-1">
+          <h2 class="text-white text-xl sm:text-3xl font-bold mb-2 drop-shadow-sm">Halo, {{ auth()->user()->name ?? 'User' }} 👋</h2>
           <p class="text-white/80 text-xs sm:text-sm font-medium">Unit Anda</p>
           <h3 class="text-white text-lg sm:text-2xl font-bold">{{ auth()->user()->unit->code }}</h3>
           <p class="text-white/90 text-xs sm:text-sm mt-0.5">{{ auth()->user()->unit->name }}</p>

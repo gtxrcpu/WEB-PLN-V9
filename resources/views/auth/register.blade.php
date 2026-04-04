@@ -4,7 +4,11 @@
       <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4 hover:shadow-2xl transition-shadow duration-300">
         {{-- Logo & Header (lebih ringkas) --}}
         <div class="text-center">
-          <img src="{{ asset('/images/logoo.png') }}" alt="Logo" class="h-12 w-auto mx-auto mb-3">
+          <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+              <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-8 sm:h-10 w-auto object-contain">
+              <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-8 sm:h-10 w-auto object-contain">
+              <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-8 sm:h-10 w-auto object-contain">
+          </div>
           <h2 class="text-2xl font-extrabold text-gray-900">Create Account</h2>
           <p class="mt-1 text-xs text-gray-600">Register to start using the system</p>
         </div>

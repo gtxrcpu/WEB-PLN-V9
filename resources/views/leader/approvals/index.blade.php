@@ -1,4 +1,4 @@
-﻿<x-layouts.app :title="'Pending Approvals â€” Leader'">
+<x-layouts.app :title="'Pending Approvals â€” Leader'">
   <div class="mb-4 sm:mb-6">
     <a href="{{ route('leader.dashboard') }}"
       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-sm border border-slate-200 mb-4">
@@ -55,6 +55,9 @@
       <table class="w-full">
         <thead class="bg-slate-50 border-b border-slate-200">
           <tr>
+            <th class="px-6 py-4 w-12">
+              <input type="checkbox" id="selectAllCheckbox" onclick="window.toggleAllCheckboxes(this)" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all">
+            </th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Modul</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Equipment</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Tanggal
@@ -72,6 +75,9 @@
         <tbody class="divide-y divide-slate-200">
           @forelse($pendingApprovals as $kartu)
             <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4">
+                <input type="checkbox" class="approval-checkbox item-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-all" value="{{ $kartu->id }}" data-type="{{ strtolower($kartu->module_type) }}" onclick="if(window.updateBatchUI) window.updateBatchUI()">
+              </td>
               <td class="px-6 py-4">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
                   {{ $kartu->module_label }}
@@ -128,7 +134,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="9" class="px-6 py-12 text-center text-gray-500">
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -147,4 +153,151 @@
       </div>
     @endif
   </div>
+
+  {{-- Batch Approve Action Bar --}}
+  <div id="batch-approve-bar"
+    class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl transform translate-y-full transition-transform duration-300 flex items-center justify-between px-6 py-4 sm:px-8">
+    <div class="flex items-center gap-4">
+      <div class="bg-blue-100 text-blue-700 h-10 w-10 flex items-center justify-center rounded-full font-bold">
+        <span id="selected-count">0</span>
+      </div>
+      <div>
+        <p class="text-sm font-bold text-gray-900">Item Terpilih</p>
+        <p class="text-xs text-gray-500">Pilih tanda tangan dan approve sekaligus</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <select id="batch-signature-id" class="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 py-2 pl-3 pr-10">
+        <option value="">-- Pilih Tanda Tangan --</option>
+        @if(isset($signatures))
+          @foreach($signatures as $sig)
+            <option value="{{ $sig->id }}">{{ $sig->name }} ({{ $sig->position }})</option>
+          @endforeach
+        @endif
+      </select>
+      <button id="btn-batch-approve" disabled
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+        <span id="batch-approve-text">Approve Batch</span>
+        <svg id="batch-approve-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  @push('scripts')
+    <script>
+      // Global functions for inline onclick handlers
+      window.updateBatchUI = function() {
+        const batchActionBar = document.getElementById('batch-approve-bar');
+        const selectedCountEl = document.getElementById('selected-count');
+        const batchSignatureSelect = document.getElementById('batch-signature-id');
+        const btnBatchApprove = document.getElementById('btn-batch-approve');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+        const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+        const allItemsCount = document.querySelectorAll('.item-checkbox').length;
+        
+        if (selectedCountEl) selectedCountEl.textContent = checkedCount;
+        
+        if (checkedCount > 0) {
+          if (batchActionBar) {
+            batchActionBar.classList.remove('translate-y-full');
+            batchActionBar.classList.add('translate-y-0');
+          }
+        } else {
+          if (batchActionBar) {
+            batchActionBar.classList.add('translate-y-full');
+            batchActionBar.classList.remove('translate-y-0');
+          }
+        }
+
+        if (btnBatchApprove && batchSignatureSelect) {
+          if (checkedCount > 0 && batchSignatureSelect.value !== '') {
+            btnBatchApprove.removeAttribute('disabled');
+          } else {
+            btnBatchApprove.setAttribute('disabled', 'true');
+          }
+        }
+
+        if (selectAllCheckbox && allItemsCount > 0) {
+          selectAllCheckbox.checked = (checkedCount === allItemsCount);
+        }
+      };
+
+      window.toggleAllCheckboxes = function(source) {
+        const isChecked = source.checked;
+        document.querySelectorAll('.item-checkbox').forEach(cb => {
+          cb.checked = isChecked;
+        });
+        window.updateBatchUI();
+      };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const batchSignatureSelect = document.getElementById('batch-signature-id');
+        const btnBatchApprove = document.getElementById('btn-batch-approve');
+        const batchApproveText = document.getElementById('batch-approve-text');
+        const batchApproveSpinner = document.getElementById('batch-approve-spinner');
+
+        if (batchSignatureSelect) {
+          batchSignatureSelect.addEventListener('change', window.updateBatchUI);
+        }
+
+        if (btnBatchApprove) {
+          btnBatchApprove.addEventListener('click', async function () {
+            const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+            if (batchSignatureSelect && !batchSignatureSelect.value) {
+              alert('Silakan pilih tanda tangan terlebih dahulu.');
+              return;
+            }
+
+            const items = Array.from(checkedBoxes).map(cb => ({
+              id: cb.value,
+              module: cb.dataset.type // mapping dataset 'type' ke key 'module' yang diterima backend
+            }));
+
+            // Loading state
+            btnBatchApprove.setAttribute('disabled', 'true');
+            if (batchApproveText) batchApproveText.textContent = 'Memproses...';
+            if (batchApproveSpinner) batchApproveSpinner.classList.remove('hidden');
+
+            try {
+              const signatureId = batchSignatureSelect ? batchSignatureSelect.value : null;
+              const response = await fetch(`{{ route('leader.approvals.batch-approve') }}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                  'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                  items: items,
+                  signature_id: signatureId
+                })
+              });
+
+              const result = await response.json();
+              if (response.ok && result.success) {
+                if (batchApproveText) batchApproveText.textContent = 'Berhasil';
+                if (batchApproveSpinner) batchApproveSpinner.classList.add('hidden');
+                
+                window.location.reload();
+              } else {
+                alert(result.message || 'Terjadi kesalahan saat memproses batch approval.');
+                throw new Error(result.message);
+              }
+            } catch (err) {
+              console.error(err);
+              alert('Gagal melakukan permintaan. Silakan coba lagi.');
+              if (batchApproveText) batchApproveText.textContent = 'Approve Batch';
+              if (batchApproveSpinner) batchApproveSpinner.classList.add('hidden');
+              window.updateBatchUI();
+            }
+          });
+        }
+      });
+    </script>
+  @endpush
 </x-layouts.app>

@@ -1,0 +1,12 @@
+=== TEMPLATE FOUND (id=1) ===
+  field[0] label=Pressure Gauge | key=NULL | type=checkbox
+  field[1] label=Pin & Segel | key=NULL | type=checkbox
+  field[2] label=Selang | key=NULL | type=checkbox
+  field[3] label=Tabung | key=NULL | type=checkbox
+  field[4] label=Label | key=NULL | type=checkbox
+  field[5] label=Kondisi Fisik | key=NULL | type=checkbox
+
+=== LATEST 3 KARTU_APARS ===
+id=18 | pressure_gauge=baik | pin_segel=baik | selang=baik | tabung=tidak_baik | label=baik | kondisi_fisik=baik
+id=17 | pressure_gauge=baik | pin_segel=baik | selang=baik | tabung=tidak_baik | label=baik | kondisi_fisik=baik
+id=16 | pressure_gauge=- | pin_segel=- | selang=- | tabung=- | label=- | kondisi_fisik=-

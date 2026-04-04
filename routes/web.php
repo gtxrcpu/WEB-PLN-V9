@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SearchController;
@@ -12,6 +12,11 @@ Route::get('/', fn() => redirect()->route('guest.dashboard'));
 
 // QR Code Generator (Public - no auth needed for scanning)
 Route::get('/qr', [\App\Http\Controllers\QrCodeController::class, 'generate'])->name('qr.generate');
+
+// Public QR Code Status Scanner Endpoint
+Route::get('/scan/{module}/{id}', [\App\Http\Controllers\EquipmentStatusController::class, 'show'])
+    ->name('equipment.status')
+    ->middleware('signed');
 
 // Guest Routes (No Authentication Required)
 Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(function () {
@@ -72,6 +77,10 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     Route::resource('box-hydrant', \App\Http\Controllers\Admin\BoxHydrantController::class);
     Route::resource('rumah-pompa', \App\Http\Controllers\Admin\RumahPompaController::class);
     Route::resource('p3k', \App\Http\Controllers\Admin\P3kController::class);
+    
+    // Pilot Project CCTV - Superadmin Eksklusif
+    Route::resource('cctvs', \App\Http\Controllers\Admin\CctvController::class);
+    Route::post('cctvs/{cctv}/status', [\App\Http\Controllers\Admin\CctvController::class, 'toggleStatus'])->name('cctvs.toggle-status');
 
     // Kartu Settings (Legacy - will be replaced by templates)
     Route::get('/kartu-settings', [\App\Http\Controllers\Admin\KartuSettingController::class, 'index'])->name('kartu-settings.index');
@@ -87,6 +96,7 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
     // Approvals - Superadmin bisa approve semua kartu
     Route::get('/approvals/check-new', [\App\Http\Controllers\Admin\ApprovalController::class, 'checkNew'])->name('approvals.check-new');
     Route::get('/approvals', [\App\Http\Controllers\Admin\ApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('/approvals/batch-approve', [\App\Http\Controllers\Admin\ApprovalController::class, 'batchApprove'])->name('approvals.batch-approve');
     Route::get('/approvals/{id}', [\App\Http\Controllers\Admin\ApprovalController::class, 'show'])->name('approvals.show');
     Route::post('/approvals/{id}/approve', [\App\Http\Controllers\Admin\ApprovalController::class, 'approve'])->name('approvals.approve');
     Route::post('/approvals/{id}/reject', [\App\Http\Controllers\Admin\ApprovalController::class, 'reject'])->name('approvals.reject');
@@ -112,6 +122,7 @@ Route::middleware(['auth', 'role:leader|superadmin'])->prefix('leader')->name('l
 
     // Approvals - Leader bisa approve kartu di unit-nya
     Route::get('/approvals', [\App\Http\Controllers\Leader\ApprovalController::class, 'index'])->name('approvals.index');
+    Route::post('/approvals/batch-approve', [\App\Http\Controllers\Leader\ApprovalController::class, 'batchApprove'])->name('approvals.batch-approve');
     Route::get('/approvals/{module}/{id}', [\App\Http\Controllers\Leader\ApprovalController::class, 'show'])->name('approvals.show');
     Route::post('/approvals/{module}/{id}/approve', [\App\Http\Controllers\Leader\ApprovalController::class, 'approve'])->name('approvals.approve');
     Route::post('/approvals/{module}/{id}/reject', [\App\Http\Controllers\Leader\ApprovalController::class, 'reject'])->name('approvals.reject');
@@ -222,10 +233,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/apar/{apar}/edit', [AparController::class, 'edit'])->name('apar.edit');
     Route::put('/apar/{apar}', [AparController::class, 'update'])->name('apar.update');
 });
-
-Route::resource('apar', \App\Http\Controllers\AparController::class)
-    ->only(['index', 'create', 'store'])
-    ->middleware(['auth']);
 
 // Ini Modul APAT
 Route::middleware(['auth'])->group(function () {

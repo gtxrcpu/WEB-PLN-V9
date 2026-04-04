@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Signature extends Model
 {
@@ -26,13 +27,7 @@ class Signature extends Model
         if (empty($this->signature_path)) {
             return null;
         }
-        
-        // Cek apakah file exists
-        $fullPath = public_path('storage/' . $this->signature_path);
-        if (file_exists($fullPath)) {
-            return url('storage/' . $this->signature_path);
-        }
-        
-        return null;
+
+        return Storage::url($this->signature_path);
     }
 }

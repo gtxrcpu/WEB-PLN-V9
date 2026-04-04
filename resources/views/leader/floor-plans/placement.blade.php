@@ -27,18 +27,42 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-slate-600" x-show="saving">
-                            <svg class="w-4 h-4 inline animate-spin" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                    <div class="flex items-center gap-3">
+                        <!-- Saving Indicator -->
+                        <span class="text-sm text-slate-600 flex items-center gap-2" x-show="saving">
+                            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
-                            Menyimpan...
+                            <span class="font-medium">Menyimpan...</span>
                         </span>
-                        <span class="text-sm text-green-600 font-medium" x-show="saved" x-transition>
-                            ✓ Tersimpan
-                        </span>
+
+                        <!-- Saved Indicator with Counter -->
+                        <div class="flex items-center gap-2" x-show="!saving && saveCount > 0">
+                            <div
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span class="text-sm font-semibold text-green-700">
+                                    <span x-text="saveCount"></span> Tersimpan
+                                </span>
+                            </div>
+                            <span class="text-xs text-slate-500" x-show="lastSavedTime" x-text="lastSavedTime"></span>
+                        </div>
+
+                        <!-- Error Indicator -->
+                        <div class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg"
+                            x-show="saveError" x-transition>
+                            <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <span class="text-sm font-medium text-red-700">Gagal menyimpan</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -237,6 +261,9 @@
                 activeTab: 'apar',
                 saving: false,
                 saved: false,
+                saveError: false,
+                saveCount: 0,
+                lastSavedTime: '',
                 dragging: null,
                 dragOffset: { x: 0, y: 0 },
                 initialized: false,
@@ -472,8 +499,10 @@
 
                 async savePosition(marker) {
                     this.saving = true;
+                    this.saveError = false;
+                    
                     try {
-                        await fetch('{{ route("leader.floor-plans.save-placement", $floorPlan) }}', {
+                        const response = await fetch('{{ route("leader.floor-plans.save-placement", $floorPlan) }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -486,16 +515,40 @@
                                 y: marker.y
                             })
                         });
-                        this.showSaved();
+
+                        const data = await response.json();
+                        
+                        if (response.ok && data.success) {
+                            this.saveCount++;
+                            this.updateLastSavedTime();
+                            this.showSaved();
+                            console.log('✓ Saved:', marker.name, 'at', marker.x.toFixed(2) + '%', marker.y.toFixed(2) + '%');
+                        } else {
+                            throw new Error(data.message || 'Failed to save');
+                        }
                     } catch (error) {
                         console.error('Failed to save:', error);
+                        this.saveError = true;
+                        setTimeout(() => this.saveError = false, 5000);
+                        
+                        // Show alert for critical errors
+                        alert('Gagal menyimpan posisi peralatan. Silakan coba lagi atau refresh halaman.');
                     }
+                    
                     this.saving = false;
+                },
+
+                updateLastSavedTime() {
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
+                    this.lastSavedTime = `${hours}:${minutes}:${seconds}`;
                 },
 
                 showSaved() {
                     this.saved = true;
-                    setTimeout(() => this.saved = false, 2000);
+                    setTimeout(() => this.saved = false, 3000);
                 }
             }
         }

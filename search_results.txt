@@ -1,0 +1,46 @@
+app/helpers.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/helpers.php:            $qrCode = QrCode::format('png')
+app/Models/Apat.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/Apat.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/P3k.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/P3k.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/Apar.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/Apar.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/Apar.php:        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($qrContent);
+app/Models/Apar.php:        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+app/Models/Apar.php:        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+app/Models/BoxHydrant.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/BoxHydrant.php:        $svg = QrCode::size(300)
+app/Models/BoxHydrant.php:        $svg = QrCode::size(300)
+app/Models/BoxHydrant.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/RumahPompa.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/RumahPompa.php:        $svg = QrCode::size(300)
+app/Models/RumahPompa.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/Apab.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/Apab.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Models/FireAlarm.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Models/FireAlarm.php:        $svg = QrCode::size(300)
+app/Models/FireAlarm.php:        $svg = QrCode::size(300)
+app/Models/FireAlarm.php:            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+app/Http/Controllers/QrCodeController.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Http/Controllers/QrCodeController.php:class QrCodeController extends Controller
+app/Http/Controllers/QrCodeController.php:            $qrSvg = \App\Helpers\QrCodeHelper::generateVisualSvg($data);
+app/console/commands/GenerateFireAlarmQrCodes.php:class GenerateFireAlarmQrCodes extends Command
+app/console/commands/GenerateAparQrCodes.php:class GenerateAparQrCodes extends Command
+app/Helpers/QrCodeHelper.php:use SimpleSoftwareIO\QrCode\Facades\QrCode;
+app/Helpers/QrCodeHelper.php:class QrCodeHelper
+app/Helpers/QrCodeHelper.php:            $qrCode = QrCode::format('png')
+app/Helpers/QrCodeHelper.php:            $qrCode = QrCode::format('svg')
+app/Helpers/QrCodeHelper.php:            $qrSvg = QrCode::format('svg')
+routes/web.php:Route::get('/qr', [\App\Http\Controllers\QrCodeController::class, 'generate'])->name('qr.generate');
+resources/views/quick/scan.blade.php:        let html5QrCode = null;
+resources/views/quick/scan.blade.php:            html5QrCode = new Html5Qrcode("qr-video");
+resources/views/quick/scan.blade.php:            html5QrCode.start(
+resources/views/quick/scan.blade.php:                    if (html5QrCode && isScanning) {
+resources/views/quick/scan.blade.php:                            html5QrCode.stop().catch(e => console.log('Stop error (ignored):', e));
+resources/views/quick/scan.blade.php:            if (!html5QrCode || !isScanning) return;
+resources/views/quick/scan.blade.php:            html5QrCode.stop()
+resources/views/quick/scan.blade.php:                    html5QrCode = null;
+resources/views/quick/scan.blade.php:                    html5QrCode = null;
+resources/views/quick/scan.blade.php:            if (isScanning && html5QrCode) {
+resources/views/quick/scan.blade.php:                    html5QrCode.stop().catch(e => { });

@@ -14,9 +14,10 @@
             <div
                 class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 space-y-6 transform hover:shadow-3xl transition-all duration-300 border border-white/20">
                 <div class="text-center">
-                    <div class="mx-auto mb-6">
-                        <img src="{{ asset('/images/logoo.png') }}" alt="Logo"
-                            class="h-16 w-auto mx-auto drop-shadow-lg">
+                    <div class="flex items-center justify-center gap-2 sm:gap-4 mb-6">
+                        <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-lg">
+                        <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-lg">
+                        <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-10 sm:h-12 md:h-14 w-auto object-contain drop-shadow-lg">
                     </div>
                     <h2 class="text-3xl font-extrabold text-gray-900">Welcome Back</h2>
                     <p class="mt-2 text-sm text-gray-600">Sign in to continue to your account</p>

@@ -1,9 +1,5 @@
 {{-- resources/views/apar/create.blade.php --}}
-@extends('layouts.app')
-
-@section('title', 'Tambah APAR')
-
-@section('content')
+<x-layouts.app :title="'Tambah APAR'">
 <div class="max-w-4xl mx-auto px-4 py-6 space-y-6">
     {{-- Header Section --}}
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 p-8 shadow-xl">
@@ -49,8 +45,10 @@
             </div>
         </div>
 
-        <form action="{{ route('apar.store') }}" method="POST" class="p-8">
+        <form action="{{ route('apar.store') }}" method="POST" class="p-8" id="aparCreateForm">
             @csrf
+            {{-- Idempotency token: unik per load, mencegah double-submit --}}
+            <input type="hidden" name="_submission_token" value="{{ Str::uuid() }}">
 
             <div class="space-y-6">
                 {{-- Serial Preview --}}
@@ -257,4 +255,26 @@
         </form>
     </div>
 </div>
-@endsection
+
+{{-- Script pencegah double-submit --}}
+<script>
+(function() {
+    var form = document.getElementById('aparCreateForm');
+    var submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+    var submitted = false;
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            if (submitted) {
+                e.preventDefault();
+                return false;
+            }
+            submitted = true;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Menyimpan...';
+        });
+    }
+})();
+</script>
+
+</x-layouts.app>

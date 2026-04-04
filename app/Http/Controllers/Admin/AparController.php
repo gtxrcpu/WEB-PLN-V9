@@ -54,6 +54,7 @@ class AparController extends Controller
 
         $apar = Apar::create([
             'user_id' => auth()->id(),
+            'unit_id' => session('viewing_unit_id'), // Assign to viewed unit
             'name' => 'APAR ' . $serial,
             'barcode' => $barcode,
             'serial_no' => $serial,

@@ -274,22 +274,74 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                        @foreach([
-                            'pressure_gauge' => 'Pressure Gauge',
-                            'pin_segel' => 'Pin & Segel',
-                            'selang' => 'Selang',
-                            'tabung' => 'Tabung',
-                            'label' => 'Label',
-                            'kondisi_fisik' => 'Kondisi Fisik'
-                        ] as $field => $label)
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $label }}</td>
+                        @php
+                            // Kolom DB berurutan (harus sama dengan urutan inspect fields di template)
+                            $aparDbCols = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
+
+                            // Mapping field DB -> label tampilan (fallback jika template tidak ada)
+                            $aparFieldDisplay = [
+                                'pressure_gauge' => 'Pressure Gauge',
+                                'pin_segel'      => 'Pin & Segel',
+                                'selang'         => 'Selang',
+                                'tabung'         => 'Tabung',
+                                'label'          => 'Label',
+                                'kondisi_fisik'  => 'Kondisi Fisik',
+                            ];
+
+                            $templateApar = \App\Models\KartuTemplate::getTemplate('apar');
+
+                            if ($templateApar && $templateApar->inspection_fields) {
+                                $viewRows = [];
+                                foreach ($templateApar->inspection_fields as $index => $tf) {
+                                    $key = $tf['key'] ?? null;
+
+                                    // Cari kolom DB: pakai key jika valid, fallback ke index-based
+                                    if ($key && isset($aparFieldDisplay[$key])) {
+                                        $dbCol = $key;
+                                    } elseif ($key && in_array($key, $aparDbCols)) {
+                                        $dbCol = $key;
+                                    } elseif (isset($aparDbCols[$index])) {
+                                        // Key NULL: gunakan urutan index (sesuai cara controller menyimpan)
+                                        $dbCol = $aparDbCols[$index];
+                                    } else {
+                                        $dbCol = null;
+                                    }
+
+                                    $viewRows[] = ['label' => $tf['label'], 'db_col' => $dbCol];
+                                }
+                            } else {
+                                // Fallback: tidak ada template, tampilkan semua kolom DB
+                                $viewRows = array_map(fn($col, $lbl) => ['label' => $lbl, 'db_col' => $col],
+                                    array_keys($aparFieldDisplay), array_values($aparFieldDisplay));
+                            }
+                        @endphp
+                        @foreach($viewRows as $row)
+                            @php
+                                $dbCol = $row['db_col'];
+                                $val   = $dbCol ? ($kartu->$dbCol ?? null) : null;
+                            @endphp
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $row['label'] }}</td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        @if($kartu->$field === 'baik') bg-green-100 text-green-700
-                                        @else bg-red-100 text-red-700 @endif">
-                                        {{ ucfirst(str_replace('_', ' ', $kartu->$field)) }}
-                                    </span>
+                                    @if($val === 'baik')
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-200">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                            Baik
+                                        </span>
+                                    @elseif($val === 'tidak_baik')
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-200">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            Tidak Baik
+                                        </span>
+                                    @elseif($val && $val !== '-')
+                                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                            {{ ucfirst(str_replace('_', ' ', $val)) }}
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-400 italic">
+                                            Tidak diisi / Belum ada data
+                                        </span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

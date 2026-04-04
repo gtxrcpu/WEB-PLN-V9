@@ -189,7 +189,165 @@ class ApprovalController extends Controller
             ->concat($p3kKartu)
             ->sortByDesc('created_at');
 
-        return view('admin.approvals.index', compact('pendingApprovals', 'units', 'currentViewingUnit', 'unitId'));
+        $signatures = \App\Models\Signature::where('is_active', true)->get();
+
+        return view('admin.approvals.index', compact('pendingApprovals', 'units', 'currentViewingUnit', 'unitId', 'signatures'));
+    }
+
+    public function batchApprove(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'items' => ['required', 'array', 'min:1'],
+                'items.*.id' => ['required', 'integer'],
+                'items.*.type' => ['required', 'string'],
+                'signature_id' => ['required', 'exists:signatures,id'],
+            ]);
+
+            $unitId = $this->getAuthUserUnitId();
+            $approvedCount = 0;
+            $skippedCount = 0;
+            $failedCount = 0;
+            $skippedReasons = [];
+            $failedItems = [];
+
+            // Use database transaction for data consistency
+            \DB::beginTransaction();
+
+            foreach ($validated['items'] as $item) {
+                try {
+                    $type = $item['type'];
+                    $id = $item['id'];
+                    $equipmentRelation = $this->equipmentRelationForType($type);
+
+                    $kartu = match ($type) {
+                        'apar' => \App\Models\KartuApar::with([$equipmentRelation])->find($id),
+                        'apat' => \App\Models\KartuApat::with([$equipmentRelation])->find($id),
+                        'apab' => \App\Models\KartuApab::with([$equipmentRelation])->find($id),
+                        'fire-alarm' => \App\Models\KartuFireAlarm::with([$equipmentRelation])->find($id),
+                        'box-hydrant' => \App\Models\KartuBoxHydrant::with([$equipmentRelation])->find($id),
+                        'rumah-pompa' => \App\Models\KartuRumahPompa::with([$equipmentRelation])->find($id),
+                        'p3k' => \App\Models\KartuP3k::with([$equipmentRelation])->find($id),
+                        default => \App\Models\KartuApar::with([$equipmentRelation])->find($id),
+                    };
+
+                    // Check if kartu exists
+                    if (!$kartu) {
+                        $skippedCount++;
+                        $skippedReasons[] = "ID #{$id} ({$type}): Kartu tidak ditemukan";
+                        \Log::warning("Batch Approve: Kartu not found", ['id' => $id, 'type' => $type]);
+                        continue;
+                    }
+
+                    // Check unit access
+                    if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                        $skippedCount++;
+                        $skippedReasons[] = "ID #{$id} ({$type}): Tidak memiliki akses ke unit ini";
+                        \Log::warning("Batch Approve: Unit access denied", [
+                            'id' => $id,
+                            'type' => $type,
+                            'user_unit' => $unitId,
+                            'kartu_unit' => $kartu->{$equipmentRelation}->unit_id
+                        ]);
+                        continue;
+                    }
+
+                    // Check if rejected by leader
+                    if ($kartu->leader_rejected_at) {
+                        $skippedCount++;
+                        $skippedReasons[] = "ID #{$id} ({$type}): Sudah di-reject oleh leader";
+                        \Log::info("Batch Approve: Already rejected by leader", ['id' => $id, 'type' => $type]);
+                        continue;
+                    }
+
+                    // Check if already approved
+                    if ($kartu->approved_at) {
+                        $skippedCount++;
+                        $skippedReasons[] = "ID #{$id} ({$type}): Sudah di-approve sebelumnya";
+                        \Log::info("Batch Approve: Already approved", ['id' => $id, 'type' => $type]);
+                        continue;
+                    }
+
+                    // Perform approval
+                    $kartu->update([
+                        'signature_id' => $validated['signature_id'],
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                        'rejected_by' => null,
+                        'rejected_at' => null,
+                        'rejection_reason' => null,
+                    ]);
+
+                    $approvedCount++;
+                    \Log::info("Batch Approve: Success", [
+                        'id' => $id,
+                        'type' => $type,
+                        'approved_by' => auth()->id()
+                    ]);
+
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    $failedItems[] = "ID #{$id} ({$type}): {$e->getMessage()}";
+                    \Log::error("Batch Approve: Item failed", [
+                        'id' => $id,
+                        'type' => $type,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    // Continue with other items even if one fails
+                    continue;
+                }
+            }
+
+            // Commit transaction
+            \DB::commit();
+
+            // Prepare response message
+            $message = "Berhasil meng-approve {$approvedCount} kartu kendali.";
+            
+            if ($skippedCount > 0) {
+                $message .= " {$skippedCount} item di-skip.";
+            }
+            
+            if ($failedCount > 0) {
+                $message .= " {$failedCount} item gagal diproses.";
+            }
+
+            // Log summary
+            \Log::info("Batch Approve: Summary", [
+                'total_items' => count($validated['items']),
+                'approved' => $approvedCount,
+                'skipped' => $skippedCount,
+                'failed' => $failedCount,
+                'user_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'details' => [
+                    'approved' => $approvedCount,
+                    'skipped' => $skippedCount,
+                    'failed' => $failedCount,
+                    'total' => count($validated['items']),
+                    'skipped_reasons' => $skippedReasons,
+                    'failed_items' => $failedItems
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            
+            \Log::error("Batch Approve: Fatal error", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memproses batch approval: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show(Request $request, $id)
@@ -245,8 +403,8 @@ class ApprovalController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if (!$kartu->leader_approved_at || $kartu->leader_rejected_at) {
-            return back()->with('error', 'Kartu belum di-approve oleh leader.');
+        if ($kartu->leader_rejected_at) {
+            return back()->with('error', 'Kartu sudah di-reject oleh leader.');
         }
 
         $kartu->update([
@@ -319,70 +477,129 @@ class ApprovalController extends Controller
 
     public function checkNew(Request $request)
     {
-        $lastChecked = $request->query('last_checked');
-        if (!$lastChecked) {
-            return response()->json(['has_new' => false]);
-        }
-
-        // Convert format ISO 8601 string to Carbon instance if needed,
-        // or just use directly if the database driver supports comparison with ISO strings.
-        // Usually safer to parse with Carbon to ensure timezone consistency.
-        $lastCheckedTime = \Carbon\Carbon::parse($lastChecked);
-        $unitId = $this->getAuthUserUnitId();
-
-        $models = [
-            'apar' => [KartuApar::class, 'apar'],
-            'apat' => [KartuApat::class, 'apat'],
-            'apab' => [KartuApab::class, 'apab'],
-            'fire-alarm' => [KartuFireAlarm::class, 'fireAlarm'],
-            'box-hydrant' => [KartuBoxHydrant::class, 'boxHydrant'],
-            'rumah-pompa' => [KartuRumahPompa::class, 'rumahPompa'],
-            'p3k' => [KartuP3k::class, 'p3k'],
-        ];
-
-        $newCount = 0;
-
-        foreach ($models as $type => [$modelClass, $relation]) {
-            $query = $modelClass::query()
-                ->where('created_at', '>', $lastCheckedTime)
-                ->whereNull('approved_at')
-                ->whereNull('rejected_at')
-                ->whereNull('leader_rejected_at');
-
-            // Apply unit filter
-            if ($unitId) {
-                $query->whereHas($relation, function ($q) use ($unitId) {
-                    $q->where('unit_id', $unitId);
-                });
+        try {
+            $lastChecked = $request->query('last_checked');
+            
+            // Validate and parse the timestamp
+            if (!$lastChecked) {
+                return response()->json([
+                    'has_new' => false,
+                    'count' => 0,
+                    'total_pending' => 0,
+                    'timestamp' => now()->toIso8601String()
+                ]);
             }
 
-            $count = $query->count();
-            if ($count > 0) {
-                $newCount += $count;
+            // Clean up timestamp - replace space with + if needed (URL decoding issue)
+            $lastChecked = str_replace(' ', '+', $lastChecked);
+
+            // Try to parse the timestamp with error handling
+            try {
+                $lastCheckedTime = \Carbon\Carbon::parse($lastChecked);
+            } catch (\Exception $e) {
+                \Log::warning('Invalid timestamp format in checkNew', [
+                    'last_checked' => $lastChecked,
+                    'original' => $request->query('last_checked'),
+                    'error' => $e->getMessage()
+                ]);
+                
+                // Return success with no new data instead of error to prevent frontend errors
+                return response()->json([
+                    'has_new' => false,
+                    'count' => 0,
+                    'total_pending' => 0,
+                    'timestamp' => now()->toIso8601String()
+                ]);
             }
-        }
 
-        // Calculate total pending for the badge
-        $totalPending = 0;
-        foreach ($models as $type => [$modelClass, $relation]) {
-            $q = $modelClass::query()
-                ->whereNull('approved_at')
-                ->whereNull('rejected_at')
-                ->whereNull('leader_rejected_at');
+            $unitId = $this->getAuthUserUnitId();
 
-            if ($unitId) {
-                $q->whereHas($relation, function ($sq) use ($unitId) {
-                    $sq->where('unit_id', $unitId);
-                });
+            $models = [
+                'apar' => [KartuApar::class, 'apar'],
+                'apat' => [KartuApat::class, 'apat'],
+                'apab' => [KartuApab::class, 'apab'],
+                'fire-alarm' => [KartuFireAlarm::class, 'fireAlarm'],
+                'box-hydrant' => [KartuBoxHydrant::class, 'boxHydrant'],
+                'rumah-pompa' => [KartuRumahPompa::class, 'rumahPompa'],
+                'p3k' => [KartuP3k::class, 'p3k'],
+            ];
+
+            $newCount = 0;
+
+            foreach ($models as $type => [$modelClass, $relation]) {
+                try {
+                    $query = $modelClass::query()
+                        ->where('created_at', '>', $lastCheckedTime)
+                        ->whereNull('approved_at')
+                        ->whereNull('rejected_at')
+                        ->whereNull('leader_rejected_at');
+
+                    // Apply unit filter
+                    if ($unitId) {
+                        $query->whereHas($relation, function ($q) use ($unitId) {
+                            $q->where('unit_id', $unitId);
+                        });
+                    }
+
+                    $count = $query->count();
+                    if ($count > 0) {
+                        $newCount += $count;
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error counting new {$type} approvals", [
+                        'error' => $e->getMessage(),
+                        'type' => $type
+                    ]);
+                    // Continue with other models even if one fails
+                    continue;
+                }
             }
-            $totalPending += $q->count();
-        }
 
-        return response()->json([
-            'has_new' => $newCount > 0,
-            'count' => $newCount,
-            'total_pending' => $totalPending,
-            'timestamp' => now()->toIso8601String()
-        ]);
+            // Calculate total pending for the badge
+            $totalPending = 0;
+            foreach ($models as $type => [$modelClass, $relation]) {
+                try {
+                    $q = $modelClass::query()
+                        ->whereNull('approved_at')
+                        ->whereNull('rejected_at')
+                        ->whereNull('leader_rejected_at');
+
+                    if ($unitId) {
+                        $q->whereHas($relation, function ($sq) use ($unitId) {
+                            $sq->where('unit_id', $unitId);
+                        });
+                    }
+                    $totalPending += $q->count();
+                } catch (\Exception $e) {
+                    \Log::error("Error counting total pending {$type} approvals", [
+                        'error' => $e->getMessage(),
+                        'type' => $type
+                    ]);
+                    // Continue with other models
+                    continue;
+                }
+            }
+
+            return response()->json([
+                'has_new' => $newCount > 0,
+                'count' => $newCount,
+                'total_pending' => $totalPending,
+                'timestamp' => now()->toIso8601String()
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Unexpected error in checkNew', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'has_new' => false,
+                'count' => 0,
+                'total_pending' => 0,
+                'timestamp' => now()->toIso8601String(),
+                'error' => 'Internal server error'
+            ], 500);
+        }
     }
 }

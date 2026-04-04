@@ -31,6 +31,7 @@
   {{-- Header Section --}}
   <section class="mb-4 sm:mb-8 p-4 sm:p-8 shadow-lg rounded-lg bg-white">
     <div class="mb-4 sm:mb-6">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 drop-shadow-sm">Halo, {{ auth()->user()->name ?? 'Admin' }} 👋</h1>
       <h2 class="text-xl sm:text-2xl font-bold">Admin Dashboard</h2>
       <p class="text-xs sm:text-sm text-gray-600 mt-1">Kelola sistem dan monitor semua modul</p>
     </div>
@@ -53,6 +54,7 @@
             <option value="fire-alarm">Fire Alarm - Panel & Titik Alarm</option>
             <option value="box-hydrant">Box Hydrant - Box, Hose, Nozzle</option>
             <option value="rumah-pompa">Rumah Pompa - Hydrant Rumah Pompa</option>
+            <option value="cctv">CCTV - Surveillance Cameras</option>
           </select>
           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-600">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,7 +378,7 @@
         <div class="flex items-start justify-between mb-3">
           <div class="w-12 h-12 rounded-lg flex items-center justify-center bg-cyan-100">
             <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 2 0 01-2 2z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19 a2 2 0 01-2 2z"/>
             </svg>
           </div>
           <span class="text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all">→</span>
@@ -442,6 +444,7 @@
           ['Box Hydrant', 'box-hydrant.index', 'from-blue-700 to-cyan-500', 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'],
           ['Rumah Pompa', 'rumah-pompa.index', 'from-purple-600 to-indigo-600', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
           ['P3K', 'p3k.pilih-jenis', 'from-emerald-500 to-teal-500', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
+          ['CCTV', 'admin.cctvs.index', 'from-indigo-500 to-purple-500', 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
           ['Referensi', 'reference-videos.index', 'from-purple-500 to-pink-500', 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
         ];
       @endphp
@@ -455,8 +458,9 @@
             'APAB' => 'admin.apab.index',
             'Fire Alarm' => 'admin.fire-alarm.index',
             'Box Hydrant' => 'admin.box-hydrant.index',
-            'Rumah Pompa' => 'admin.rumah-pompa.index',
+             'Rumah Pompa' => 'admin.rumah-pompa.index',
             'P3K' => 'admin.p3k.index',
+            'CCTV' => 'admin.cctvs.index',
             'Referensi' => 'admin.reference-videos.index',
             default => $route
           };
@@ -468,8 +472,9 @@
             'APAB' => 'images/apab.png',
             'Fire Alarm' => 'images/fire-alarm.png',
             'Box Hydrant' => 'images/box-hydrant.png',
-            'Rumah Pompa' => 'images/box-hydrant.png',
+             'Rumah Pompa' => 'images/box-hydrant.png',
             'P3K' => 'images/p3k.png',
+            'CCTV' => 'images/cctv.png',
             'Referensi' => 'images/referensi.png',
             default => null
           };
@@ -567,9 +572,17 @@
         fullName: 'Hydrant Rumah Pompa',
         baik: {{ $rumahPompaData['baik'] ?? 0 }},
         isi_ulang: 0,
-        rusak: {{ $rumahPompaData['rusak'] ?? 0 }},
-        total: {{ $rumahPompaData['total'] ?? 0 }},
+         total: {{ $rumahPompaData['total'] ?? 0 }},
         color: 'rgb(168, 85, 247)'
+      },
+      'cctv': {
+        name: 'CCTV',
+        fullName: 'Surveillance Cameras',
+        baik: {{ $cctvData['baik'] ?? 0 }},
+        isi_ulang: 0,
+        rusak: {{ $cctvData['rusak'] ?? 0 }},
+        total: {{ $cctvData['total'] ?? 0 }},
+        color: 'rgb(99, 102, 241)'
       }
     };
 
@@ -1205,7 +1218,9 @@
 
         async function checkNewApprovals() {
             try {
-                const response = await fetch(`{{ route('admin.approvals.check-new') }}?last_checked=${lastChecked}`);
+                // Replace + with %2B manually to prevent it being decoded as space
+                const encodedTimestamp = encodeURIComponent(lastChecked).replace(/\+/g, '%2B');
+                const response = await fetch(`{{ route('admin.approvals.check-new') }}?last_checked=${encodedTimestamp}`);
                 const data = await response.json();
 
                 if (data.total_pending !== undefined) {

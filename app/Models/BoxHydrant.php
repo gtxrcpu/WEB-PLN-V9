@@ -36,26 +36,17 @@ class BoxHydrant extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        // Generate QR content with equipment info (not URL)
-        $qrContent = json_encode([
-            'type' => 'Box Hydrant',
-            'code' => $this->barcode ?? $this->serial_no,
-            'serial' => $this->serial_no,
-            'location' => $this->location_code ?? '-',
-            'status' => $this->status ?? '-',
-        ], JSON_UNESCAPED_UNICODE);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'box-hydrant', 
+            'id' => $this->id
+        ]);
 
-        $svg = QrCode::size(300)
-            ->format('svg')
-            ->margin(1)
-            ->errorCorrection('H')
-            ->generate($qrContent);
-
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     public function refreshQrSvg(): void
     {
+        // keeping logic intact if it generates simple qr for other specific cases
         $qrContent = $this->barcode ?? $this->serial_no ?? 'H6-' . $this->id;
 
         $svg = QrCode::size(300)
@@ -150,14 +141,13 @@ class BoxHydrant extends Model
             return;
         }
 
-        $url = route('box-hydrant.riwayat', $this->id);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'box-hydrant',
+            'id' => $this->id
+        ]);
 
         try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
 
             $path = 'qrcodes/box-hydrant/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);
@@ -165,7 +155,7 @@ class BoxHydrant extends Model
             $this->qr_svg_path = $path;
             $this->saveQuietly();
         } catch (\Exception $e) {
-            \Log::error('Failed to generate QR for Box Hydrant: ' . $e->getMessage());
+            \Log::error('Failed to generate QR for Box Hydrant ' . $this->id . ': ' . $e->getMessage());
         }
     }
 

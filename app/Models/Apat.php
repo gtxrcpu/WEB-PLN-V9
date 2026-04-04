@@ -142,32 +142,12 @@ class Apat extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        // Generate QR content with equipment info (not URL)
-        $qrContent = json_encode([
-            'type' => 'APAT',
-            'code' => $this->barcode ?? $this->serial_no,
-            'serial' => $this->serial_no,
-            'location' => $this->lokasi ?? '-',  // Fixed: lokasi not location_code
-            'status' => $this->status ?? '-',
-            'capacity' => $this->kapasitas ?? '-',  // Fixed: kapasitas not capacity
-            'type_detail' => $this->jenis ?? '-',  // Fixed: jenis not type
-        ], JSON_UNESCAPED_UNICODE);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'apat', 
+            'id' => $this->id
+        ]);
 
-        try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($qrContent);
-
-            $base64 = base64_encode($qrCode);
-            return 'data:image/svg+xml;base64,' . $base64;
-        } catch (\Exception $e) {
-            // Fallback placeholder
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#f3f4f6"/><text x="150" y="150" text-anchor="middle" font-size="14" fill="#6b7280">QR Error</text></svg>'
-            );
-        }
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
     }
 
     /**
@@ -175,27 +155,24 @@ class Apat extends Model
      */
     public function generateQrSvg($force = false): void
     {
-        // Skip if already exists and not forcing
         if (!$force && $this->qr_svg_path && Storage::disk('public')->exists($this->qr_svg_path)) {
             return;
         }
 
-        $url = route('apat.riwayat', $this->id);
+        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+            'module' => 'apat',
+            'id' => $this->id
+        ]);
 
         try {
-            $qrCode = QrCode::format('svg')
-                ->size(300)
-                ->margin(1)
-                ->errorCorrection('H')
-                ->generate($url);
-
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
             $path = 'qrcodes/apat/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);
 
             $this->qr_svg_path = $path;
             $this->saveQuietly();
         } catch (\Exception $e) {
-            \Log::error('Failed to generate QR for APAT: ' . $e->getMessage());
+            \Log::error('Failed to generate QR for APAT ' . $this->id . ': ' . $e->getMessage());
         }
     }
 

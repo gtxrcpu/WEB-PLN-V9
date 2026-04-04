@@ -1,4 +1,4 @@
-﻿{{-- resources/views/p3k/riwayat.blade.php --}}
+{{-- resources/views/p3k/riwayat.blade.php --}}
 <x-layouts.app :title="'Riwayat Inspeksi P3K ' . ($p3k->serial_no ?? '')">
   <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
@@ -73,7 +73,7 @@
                 </a>
             @endif
         </div>
-        <form method="GET" action="{{ route('p3k.riwayat', $p3k->id) }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <form method="GET" action="{{ route('p3k.riwayat', $p3k->id) }}" class="auto-filter grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
                 <label for="jenis" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kartu</label>
                 <select name="jenis" 

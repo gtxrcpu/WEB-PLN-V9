@@ -11,6 +11,7 @@ use App\Models\BoxHydrant;
 use App\Models\RumahPompa;
 use App\Models\Apab;
 use App\Models\P3k;
+use App\Models\Cctv;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
@@ -33,7 +34,8 @@ class DashboardController extends Controller
         $totalRumahPompa = RumahPompa::count();
         $totalApab = Apab::count();
         $totalP3k = P3k::count();
-        $totalEquipment = $totalApar + $totalApat + $totalFireAlarm + $totalBoxHydrant + $totalRumahPompa + $totalApab + $totalP3k;
+        $totalCctv = Cctv::count();
+        $totalEquipment = $totalApar + $totalApat + $totalFireAlarm + $totalBoxHydrant + $totalRumahPompa + $totalApab + $totalP3k + $totalCctv;
 
         // APAR status breakdown
         $aparData = [
@@ -78,6 +80,13 @@ class DashboardController extends Controller
             'total' => $totalRumahPompa
         ];
 
+        // CCTV status breakdown
+        $cctvData = [
+            'baik' => Cctv::where('status', 'Baik')->count(),
+            'rusak' => Cctv::where('status', 'Jelek')->count(),
+            'total' => $totalCctv
+        ];
+
         // Recent users
         $recentUsers = User::latest()->take(5)->get();
 
@@ -90,13 +99,14 @@ class DashboardController extends Controller
             ['name' => 'Rumah Pompa', 'count' => $totalRumahPompa],
             ['name' => 'APAB', 'count' => $totalApab],
             ['name' => 'P3K', 'count' => $totalP3k],
+            ['name' => 'CCTV', 'count' => $totalCctv],
         ];
 
         // Total items for KPI
         $totalBaik = $aparData['baik'] + $apatData['baik'] + $apabData['baik'] +
-            $fireAlarmData['baik'] + $boxHydrantData['baik'] + $rumahPompaData['baik'];
+            $fireAlarmData['baik'] + $boxHydrantData['baik'] + $rumahPompaData['baik'] + $cctvData['baik'];
         $totalRusak = $aparData['rusak'] + $apatData['rusak'] + $apabData['tidak_baik'] +
-            $fireAlarmData['rusak'] + $boxHydrantData['rusak'] + $rumahPompaData['rusak'];
+            $fireAlarmData['rusak'] + $boxHydrantData['rusak'] + $rumahPompaData['rusak'] + $cctvData['rusak'];
 
 
         // Pending approvals - All modules
@@ -172,12 +182,14 @@ class DashboardController extends Controller
             'totalRumahPompa',
             'totalApab',
             'totalP3k',
+            'totalCctv',
             'aparData',
             'apatData',
             'apabData',
             'fireAlarmData',
             'boxHydrantData',
             'rumahPompaData',
+            'cctvData',
             'recentUsers',
             'equipmentByType',
             'totalItems',

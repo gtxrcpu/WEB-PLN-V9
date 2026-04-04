@@ -1,62 +1,96 @@
-# 🔐 Default User Credentials - PLN K3 Inventaris
+# 🔐 User Credentials — PLN K3 Inventaris (Updated)
 
 ## Quick Login Reference
 
 ### 🔑 SUPERADMIN (Full Access)
 - **Email:** `superadmin@pln.co.id`
-- **Username:** `superadmin`
 - **Password:** `super123`
 - **Access:** All features, all units
 
 ---
 
-### 👨‍💼 LEADER UPW2 (Admin Unit 2)
-- **Email:** `leader.upw2@pln.co.id`
-- **Username:** `leader_upw2`
-- **Password:** `leader123`
-- **Access:** Manage UPW2, approve inspections
+## Unit Listing (Dropdown Values)
 
-### 👨‍💼 LEADER UPW3 (Admin Unit 3)
-- **Email:** `leader.upw3@pln.co.id`
-- **Username:** `leader_upw3`
-- **Password:** `leader123`
-- **Access:** Manage UPW3, approve inspections
-
----
-
-### 👷 PETUGAS UPW2 (Staff Unit 2)
-- **Email:** `petugas.upw2@pln.co.id`
-- **Username:** `petugas_upw2`
-- **Password:** `petugas123`
-- **Access:** Create/edit equipment, create inspections
-
-### 👷 PETUGAS UPW3 (Staff Unit 3)
-- **Email:** `petugas.upw3@pln.co.id`
-- **Username:** `petugas_upw3`
-- **Password:** `petugas123`
-- **Access:** Create/edit equipment, create inspections
+| Code     | Display Name | Keterangan                              |
+|----------|-------------|------------------------------------------|
+| INDUK    | Induk        | Unit Induk (Pusat)                      |
+| UP2WI    | UP2W I       | Unit Pelayanan dan Pengelolaan Wilayah I |
+| UP2WII   | UP2W II      | Unit Pelayanan dan Pengelolaan Wilayah II|
+| UP2WIII  | UP2W III     | Unit Pelayanan dan Pengelolaan Wilayah III|
+| UP2WIV   | UP2W IV      | Unit Pelayanan dan Pengelolaan Wilayah IV |
+| UP2WV    | UP2W V       | Unit Pelayanan dan Pengelolaan Wilayah V  |
+| UP2WVI   | UP2W VI      | Unit Pelayanan dan Pengelolaan Wilayah VI |
 
 ---
 
-### 🔍 INSPECTOR (Auditor)
-- **Email:** `inspector@pln.co.id`
-- **Username:** `inspector`
-- **Password:** `inspector123`
-- **Access:** View all data, export reports
+## 👥 User Accounts per Unit
+
+### INDUK (tidak termasuk konfigurasi email otomatis)
+| Role    | Email                     | Password    |
+|---------|---------------------------|-------------|
+| Leader  | leader.induk@pln.co.id    | leader123   |
+| Petugas | petugas.induk@pln.co.id   | petugas123  |
+
+### UP2W I
+| Role    | Email               | Password |
+|---------|---------------------|----------|
+| Leader  | leader.UPW1@pln.com | password |
+| Petugas | UP2W1@pln.com       | password |
+
+### UP2W II
+| Role    | Email               | Password |
+|---------|---------------------|----------|
+| Leader  | leader.UPW2@pln.com | password |
+| Petugas | UP2W2@pln.com       | password |
+
+### UP2W III (tidak termasuk konfigurasi email otomatis)
+| Role    | Email                     | Password    |
+|---------|---------------------------|-------------|
+| Leader  | leader.upw3@pln.co.id     | leader123   |
+| Petugas | petugas.upw3@pln.co.id    | petugas123  |
+
+### UP2W IV (tidak termasuk konfigurasi email otomatis)
+| Role    | Email                     | Password    |
+|---------|---------------------------|-------------|
+| Leader  | leader.upw4@pln.co.id     | leader123   |
+| Petugas | petugas.upw4@pln.co.id    | petugas123  |
+
+### UP2W V
+| Role    | Email               | Password |
+|---------|---------------------|----------|
+| Leader  | leader.UPW5@pln.com | password |
+| Petugas | UP2W5@pln.com       | password |
+
+### UP2W VI
+| Role    | Email               | Password |
+|---------|---------------------|----------|
+| Leader  | leader.UPW6@pln.com | password |
+| Petugas | UP2W6@pln.com       | password |
 
 ---
 
-## 🚀 Quick Setup (Docker)
+## 🚀 Apply Fixes
 
+### 1. Fix Unit Names in Database (run manually)
 ```bash
-# PowerShell (Windows)
-.\docker-reset-db.ps1
+# Option A: Via artisan migrate
+docker exec <container> php artisan migrate --path=database/migrations/2026_04_01_210000_fix_unit_names_and_add_missing_units.php --force
 
-# Bash (Linux/Mac)
-./docker-reset-db.sh
+# Option B: Via standalone PHP script (from project root in WSL)
+php fix_units.php
 
-# Manual
-docker compose exec frankenphp php artisan migrate:fresh --seed
+# Option C: Via Laravel sail
+./vendor/bin/sail artisan migrate --path=database/migrations/2026_04_01_210000_fix_unit_names_and_add_missing_units.php --force
+```
+
+### 2. Create Missing User Accounts
+```bash
+docker exec <container> php artisan db:seed --class=AdminSeeder --force
+```
+
+### 3. Full Rebuild (Fresh)
+```bash
+docker exec <container> php artisan migrate:fresh --seed
 ```
 
 ---
@@ -71,11 +105,3 @@ For production:
 3. ✅ Set `APP_ENV=production`
 4. ✅ Set `APP_DEBUG=false`
 5. ✅ Use strong passwords (min 12 characters)
-
----
-
-## 📚 Full Documentation
-
-- **Docker Setup:** See `DOCKER_SETUP.md`
-- **Production Deployment:** See `scripts/deployment/README.md`
-- **Testing Guide:** See `tests/manual/MANUAL_TESTING_CHECKLIST.md`

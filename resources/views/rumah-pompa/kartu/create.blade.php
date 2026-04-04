@@ -40,20 +40,20 @@
 
         {{-- TABEL PEMERIKSAAN CHECKLIST - DINAMIS DARI TEMPLATE --}}
         <div class="mb-6">
-            <div class="border border-gray-400 rounded-lg overflow-hidden text-xs">
-                <table class="w-full">
+            <h3 class="text-lg font-bold text-gray-900 mb-3">Hasil Pemeriksaan</h3>
+            <div class="border border-gray-300 rounded-lg overflow-hidden">
+                <table class="w-full text-xs">
                     <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-3 py-2 text-center font-bold text-gray-700 border-r border-gray-400 w-12">NO</th>
-                            <th class="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-400">URAIAN PEKERJAAN</th>
-                            <th class="px-3 py-2 text-center font-bold text-gray-700 w-48">
-                                {{ $template->table_header ?? 'KONDISI' }}
+                            <th class="px-3 py-2 text-center font-bold text-gray-700 border-r border-gray-300 w-12">NO</th>
+                            <th class="px-3 py-2 text-left font-semibold text-gray-700 border-r border-gray-300">Uraian Pekerjaan</th>
+                            <th class="px-3 py-2 text-center font-semibold text-gray-700 w-48">
+                                {{ $template->table_header ?? 'Kondisi' }}
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         @php
-                            // Kelompokkan inspection fields berdasarkan section
                             $inspectionFields = $template->inspection_fields ?? [];
                             $groupedFields = [];
                             foreach ($inspectionFields as $index => $field) {
@@ -66,22 +66,19 @@
                                     'field' => $field
                                 ];
                             }
-                            ksort($groupedFields); // Sort by section A, B, C, etc.
-                            
+                            ksort($groupedFields);
                             $globalIndex = 0;
                         @endphp
 
                         @foreach($groupedFields as $section => $fields)
-                            {{-- SECTION HEADER --}}
                             @if(count($fields) > 0 && !empty($fields[0]['field']['section_title']))
-                            <tr class="bg-gray-200">
-                                <td colspan="3" class="px-3 py-2 font-bold text-gray-900 border-t border-gray-400">
+                            <tr class="bg-gray-100">
+                                <td colspan="3" class="px-3 py-2 font-bold text-gray-900 border-t border-gray-300">
                                     {{ $section }}. {{ strtoupper($fields[0]['field']['section_title']) }}
                                 </td>
                             </tr>
                             @endif
 
-                            {{-- SECTION ITEMS --}}
                             @foreach($fields as $item)
                             @php
                                 $globalIndex++;
@@ -89,23 +86,23 @@
                                 $fieldIndex = $item['index'];
                                 $fieldName = 'inspection_' . $fieldIndex;
                             @endphp
-                            <tr class="border-t border-gray-300 hover:bg-gray-50">
-                                <td class="px-3 py-2 text-center border-r border-gray-300">{{ $globalIndex }}</td>
-                                <td class="px-3 py-2 border-r border-gray-300">{{ $field['label'] }}</td>
+                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                <td class="px-3 py-2 text-center border-r border-gray-200">{{ $globalIndex }}</td>
+                                <td class="px-3 py-2 border-r border-gray-200 font-medium text-gray-900">{{ $field['label'] }}</td>
                                 <td class="px-3 py-2 text-center">
                                     @if($field['type'] === 'checkbox')
                                         <div class="flex items-center justify-center gap-4">
-                                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <label class="inline-flex items-center cursor-pointer">
                                                 <input type="radio" name="{{ $fieldName }}" value="baik"
                                                        class="w-4 h-4 border-gray-300 text-green-600 focus:ring-green-500"
                                                        {{ old($fieldName) === 'baik' ? 'checked' : '' }}>
-                                                <span>Baik</span>
+                                                <span class="ml-1 text-gray-700">Baik</span>
                                             </label>
-                                            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                                            <label class="inline-flex items-center cursor-pointer">
                                                 <input type="radio" name="{{ $fieldName }}" value="tidak_baik"
                                                        class="w-4 h-4 border-gray-300 text-red-600 focus:ring-red-500"
                                                        {{ old($fieldName) === 'tidak_baik' ? 'checked' : '' }}>
-                                                <span>Tidak Baik</span>
+                                                <span class="ml-1 text-gray-700">Tidak Baik</span>
                                             </label>
                                         </div>
                                     @elseif($field['type'] === 'text')
@@ -116,7 +113,7 @@
                                                   class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500">{{ old($fieldName) }}</textarea>
                                     @endif
                                     @error($fieldName)
-                                        <p class="text-[10px] text-rose-600 mt-1">{{ $message }}</p>
+                                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
                                     @enderror
                                 </td>
                             </tr>
@@ -136,80 +133,77 @@
             </div>
         </div>
 
-        {{-- KESIMPULAN & INFO TAMBAHAN --}}
-        <div class="border border-gray-400 text-xs rounded-lg overflow-hidden">
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 font-semibold bg-gray-100">
-                    KESIMPULAN
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <div class="flex items-center gap-6">
-                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                            <input type="radio" name="kesimpulan" value="baik" required
-                                   class="border-gray-300 text-green-600 focus:ring-green-500"
-                                   {{ old('kesimpulan') === 'baik' ? 'checked' : '' }}>
-                            <span>Baik</span>
-                        </label>
-                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
-                            <input type="radio" name="kesimpulan" value="tidak_baik" required
-                                   class="border-gray-300 text-red-600 focus:ring-red-500"
-                                   {{ old('kesimpulan') === 'tidak_baik' ? 'checked' : '' }}>
-                            <span>Tidak Baik</span>
-                        </label>
+        {{-- KESIMPULAN & INFO --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Kesimpulan *</label>
+                <select name="kesimpulan" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">-- Pilih Kesimpulan --</option>
+                    <option value="baik" {{ old('kesimpulan') === 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="tidak baik" {{ old('kesimpulan') === 'tidak baik' ? 'selected' : '' }}>Tidak Baik</option>
+                </select>
+                @error('kesimpulan')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Pemeriksaan *</label>
+                <input type="date" name="tgl_periksa" required
+                    value="{{ old('tgl_periksa', now()->toDateString()) }}"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                @error('tgl_periksa')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Petugas Pemeriksa *</label>
+                <input type="text" name="petugas" required
+                    value="{{ old('petugas') }}"
+                    placeholder="Nama petugas"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                @error('petugas')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor Revisi</label>
+                <div class="w-full px-4 py-2 border-2 rounded-lg 
+                    @if(($nextRevisi ?? '00') !== '00') border-red-300 bg-red-50 @else border-gray-300 bg-gray-50 @endif">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-lg 
+                            @if(($nextRevisi ?? '00') !== '00') text-red-700 @else text-gray-700 @endif">
+                            {{ $nextRevisi ?? '00' }}
+                        </span>
+                        @if(($nextRevisi ?? '00') !== '00')
+                            <span class="text-xs font-medium text-red-600 bg-red-100 px-2 py-1 rounded">
+                                Kartu Revisi
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-500">
+                                Kartu Baru
+                            </span>
+                        @endif
                     </div>
-                    @error('kesimpulan')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
+                <p class="text-xs text-gray-500 mt-1">
+                    @if(($nextRevisi ?? '00') !== '00')
+                        Kartu sebelumnya ditolak, silakan perbaiki sesuai feedback leader
+                    @else
+                        Kartu kendali baru untuk Rumah Pompa ini
+                    @endif
+                </p>
             </div>
 
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Tanggal Pemeriksaan
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <input type="date"
-                           name="tgl_periksa"
-                           required
-                           value="{{ old('tgl_periksa', now()->toDateString()) }}"
-                           class="border border-gray-300 rounded-md px-2 py-1 text-xs focus:ring-2 focus:ring-blue-500">
-                    @error('tgl_periksa')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Petugas
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <input type="text"
-                           name="petugas"
-                           required
-                           value="{{ old('petugas') }}"
-                           placeholder="Nama Petugas"
-                           class="border border-gray-300 rounded-md px-2 py-1 text-xs w-64 focus:ring-2 focus:ring-blue-500">
-                    @error('petugas')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            <div class="grid grid-cols-12">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Pengawas
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <input type="text"
-                           name="pengawas"
-                           value="{{ old('pengawas') }}"
-                           placeholder="Nama Pengawas (opsional)"
-                           class="border border-gray-300 rounded-md px-2 py-1 text-xs w-64 focus:ring-2 focus:ring-blue-500">
-                    @error('pengawas')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Pengawas</label>
+                <input type="text" name="pengawas"
+                    value="{{ old('pengawas') }}"
+                    placeholder="Nama pengawas (opsional)"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
         </div>
 
@@ -218,8 +212,8 @@
             <div class="flex justify-end">
                 <div class="text-center">
                     @php
-                        $lokasi = 'Surabaya'; // default
-                        $labelPimpinan = 'Team Leader K3L & KAM'; // default
+                        $lokasi = 'Surabaya';
+                        $labelPimpinan = 'Team Leader K3L & KAM';
                         if ($template && $template->footer_fields) {
                             $lokasiField = collect($template->footer_fields)->firstWhere('label', 'Lokasi');
                             if ($lokasiField && isset($lokasiField['value'])) {
@@ -240,18 +234,18 @@
             </div>
         </div>
 
-        {{-- FOOTER TOMBOL (HANYA LAYAR) --}}
-        <div class="no-print pt-4 mt-2 border-t border-dashed border-slate-200 flex items-center justify-between gap-3 text-xs">
-            <p class="text-slate-500">
-                <span class="text-red-600">*</span> Wajib diisi. Data akan disimpan dan menunggu approval.
+        {{-- BUTTONS --}}
+        <div class="no-print mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                <span class="text-red-600">*</span> Wajib diisi
             </p>
-            <div class="flex gap-2">
-                <a href="{{ route('rumah-pompa.index') }}"
-                   class="px-3 py-2 rounded-lg border text-sm hover:bg-slate-50">
+            <div class="flex gap-3">
+                <a href="{{ route('rumah-pompa.index') }}" 
+                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
                     Batal
                 </a>
-                <button type="submit"
-                        class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 shadow-md">
+                <button type="submit" 
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-md">
                     Simpan Kartu Kendali
                 </button>
             </div>

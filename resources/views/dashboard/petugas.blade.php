@@ -52,6 +52,9 @@
 
               {{-- Unit Details --}}
               <div class="flex-1">
+                <div class="mb-2">
+                  <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Halo, {{ auth()->user()->name ?? 'User' }} 👋</h1>
+                </div>
                 <div class="flex items-center gap-2 mb-1">
                   <span class="text-xs font-extrabold text-blue-600 uppercase tracking-wider">Unit Kerja</span>
                   @if(auth()->user()->position)

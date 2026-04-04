@@ -248,9 +248,23 @@
             </div>
         @endif
 
+        {{-- SESSION FLASH MESSAGES --}}
+        @if(session('error'))
+            <div class="no-print mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="font-semibold text-red-800">{{ session('error') }}</p>
+            </div>
+        @endif
+        @if(session('success'))
+            <div class="no-print mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p class="font-semibold text-green-800">{{ session('success') }}</p>
+            </div>
+        @endif
+
         {{-- FORM --}}
-        <form method="POST" action="{{ route('kartu.store') }}">
+        <form method="POST" action="{{ route('kartu.store') }}" id="kartuKendaliForm">
             @csrf
+            {{-- Idempotency token: token unik per form load untuk mencegah double-submit --}}
+            <input type="hidden" name="_submission_token" value="{{ Str::uuid() }}">
             <input type="hidden" name="apar_id" value="{{ $apar->id }}">
 
             {{-- TABEL PEMERIKSAAN - FROM TEMPLATE --}}
@@ -268,7 +282,8 @@
                             @if($template && $template->inspection_fields)
                                 @foreach($template->inspection_fields as $index => $field)
                                     @php
-                                        $fieldName = 'inspection_' . $index;
+                                        // Gunakan key sebagai nama field jika ada, fallback ke inspection_N
+                                        $fieldName = !empty($field['key']) ? $field['key'] : ('inspection_' . $index);
                                     @endphp
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-4 py-3 font-medium text-gray-900">{{ $field['label'] }}</td>
@@ -458,6 +473,30 @@
                 </div>
             </div>
         </form>
+
+        {{-- Script pencegah double-submit --}}
+        <script>
+        (function() {
+            var form = document.getElementById('kartuKendaliForm');
+            var submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            var submitted = false;
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function(e) {
+                    if (submitted) {
+                        // Sudah submit sekali, batalkan request kedua
+                        e.preventDefault();
+                        return false;
+                    }
+                    submitted = true;
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Menyimpan...';
+                    submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                });
+            }
+        })();
+        </script>
 
     </div>
 </div>

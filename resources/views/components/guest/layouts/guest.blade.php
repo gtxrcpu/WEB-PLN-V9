@@ -13,13 +13,21 @@
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="{{ route('guest.dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-9 w-auto object-contain">
-          <div class="hidden sm:block">
-            <h1 class="font-bold text-slate-900 text-lg">Inventaris K3 PLN</h1>
-            <p class="text-xs text-slate-500">Sistem Monitoring Peralatan</p>
-          </div>
-        </a>
+        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-7 sm:h-9 w-auto object-contain">
+          </a>
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-7 sm:h-9 w-auto object-contain">
+          </a>
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
+            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-7 sm:h-9 w-auto object-contain">
+          </a>
+        </div>
+        <div class="hidden lg:block ml-2">
+          <h1 class="font-bold text-slate-900 text-lg leading-tight">Inventaris K3 PLN</h1>
+          <p class="text-xs text-slate-500">Sistem Monitoring Peralatan</p>
+        </div>
       </div>
 
       <div class="flex items-center gap-3">
@@ -45,8 +53,12 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-3">
-          <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-8 w-auto object-contain opacity-80">
-          <div class="text-sm text-slate-600">
+          <div class="flex items-center gap-2">
+            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-6 w-auto object-contain opacity-80">
+            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-6 w-auto object-contain opacity-80">
+            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-6 w-auto object-contain opacity-80">
+          </div>
+          <div class="text-sm text-slate-600 border-l border-slate-300 pl-3">
             <div class="font-semibold text-slate-900">PLN - Sistem Inventaris K3</div>
             <div class="text-xs text-slate-500">Monitoring Peralatan Keselamatan</div>
           </div>

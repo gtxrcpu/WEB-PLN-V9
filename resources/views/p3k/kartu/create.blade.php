@@ -44,7 +44,7 @@
         <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 mb-2">Pilih Kotak P3K</label>
             <select name="p3k_id" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">-- Pilih Kotak P3K --</option>
                 @foreach(\App\Models\P3k::orderBy('name')->get() as $p3k)
                     <option value="{{ $p3k->id }}" {{ old('p3k_id') == $p3k->id ? 'selected' : '' }}>
@@ -53,7 +53,7 @@
                 @endforeach
             </select>
             @error('p3k_id')
-                <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
             @enderror
         </div>
 
@@ -63,18 +63,17 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-3">
                     {{ $template && $template->table_header ? $template->table_header : 'Pemeriksaan Stock P3K' }}
                 </h3>
-                <div class="border border-gray-400 rounded-lg overflow-hidden text-xs">
-                    <table class="w-full">
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-3 py-2 text-center font-bold text-gray-700 border-r border-gray-400 w-12">NO</th>
-                                <th class="px-3 py-2 text-left font-bold text-gray-700 border-r border-gray-400">ITEM P3K</th>
-                                <th class="px-3 py-2 text-center font-bold text-gray-700 w-48">KONDISI</th>
+                                <th class="px-3 py-3 text-center font-semibold text-gray-700 border-r border-gray-300 w-12">NO</th>
+                                <th class="px-3 py-3 text-left font-semibold text-gray-700 border-r border-gray-300">Item P3K</th>
+                                <th class="px-3 py-3 text-center font-semibold text-gray-700 w-48">Kondisi</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="divide-y divide-gray-200">
                             @php
-                                // Get items from template or use default
                                 $items = [];
                                 if ($template && $template->inspection_fields) {
                                     foreach ($template->inspection_fields as $field) {
@@ -97,22 +96,22 @@
                                 }
                             @endphp
                             @foreach($items as $index => $item)
-                            <tr class="border-t border-gray-300">
-                                <td class="px-3 py-2 text-center border-r border-gray-300">{{ $index + 1 }}</td>
-                                <td class="px-3 py-2 border-r border-gray-300">{{ $item }}</td>
-                                <td class="px-3 py-2 text-center">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-3 py-3 text-center border-r border-gray-200">{{ $index + 1 }}</td>
+                                <td class="px-3 py-3 font-medium text-gray-900 border-r border-gray-200">{{ $item }}</td>
+                                <td class="px-3 py-3">
                                     <div class="flex items-center justify-center gap-4">
-                                        <label class="inline-flex items-center gap-1.5">
+                                        <label class="inline-flex items-center cursor-pointer">
                                             <input type="radio" name="stock_items[{{ $index }}][kondisi]" value="baik"
-                                                   class="border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                   class="w-4 h-4 border-gray-300 text-green-600 focus:ring-green-500"
                                                    {{ old('stock_items.'.$index.'.kondisi') === 'baik' ? 'checked' : '' }}>
-                                            <span>Baik</span>
+                                            <span class="ml-2 text-gray-700">Baik</span>
                                         </label>
-                                        <label class="inline-flex items-center gap-1.5">
+                                        <label class="inline-flex items-center cursor-pointer">
                                             <input type="radio" name="stock_items[{{ $index }}][kondisi]" value="tidak_baik"
-                                                   class="border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                                   class="w-4 h-4 border-gray-300 text-red-600 focus:ring-red-500"
                                                    {{ old('stock_items.'.$index.'.kondisi') === 'tidak_baik' ? 'checked' : '' }}>
-                                            <span>Tidak Baik</span>
+                                            <span class="ml-2 text-gray-700">Tidak Baik</span>
                                         </label>
                                     </div>
                                     <input type="hidden" name="stock_items[{{ $index }}][item]" value="{{ $item }}">
@@ -130,178 +129,155 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-3">
                     {{ $template && $template->table_header ? $template->table_header : 'Checklist Pemeriksaan' }}
                 </h3>
-                <div class="space-y-3">
-                    @php
-                        // Get checklist items from template or use default
-                        $checkItems = [];
-                        if ($template && $template->inspection_fields) {
-                            foreach ($template->inspection_fields as $field) {
-                                $checkItems[] = $field['label'] ?? '';
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <div class="p-4 space-y-3">
+                        @php
+                            $checkItems = [];
+                            if ($template && $template->inspection_fields) {
+                                foreach ($template->inspection_fields as $field) {
+                                    $checkItems[] = $field['label'] ?? '';
+                                }
                             }
-                        }
-                        if (empty($checkItems)) {
-                            $checkItems = [
-                                'Kotak P3K dalam kondisi baik dan bersih',
-                                'Semua item tersedia lengkap',
-                                'Tidak ada item yang kadaluarsa',
-                                'Obat-obatan tersimpan dengan baik',
-                                'Label dan instruksi terbaca jelas',
-                            ];
-                        }
-                    @endphp
-                    @foreach($checkItems as $index => $checkItem)
-                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <input type="checkbox" name="checklist[{{ $index }}][checked]" value="1"
-                               class="w-5 h-5 border-gray-300 text-emerald-600 focus:ring-emerald-500 rounded"
-                               {{ old('checklist.'.$index.'.checked') ? 'checked' : '' }}>
-                        <label class="text-sm text-gray-700">{{ $checkItem }}</label>
-                        <input type="hidden" name="checklist[{{ $index }}][item]" value="{{ $checkItem }}">
+                            if (empty($checkItems)) {
+                                $checkItems = [
+                                    'Kotak P3K dalam kondisi baik dan bersih',
+                                    'Semua item tersedia lengkap',
+                                    'Tidak ada item yang kadaluarsa',
+                                    'Obat-obatan tersimpan dengan baik',
+                                    'Label dan instruksi terbaca jelas',
+                                ];
+                            }
+                        @endphp
+                        @foreach($checkItems as $index => $checkItem)
+                        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                            <input type="checkbox" name="checklist[{{ $index }}][checked]" value="1"
+                                   class="w-5 h-5 border-gray-300 text-green-600 focus:ring-green-500 rounded"
+                                   {{ old('checklist.'.$index.'.checked') ? 'checked' : '' }}>
+                            <label class="text-sm text-gray-700">{{ $checkItem }}</label>
+                            <input type="hidden" name="checklist[{{ $index }}][item]" value="{{ $checkItem }}">
+                        </div>
+                        @endforeach
                     </div>
-                    @endforeach
                 </div>
             </div>
 
         @else
             {{-- FORM PEMAKAIAN --}}
-            <div class="mb-6 space-y-4">
+            <div class="mb-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-3">
                     {{ $template && $template->table_header ? $template->table_header : 'Detail Pemakaian' }}
                 </h3>
-                
-                @php
-                    // Get item options from template
-                    $itemOptions = [];
-                    if ($template && $template->inspection_fields) {
-                        foreach ($template->inspection_fields as $field) {
-                            if (!empty($field['label'])) {
-                                $itemOptions[] = $field['label'];
+                <div class="space-y-4">
+                    @php
+                        $itemOptions = [];
+                        if ($template && $template->inspection_fields) {
+                            foreach ($template->inspection_fields as $field) {
+                                if (!empty($field['label'])) {
+                                    $itemOptions[] = $field['label'];
+                                }
                             }
                         }
-                    }
-                @endphp
+                    @endphp
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Item yang Digunakan</label>
-                    @if(!empty($itemOptions))
-                        <select name="item_digunakan" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500">
-                            <option value="">-- Pilih Item --</option>
-                            @foreach($itemOptions as $opt)
-                                <option value="{{ $opt }}" {{ old('item_digunakan') === $opt ? 'selected' : '' }}>{{ $opt }}</option>
-                            @endforeach
-                            <option value="lainnya" {{ old('item_digunakan') === 'lainnya' ? 'selected' : '' }}>Lainnya...</option>
-                        </select>
-                        <input type="text" name="item_digunakan_lainnya" value="{{ old('item_digunakan_lainnya') }}"
-                               class="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm hidden"
-                               placeholder="Masukkan nama item lainnya" id="item_lainnya_input">
-                    @else
-                        <input type="text" name="item_digunakan" value="{{ old('item_digunakan') }}" required
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Item yang Digunakan</label>
+                        @if(!empty($itemOptions))
+                            <select name="item_digunakan" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">-- Pilih Item --</option>
+                                @foreach($itemOptions as $opt)
+                                    <option value="{{ $opt }}" {{ old('item_digunakan') === $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                                <option value="lainnya" {{ old('item_digunakan') === 'lainnya' ? 'selected' : '' }}>Lainnya...</option>
+                            </select>
+                            <input type="text" name="item_digunakan_lainnya" value="{{ old('item_digunakan_lainnya') }}"
+                                   class="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg text-sm hidden"
+                                   placeholder="Masukkan nama item lainnya" id="item_lainnya_input">
+                        @else
+                            <input type="text" name="item_digunakan" value="{{ old('item_digunakan') }}" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                                   placeholder="Contoh: Plester, Perban">
+                        @endif
+                        @error('item_digunakan')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah</label>
+                        <input type="number" name="jumlah" value="{{ old('jumlah', 1) }}" required min="1"
                                class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
-                               placeholder="Contoh: Plester, Perban">
-                    @endif
-                    @error('item_digunakan')
-                        <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                               placeholder="Jumlah item yang digunakan">
+                        @error('jumlah')
+                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Jumlah</label>
-                    <input type="number" name="jumlah" value="{{ old('jumlah', 1) }}" required min="1"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
-                           placeholder="Jumlah item yang digunakan">
-                    @error('jumlah')
-                        <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Pengguna</label>
+                        <input type="text" name="nama_pengguna" value="{{ old('nama_pengguna') }}"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                               placeholder="Nama orang yang menggunakan">
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Pengguna</label>
-                    <input type="text" name="nama_pengguna" value="{{ old('nama_pengguna') }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
-                           placeholder="Nama orang yang menggunakan">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Keperluan</label>
-                    <textarea name="keperluan" rows="3"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
-                              placeholder="Jelaskan keperluan penggunaan">{{ old('keperluan') }}</textarea>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Keperluan</label>
+                        <textarea name="keperluan" rows="3"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                                  placeholder="Jelaskan keperluan penggunaan">{{ old('keperluan') }}</textarea>
+                    </div>
                 </div>
             </div>
         @endif
 
-        {{-- KESIMPULAN & INFO TAMBAHAN --}}
-        <div class="border border-gray-400 text-xs rounded-lg overflow-hidden">
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 font-semibold bg-gray-100">
-                    KESIMPULAN
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <div class="flex items-center gap-6">
-                        <label class="inline-flex items-center gap-1.5">
-                            <input type="radio" name="kesimpulan" value="baik" required
-                                   class="border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                                   {{ old('kesimpulan') === 'baik' ? 'checked' : '' }}>
-                            <span>Baik</span>
-                        </label>
-                        <label class="inline-flex items-center gap-1.5">
-                            <input type="radio" name="kesimpulan" value="tidak_baik"
-                                   class="border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                                   {{ old('kesimpulan') === 'tidak_baik' ? 'checked' : '' }}>
-                            <span>Tidak Baik</span>
-                        </label>
-                    </div>
-                    @error('kesimpulan')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+        {{-- KESIMPULAN & INFO --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Kesimpulan *</label>
+                <select name="kesimpulan" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">-- Pilih Kesimpulan --</option>
+                    <option value="baik" {{ old('kesimpulan') === 'baik' ? 'selected' : '' }}>Baik</option>
+                    <option value="tidak baik" {{ old('kesimpulan') === 'tidak baik' ? 'selected' : '' }}>Tidak Baik</option>
+                </select>
+                @error('kesimpulan')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Tanggal {{ ucfirst($jenis) }}
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <input type="date"
-                           name="{{ $jenis === 'pemakaian' ? 'tgl_pemakaian' : 'tgl_periksa' }}"
-                           value="{{ old($jenis === 'pemakaian' ? 'tgl_pemakaian' : 'tgl_periksa', now()->toDateString()) }}"
-                           required
-                           class="border border-gray-300 rounded-md px-2 py-1 text-xs">
-                    @error('tgl_periksa')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                    @error('tgl_pemakaian')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    Tanggal {{ ucfirst($jenis) }} *
+                </label>
+                <input type="date"
+                       name="{{ $jenis === 'pemakaian' ? 'tgl_pemakaian' : 'tgl_periksa' }}"
+                       value="{{ old($jenis === 'pemakaian' ? 'tgl_pemakaian' : 'tgl_periksa', now()->toDateString()) }}"
+                       required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                @error('tgl_periksa')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+                @error('tgl_pemakaian')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="grid grid-cols-12 border-b border-gray-300">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Petugas
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <input type="text"
-                           name="petugas"
-                           value="{{ old('petugas', auth()->user()->name ?? '') }}"
-                           placeholder="Nama Petugas"
-                           required
-                           class="border border-gray-300 rounded-md px-2 py-1 text-xs w-64">
-                    @error('petugas')
-                        <p class="text-[11px] text-rose-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Petugas *</label>
+                <input type="text" name="petugas" required
+                       value="{{ old('petugas', auth()->user()->name ?? '') }}"
+                       placeholder="Nama Petugas"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                @error('petugas')
+                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
-            <div class="grid grid-cols-12">
-                <div class="col-span-3 px-3 py-2 border-r border-gray-300 bg-gray-50">
-                    Catatan
-                </div>
-                <div class="col-span-9 px-3 py-2">
-                    <textarea name="catatan" rows="2"
-                              placeholder="Catatan tambahan (opsional)"
-                              class="border border-gray-300 rounded-md px-2 py-1 text-xs w-full">{{ old('catatan') }}</textarea>
-                </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Catatan</label>
+                <textarea name="catatan" rows="2"
+                          placeholder="Catatan tambahan (opsional)"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('catatan') }}</textarea>
             </div>
         </div>
 
@@ -332,19 +308,19 @@
             </div>
         </div>
 
-        {{-- FOOTER TOMBOL (HANYA LAYAR) --}}
-        <div class="no-print pt-4 mt-2 border-t border-dashed border-slate-200 flex items-center justify-between gap-3 text-xs">
-            <p class="text-slate-500">
-                Data akan disimpan dan bisa dicetak ulang dari modul P3K.
+        {{-- BUTTONS --}}
+        <div class="no-print mt-8 pt-6 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">
+                <span class="text-red-600">*</span> Wajib diisi
             </p>
-            <div class="flex gap-2">
-                <a href="{{ route('p3k.pilih-lokasi', ['jenis' => $jenis]) }}"
-                   class="px-3 py-2 rounded-lg border text-sm hover:bg-slate-50">
+            <div class="flex gap-3">
+                <a href="{{ route('p3k.pilih-lokasi', ['jenis' => $jenis]) }}" 
+                    class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
                     Batal
                 </a>
-                <button type="submit"
-                        class="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-600 text-white text-sm font-medium hover:from-emerald-700 hover:to-green-700">
-                    Simpan Kartu
+                <button type="submit" 
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-md">
+                    Simpan Kartu Kendali
                 </button>
             </div>
         </div>
@@ -367,7 +343,6 @@
                     }
                 });
                 
-                // Check initial value
                 if (select.value === 'lainnya') {
                     inputLainnya.classList.remove('hidden');
                     inputLainnya.required = true;
