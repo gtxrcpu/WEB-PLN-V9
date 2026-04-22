@@ -131,20 +131,34 @@
                 <div class="flex items-center gap-3">
                     <img src="{{ asset('images/logoo.png') }}" alt="PLN Logo" class="h-16 w-auto object-contain">
                     <div class="text-left">
-                        @if($template->company_name)
-                            <div class="font-bold text-sm">{{ $template->company_name }}</div>
-                        @endif
-                        @if($template->company_address)
-                            <div class="text-xs">{{ $template->company_address }}</div>
-                        @endif
-                        @if($template->company_phone)
-                            <div class="text-xs">{{ $template->company_phone }}</div>
-                        @endif
-                        @if($template->company_fax)
-                            <div class="text-xs">{{ $template->company_fax }}</div>
-                        @endif
-                        @if($template->company_email)
-                            <div class="text-xs">{{ $template->company_email }}</div>
+                        @php
+                            // Jika ada resolved_address dan mengandung newline, berarti format baru (multi-line)
+                            $resolvedAddr = $template->resolved_address ?? $template->company_address;
+                            $isMultiLine = $resolvedAddr && strpos($resolvedAddr, "\n") !== false;
+                        @endphp
+                        
+                        @if($isMultiLine)
+                            {{-- Format baru: tampilkan resolved_address yang sudah lengkap --}}
+                            @foreach(explode("\n", $resolvedAddr) as $line)
+                                <div class="text-xs {{ $loop->first ? 'font-bold text-sm' : '' }}">{{ $line }}</div>
+                            @endforeach
+                        @else
+                            {{-- Format lama: tampilkan field terpisah --}}
+                            @if($template->company_name)
+                                <div class="font-bold text-sm">{{ $template->company_name }}</div>
+                            @endif
+                            @if($resolvedAddr)
+                                <div class="text-xs">{{ $resolvedAddr }}</div>
+                            @endif
+                            @if($template->company_phone)
+                                <div class="text-xs">{{ $template->company_phone }}</div>
+                            @endif
+                            @if($template->company_fax)
+                                <div class="text-xs">{{ $template->company_fax }}</div>
+                            @endif
+                            @if($template->company_email)
+                                <div class="text-xs">{{ $template->company_email }}</div>
+                            @endif
                         @endif
                     </div>
                 </div>

@@ -29,6 +29,38 @@
           </select>
         </div>
 
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="flex gap-3 mb-3">
+            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="text-sm text-blue-800">
+              <p class="font-semibold mb-1">Pengaturan Per Unit:</p>
+              <p class="text-xs">Pilih unit untuk mengatur alamat khusus. Template global akan digunakan jika tidak ada unit yang dipilih.</p>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold mb-2">Unit (Opsional)</label>
+            <select name="unit_id" id="unit_id_create" class="w-full px-4 py-2 border rounded-lg">
+              <option value="">-- Template Global (Semua Unit) --</option>
+              @foreach($units as $unit)
+                <option value="{{ $unit->id }}">{{ $unit->code }} - {{ $unit->name }}</option>
+              @endforeach
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Alamat akan otomatis disesuaikan dengan unit yang dipilih</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">
+            Alamat
+            <span class="text-xs font-normal text-gray-500 ml-2" id="address_label_create">(Global)</span>
+          </label>
+          <textarea name="unit_address" rows="2" class="w-full px-4 py-2 border rounded-lg" placeholder="Masukkan alamat perusahaan"></textarea>
+          <p class="text-xs text-gray-500 mt-1">Alamat ini akan digunakan pada kartu kendali</p>
+        </div>
+
         <div>
           <label class="block text-sm font-semibold mb-2">Title</label>
           <input type="text" name="title" required placeholder="KARTU KENDALI"
@@ -52,4 +84,18 @@
       </div>
     </div>
   </form>
+
+  <script>
+    document.getElementById('unit_id_create').addEventListener('change', function() {
+      const label = document.getElementById('address_label_create');
+      const selectedOption = this.options[this.selectedIndex];
+      
+      if (this.value) {
+        const unitText = selectedOption.text.split(' - ')[0];
+        label.textContent = `(Unit: ${unitText})`;
+      } else {
+        label.textContent = '(Global)';
+      }
+    });
+  </script>
 </x-layouts.app>

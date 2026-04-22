@@ -20,7 +20,7 @@ class RumahPompaKartuController extends Controller
         }
 
         $rumahPompa = RumahPompa::findOrFail($rumahPompaId);
-        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa');
+        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         $latestKartu = KartuRumahPompa::where('rumah_pompa_id', $rumahPompaId)
             ->orderBy('revisi', 'desc')
@@ -37,7 +37,8 @@ class RumahPompaKartuController extends Controller
 
     public function store(Request $request)
     {
-        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa');
+        $rumahPompa = RumahPompa::findOrFail($request->rumah_pompa_id);
+        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         // Debug: Log request data
         \Log::info('Rumah Pompa Kartu Store Request', [

@@ -94,10 +94,11 @@ class KartuApar extends Model
     }
 
     /**
-     * Check if approved
+     * Check if approved (by leader OR admin/superadmin)
      */
     public function isApproved()
     {
-        return ! is_null($this->approved_at);
+        // Approved if EITHER leader OR admin has approved
+        return !is_null($this->leader_approved_at) || !is_null($this->approved_at);
     }
 }

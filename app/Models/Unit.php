@@ -56,4 +56,16 @@ class Unit extends Model
     {
         return $this->hasMany(User::class)->where('position', 'petugas');
     }
+
+    // Relasi ke floor plans
+    public function floorPlans()
+    {
+        return $this->hasMany(FloorPlan::class);
+    }
+
+    // Relasi ke signatures
+    public function signatures()
+    {
+        return $this->hasMany(Signature::class);
+    }
 }

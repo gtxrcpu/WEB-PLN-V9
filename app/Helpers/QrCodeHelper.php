@@ -67,9 +67,11 @@ class QrCodeHelper
      * as SVG string with embedded logos at top right and bottom left.
      *
      * @param string $data The data to encode in QR
+     * @param string|null $label Optional label to display below QR (e.g., "APAR", "APAT")
+     * @param string|null $serialNumber Optional serial number to display (e.g., "APAR-UP2WII-002")
      * @return string Raw SVG content
      */
-    public static function generateVisualSvg(string $data): string
+    public static function generateVisualSvg(string $data, ?string $label = null, ?string $serialNumber = null): string
     {
         try {
             // Setup base QR SVG code using standard SimpleSoftwareIO
@@ -99,14 +101,13 @@ class QrCodeHelper
             }
 
             // Create wrapper SVG: 10cm x 10cm
-            // Menggunakan margin/padding minimum agar QR terlihat lebih besar
             $wrapper = '<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="10cm" height="10cm" viewBox="0 0 360 360">
     <!-- Base Canvas -->
     <rect width="360" height="360" fill="#ffffff" />
     
-    <!-- QRCode Matrix (No bottom margin to maximize space) -->
-    <svg x="30" y="60" width="300" height="300">
+    <!-- QRCode Matrix -->
+    <svg x="30" y="60" width="300" height="260">
         ' . str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $qrSvg) . '
     </svg>';
 
@@ -132,6 +133,33 @@ class QrCodeHelper
     <text x="270" y="37" font-family="sans-serif" font-size="14" font-weight="bold" fill="#666" text-anchor="middle">PLN</text>';
             }
 
+            // Add label and serial number at bottom if provided
+            if (!empty($label) || !empty($serialNumber)) {
+                // Background bar for labels
+                $wrapper .= '
+    <!-- Label Background -->
+    <rect x="30" y="325" width="300" height="30" fill="#1e40af" rx="4" />';
+                
+                if (!empty($label) && !empty($serialNumber)) {
+                    // Both label and serial number
+                    $wrapper .= '
+    <!-- Equipment Type Label -->
+    <text x="50" y="345" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="start">' . htmlspecialchars($label) . '</text>
+    <!-- Serial Number -->
+    <text x="310" y="345" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="end">' . htmlspecialchars($serialNumber) . '</text>';
+                } elseif (!empty($serialNumber)) {
+                    // Only serial number (centered)
+                    $wrapper .= '
+    <!-- Serial Number -->
+    <text x="180" y="345" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">' . htmlspecialchars($serialNumber) . '</text>';
+                } else {
+                    // Only label (centered)
+                    $wrapper .= '
+    <!-- Equipment Type Label -->
+    <text x="180" y="345" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">' . htmlspecialchars($label) . '</text>';
+                }
+            }
+
             $wrapper .= '
 </svg>';
 
@@ -145,11 +173,13 @@ class QrCodeHelper
      * Generate custom visual QR code as Base64 Data URI
      *
      * @param string $data The data to encode in QR
+     * @param string|null $label Optional label to display below QR (e.g., "APAR", "APAT")
+     * @param string|null $serialNumber Optional serial number to display (e.g., "APAR-UP2WII-002")
      * @return string Base64 encoded Data URI
      */
-    public static function generateVisualSvgDataUri(string $data): string
+    public static function generateVisualSvgDataUri(string $data, ?string $label = null, ?string $serialNumber = null): string
     {
-        $svg = self::generateVisualSvg($data);
+        $svg = self::generateVisualSvg($data, $label, $serialNumber);
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
 }

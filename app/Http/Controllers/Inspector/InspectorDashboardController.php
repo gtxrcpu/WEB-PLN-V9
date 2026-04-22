@@ -87,8 +87,11 @@ class InspectorDashboardController extends Controller
 
     public function aparRiwayat(Apar $apar)
     {
-        $riwayatInspeksi = $apar->kartuApars()->orderBy('tgl_periksa', 'desc')->get();
-        return view('inspector.apar.riwayat', compact('apar', 'riwayatInspeksi'));
+        $kartuKendali = $apar->kartuApars()
+            ->with(['user', 'leaderApprover', 'leaderSignature', 'approver', 'signature'])
+            ->orderBy('tgl_periksa', 'desc')
+            ->get();
+        return view('inspector.apar.riwayat', compact('apar', 'kartuKendali'));
     }
 
     // APAT

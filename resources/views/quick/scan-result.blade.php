@@ -266,25 +266,41 @@
                 </div>
 
                 {{-- Action Buttons --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     @php
-                        // Determine riwayat route based on type
+                        // Determine routes based on type
                         if ($type === 'apar') {
                             $riwayatRoute = route('apar.riwayat', $equipment);
+                            $editRoute = route('apar.edit', $equipment);
                         } elseif ($type === 'apat') {
                             $riwayatRoute = route('apat.riwayat', $equipment);
+                            $editRoute = route('apat.edit', $equipment);
                         } elseif ($type === 'apab') {
                             $riwayatRoute = route('apab.riwayat', $equipment);
+                            $editRoute = route('apab.edit', $equipment);
                         } elseif ($type === 'fire-alarm') {
                             $riwayatRoute = route('fire-alarm.riwayat', $equipment);
+                            $editRoute = route('fire-alarm.edit', $equipment);
                         } elseif ($type === 'box-hydrant') {
                             $riwayatRoute = route('box-hydrant.riwayat', $equipment);
+                            $editRoute = route('box-hydrant.edit', $equipment);
                         } elseif ($type === 'rumah-pompa') {
                             $riwayatRoute = route('rumah-pompa.riwayat', $equipment);
+                            $editRoute = route('rumah-pompa.edit', $equipment);
                         } else {
                             $riwayatRoute = '#';
+                            $editRoute = '#';
                         }
                     @endphp
+
+                    <a href="{{ $editRoute }}"
+                        class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-cyan-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span>Edit {{ $typeName }}</span>
+                    </a>
 
                     <a href="{{ $riwayatRoute }}"
                         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-semibold hover:from-purple-700 hover:to-indigo-700 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300">
@@ -292,7 +308,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span>Lihat Riwayat Lengkap</span>
+                        <span>Lihat Riwayat</span>
                     </a>
 
                     <a href="{{ route('quick.scan') }}"
@@ -301,7 +317,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1z" />
                         </svg>
-                        <span>Scan Peralatan Lain</span>
+                        <span>Scan Lagi</span>
                     </a>
                 </div>
             </div>

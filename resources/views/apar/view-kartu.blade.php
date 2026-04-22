@@ -49,8 +49,8 @@
                         @if($template->company_name)
                             <div class="font-bold text-sm">{{ $template->company_name }}</div>
                         @endif
-                        @if($template->company_address)
-                            <div class="text-xs">{{ $template->company_address }}</div>
+                        @if($template->resolved_address ?? $template->company_address)
+                            <div class="text-xs">{{ $template->resolved_address ?? $template->company_address }}</div>
                         @endif
                         @if($template->company_phone)
                             <div class="text-xs">{{ $template->company_phone }}</div>
@@ -188,30 +188,60 @@
 
                 {{-- Approval Status --}}
                 @if($kartu->isApproved())
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-gray-900">Di-approve oleh</span>
-                                @if($kartu->approver)
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
-                                        {{ get_user_role_display($kartu->approver) }}
-                                    </span>
-                                @endif
+                    {{-- Leader Approval (if exists) --}}
+                    @if($kartu->leader_approved_at)
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
                             </div>
-                            <p class="text-sm text-gray-700 font-medium">
-                                {{ get_user_display_name($kartu->approver, 'User Deleted') }}
-                            </p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                {{ $kartu->approved_at->format('d M Y, H:i') }} WIB
-                            </p>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-gray-900">Di-approve oleh Leader</span>
+                                    @if($kartu->leaderApprover)
+                                        <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                                            {{ get_user_role_display($kartu->leaderApprover) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-gray-700 font-medium">
+                                    {{ get_user_display_name($kartu->leaderApprover, 'User Deleted') }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ $kartu->leader_approved_at->format('d M Y, H:i') }} WIB
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                @elseif($kartu->rejected_at)
+                    @endif
+                    
+                    {{-- Admin Approval (only show if exists) --}}
+                    @if($kartu->approved_at)
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-gray-900">Di-approve oleh Admin</span>
+                                    @if($kartu->approver)
+                                        <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
+                                            {{ get_user_role_display($kartu->approver) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-gray-700 font-medium">
+                                    {{ get_user_display_name($kartu->approver, 'User Deleted') }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ $kartu->approved_at->format('d M Y, H:i') }} WIB
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+                @elseif($kartu->rejected_at || $kartu->leader_rejected_at)
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0 w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -232,16 +262,63 @@
                                 <p class="text-sm text-gray-700 font-medium">
                                     Ditolak oleh: {{ get_user_display_name($rejector, 'User Deleted') }}
                                 </p>
+                            @elseif($kartu->leader_rejected_by)
+                                @php
+                                    $rejector = \App\Models\User::find($kartu->leader_rejected_by);
+                                @endphp
+                                <p class="text-sm text-gray-700 font-medium">
+                                    Ditolak oleh: {{ get_user_display_name($rejector, 'User Deleted') }}
+                                </p>
                             @endif
                             <p class="text-xs text-gray-500 mt-1">
-                                {{ $kartu->rejected_at->format('d M Y, H:i') }} WIB
+                                {{ ($kartu->rejected_at ?? $kartu->leader_rejected_at)->format('d M Y, H:i') }} WIB
                             </p>
-                            @if($kartu->rejection_reason)
+                            @if($kartu->rejection_reason || $kartu->leader_rejection_reason)
                                 <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                                     <p class="text-xs font-semibold text-red-800 mb-1">Alasan Penolakan:</p>
-                                    <p class="text-sm text-red-700">{{ $kartu->rejection_reason }}</p>
+                                    <p class="text-sm text-red-700">{{ $kartu->rejection_reason ?? $kartu->leader_rejection_reason }}</p>
                                 </div>
                             @endif
+                        </div>
+                    </div>
+                @elseif($kartu->leader_approved_at)
+                    {{-- Leader Approval (waiting for admin) --}}
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-gray-900">Di-approve oleh Leader</span>
+                                @if($kartu->leaderApprover)
+                                    <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
+                                        {{ get_user_role_display($kartu->leaderApprover) }}
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="text-sm text-gray-700 font-medium">
+                                {{ get_user_display_name($kartu->leaderApprover, 'User Deleted') }}
+                            </p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ $kartu->leader_approved_at->format('d M Y, H:i') }} WIB
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {{-- Waiting for Admin --}}
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-semibold text-gray-900">Status</span>
+                            <p class="text-sm text-yellow-700 font-medium mt-1">
+                                Menunggu approval dari Admin/Superadmin
+                            </p>
                         </div>
                     </div>
                 @else
@@ -254,7 +331,7 @@
                         <div class="flex-1">
                             <span class="font-semibold text-gray-900">Status</span>
                             <p class="text-sm text-yellow-700 font-medium mt-1">
-                                Menunggu approval dari Leader/Superadmin
+                                Menunggu approval dari Leader
                             </p>
                         </div>
                     </div>
@@ -370,10 +447,11 @@
             </div>
         </div>
 
-        {{-- TTD SECTION - USING TEMPLATE --}}
+        {{-- TTD SECTION - SINGLE SIGNATURE (Team Leader K3L & KAM) --}}
         <div class="mt-8 pt-6 border-t-2 border-gray-200">
             <div class="flex justify-end">
-                <div class="text-center">
+                {{-- Team Leader K3L & KAM Signature (Right Side Only) --}}
+                <div class="text-center" style="width: 300px;">
                     @php
                         $lokasi = 'Surabaya'; // default
                         if ($template && $template->footer_fields) {
@@ -382,26 +460,40 @@
                                 $lokasi = $lokasiField['value'];
                             }
                         }
+                        
+                        // Determine which signature to show (from leader or superadmin role)
+                        $displaySignature = null;
+                        $displayApprover = null;
+                        
+                        // Priority: Admin/Superadmin signature first, then Leader signature
+                        if ($kartu->signature && $kartu->signature->signature_path) {
+                            $displaySignature = $kartu->signature;
+                            $displayApprover = $kartu->approver;
+                        } elseif ($kartu->leaderSignature && $kartu->leaderSignature->signature_path) {
+                            $displaySignature = $kartu->leaderSignature;
+                            $displayApprover = $kartu->leaderApprover;
+                        }
                     @endphp
+                    
                     <p class="text-sm text-gray-600 mb-1">{{ $lokasi }}, {{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d-m-Y') }}</p>
                     <p class="text-sm font-semibold text-gray-900 mb-2">
-                        @if($kartu->signature)
-                            {{ $kartu->signature->position }}
+                        @if($displaySignature)
+                            {{ $displaySignature->position }}
                         @else
                             Team Leader K3L & KAM
                         @endif
                     </p>
                     
-                    @if($kartu->signature && $kartu->signature->signature_path)
+                    @if($displaySignature)
                         <div class="h-24 flex items-center justify-center mb-2">
-                            <img src="{{ asset('storage/' . $kartu->signature->signature_path) }}" 
-                                 alt="TTD" 
+                            <img src="{{ asset('storage/' . $displaySignature->signature_path) }}" 
+                                 alt="TTD Team Leader K3L & KAM" 
                                  class="max-h-20 w-auto">
                         </div>
-                        <div class="border-t-2 border-gray-400 pt-2 w-56">
-                            <p class="text-sm font-bold">{{ $kartu->signature->name }}</p>
-                            @if($kartu->signature->nip)
-                                <p class="text-xs text-gray-500 mt-1">NIP: {{ $kartu->signature->nip }}</p>
+                        <div class="border-t-2 border-gray-400 pt-2 mx-auto" style="width: 200px;">
+                            <p class="text-sm font-bold">{{ $displaySignature->name }}</p>
+                            @if($displaySignature->nip)
+                                <p class="text-xs text-gray-500 mt-1">NIP: {{ $displaySignature->nip }}</p>
                             @endif
                         </div>
                     @else
@@ -410,10 +502,10 @@
                                 <svg class="w-8 h-8 mx-auto mb-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <p class="text-sm font-medium text-yellow-800">Menunggu Approval Admin</p>
+                                <p class="text-sm font-medium text-yellow-800">Menunggu Approval</p>
                             </div>
                         </div>
-                        <div class="border-t-2 border-gray-300 pt-2 w-56">
+                        <div class="border-t-2 border-gray-300 pt-2 mx-auto" style="width: 200px;">
                             <p class="text-sm text-gray-400 italic">(Tanda Tangan & Nama)</p>
                         </div>
                     @endif

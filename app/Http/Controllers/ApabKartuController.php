@@ -18,7 +18,7 @@ class ApabKartuController extends Controller
         }
 
         $apab = Apab::findOrFail($apabId);
-        $template = \App\Models\KartuTemplate::getTemplate('apab');
+        $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
 
         $latestKartu = \App\Models\KartuApab::where('apab_id', $apabId)
             ->latest('updated_at')
@@ -35,7 +35,8 @@ class ApabKartuController extends Controller
 
     public function store(Request $request)
     {
-        $template = \App\Models\KartuTemplate::getTemplate('apab');
+        $apab = Apab::findOrFail($request->apab_id);
+        $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
         
         // Build validation rules
         $rules = [

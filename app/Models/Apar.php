@@ -141,7 +141,7 @@ class Apar extends Model
         $url = route('apar.riwayat', $this->id);
 
         try {
-            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url, 'APAR', $this->serial_no);
 
             $filename = 'qrcodes/apar_' . $this->id . '.svg';
             Storage::disk('public')->put($filename, $qrCode);
@@ -171,7 +171,7 @@ class Apar extends Model
             'id' => $this->id
         ]);
 
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'APAR', $this->serial_no);
     }
 
     /**
@@ -185,7 +185,7 @@ class Apar extends Model
     {
         $url = route('apar.riwayat', $this->id);
 
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'APAR', $this->serial_no);
     }
 
     /**
@@ -198,7 +198,7 @@ class Apar extends Model
     {
         $url = route('apar.riwayat', $this->id);
 
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'APAR', $this->serial_no);
     }
 
     /**

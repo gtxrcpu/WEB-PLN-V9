@@ -244,6 +244,40 @@ class GuestController extends Controller
         return view('guest.p3k.riwayat', compact('p3k', 'riwayatInspeksi'));
     }
 
+    /**
+     * Pilih jenis kartu P3K (pemeriksaan, pemakaian, stock)
+     */
+    public function p3kPilihJenis()
+    {
+        return view('guest.p3k.pilih-jenis');
+    }
+
+    /**
+     * Pilih lokasi P3K berdasarkan jenis
+     */
+    public function p3kPilihLokasi(Request $request)
+    {
+        $jenis = $request->query('jenis', 'pemeriksaan');
+        return view('guest.p3k.pilih-lokasi', compact('jenis'));
+    }
+
+    /**
+     * Tampilkan P3K berdasarkan jenis dan lokasi
+     */
+    public function p3kByLokasi(Request $request)
+    {
+        $jenis = $request->query('jenis', 'pemeriksaan');
+        $lokasi = $request->query('lokasi', '');
+
+        // Get P3K by location
+        $p3ks = P3k::with(['unit', 'kartuP3ks'])
+            ->where('location_code', $lokasi)
+            ->orderBy('serial_no')
+            ->paginate(20);
+
+        return view('guest.p3k.by-lokasi', compact('p3ks', 'jenis', 'lokasi'));
+    }
+
     // APAB
     public function apab()
     {

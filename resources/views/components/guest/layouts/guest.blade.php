@@ -11,28 +11,31 @@
 
   {{-- TOPBAR --}}
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-7 sm:h-9 w-auto object-contain">
+    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-6 sm:h-8 lg:h-9 w-auto object-contain">
           </a>
-          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-7 sm:h-9 w-auto object-contain">
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-6 sm:h-8 lg:h-9 w-auto object-contain">
           </a>
-          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-7 sm:h-9 w-auto object-contain">
+          <a href="{{ route('guest.dashboard') }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-6 sm:h-8 lg:h-9 w-auto object-contain">
           </a>
         </div>
-        <div class="hidden lg:block ml-2">
-          <h1 class="font-bold text-slate-900 text-lg leading-tight">Inventaris K3 PLN</h1>
-          <p class="text-xs text-slate-500">Sistem Monitoring Peralatan</p>
+        
+        <div class="hidden md:block h-8 w-px bg-slate-200 mx-1"></div>
+        
+        <div class="hidden sm:block ml-1 sm:ml-2">
+          <h1 class="font-bold text-slate-900 text-sm sm:text-base lg:text-lg leading-tight">Inventaris K3 PLN</h1>
+          <p class="hidden lg:block text-[10px] lg:text-xs text-slate-500 font-medium">Sistem Monitoring Peralatan</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
         <a href="{{ route('login') }}" 
-           class="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5">
+           class="group relative inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[13px] sm:text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5">
           <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
           </svg>

@@ -11,6 +11,7 @@ class Signature extends Model
     use HasFactory;
 
     protected $fillable = [
+        'unit_id',
         'name',
         'position',
         'nip',
@@ -21,6 +22,11 @@ class Signature extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
 
     public function getSignatureUrlAttribute()
     {

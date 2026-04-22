@@ -420,8 +420,8 @@
                           <p class="text-xs text-gray-500 truncate">{{ $signature->position }}</p>
                         </div>
                         <div
-                          class="w-5 h-5 rounded-full border-2 border-gray-300 peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center text-white transition-colors">
-                          <svg class="w-3 h-3 opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                          class="w-6 h-6 rounded-full border-2 border-gray-300 peer-checked:border-green-500 peer-checked:bg-green-500 flex items-center justify-center transition-all">
+                          <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                               clip-rule="evenodd"></path>
@@ -438,8 +438,10 @@
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
                       </path>
                     </svg>
-                    <p class="text-sm font-medium text-gray-500">Belum ada tanda tangan.</p>
-                    <p class="text-xs text-gray-400">Harap hubungi admin.</p>
+                    <p class="text-sm font-medium text-gray-500 mb-3">Belum ada tanda tangan unit Anda.</p>
+                    <a href="{{ route('leader.signatures.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm font-semibold">
+                      Buat Tanda Tangan
+                    </a>
                   </div>
                 @endforelse
               </div>

@@ -4,7 +4,8 @@
     back-route="apab.index"
     module="apab"
     :next-revisi="$nextRevisi ?? null"
-    :template="$template">
+    :template="$template"
+    :show-header="true">
 
     {{-- INFO APAB --}}
     <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">

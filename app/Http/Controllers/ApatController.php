@@ -29,7 +29,8 @@ class ApatController extends Controller
     public function create()
     {
         // Preview serial without incrementing counter
-        $nextSerial = Apat::generateNextSerial(null, false);
+        $unitId = $this->getAuthUserUnitId();
+        $nextSerial = Apat::generateNextSerial($unitId, false);
 
         // Default values
         $default = [
@@ -61,12 +62,13 @@ class ApatController extends Controller
         ]);
 
         // Generate serial and increment counter
-        $serial = Apat::generateNextSerial(null, true);
+        $unitId = $this->getAuthUserUnitId();
+        $serial = Apat::generateNextSerial($unitId, true);
         $barcode = $serial;
 
         $apat = Apat::create([
             'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit
+            'unit_id' => $unitId, // Auto-assign unit
             'barcode' => $barcode,
             'serial_no' => $serial,
             'lokasi' => $request->lokasi,
@@ -197,7 +199,7 @@ class ApatController extends Controller
         }
 
         $kartu = \App\Models\KartuApat::with(['user', 'approver', 'signature'])->findOrFail($kartuId);
-        $template = \App\Models\KartuTemplate::getTemplate('apat');
+        $template = \App\Models\KartuTemplate::getTemplate('apat', $apat->unit_id);
 
         return view('apat.view-kartu', compact('apat', 'kartu', 'template'));
     }

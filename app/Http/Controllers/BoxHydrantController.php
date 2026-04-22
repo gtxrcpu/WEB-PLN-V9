@@ -22,7 +22,8 @@ class BoxHydrantController extends Controller
     public function create()
     {
         // Preview serial without incrementing counter
-        $nextSerial = BoxHydrant::generateNextSerial(null, false);
+        $unitId = $this->getAuthUserUnitId();
+        $nextSerial = BoxHydrant::generateNextSerial($unitId, false);
 
         // Default values
         $default = [
@@ -49,12 +50,13 @@ class BoxHydrantController extends Controller
         ]);
 
         // Generate serial and increment counter
-        $serial = BoxHydrant::generateNextSerial(null, true);
+        $unitId = $this->getAuthUserUnitId();
+        $serial = BoxHydrant::generateNextSerial($unitId, true);
         $barcode = $serial;
 
         $boxHydrant = BoxHydrant::create([
             'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(),
+            'unit_id' => $unitId,
             'barcode' => $barcode,
             'serial_no' => $serial,
             'location_code' => $request->location_code,
@@ -161,7 +163,7 @@ class BoxHydrantController extends Controller
         }
 
         $kartu = \App\Models\KartuBoxHydrant::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
-        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant');
+        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
 
         if ($template) {
             $labelMap = [

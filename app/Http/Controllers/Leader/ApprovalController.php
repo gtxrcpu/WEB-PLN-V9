@@ -122,7 +122,11 @@ class ApprovalController extends Controller
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
-        $signatures = \App\Models\Signature::where('is_active', true)->get();
+        $signatures = \App\Models\Signature::where('is_active', true)
+            ->when($unitId, function ($query) use ($unitId) {
+                return $query->where('unit_id', $unitId);
+            })
+            ->get();
 
         return view('leader.approvals.index', [
             'pendingApprovals' => $paginator,
@@ -219,7 +223,11 @@ class ApprovalController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $signatures = Signature::where('is_active', true)->get();
+        $signatures = Signature::where('is_active', true)
+            ->when($unitId, function ($query) use ($unitId) {
+                return $query->where('unit_id', $unitId);
+            })
+            ->get();
 
         return view('leader.approvals.show', compact('kartu', 'signatures', 'module', 'equipmentRelation'));
     }

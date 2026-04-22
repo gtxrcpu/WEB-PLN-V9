@@ -22,17 +22,17 @@ class KartuKendaliController extends Controller
         // kalau apar_id nggak ada / salah, langsung 404
         $apar = Apar::findOrFail($aparId);
 
-        // Get template for APAR module
-        $template = \App\Models\KartuTemplate::getTemplate('apar');
+        // Get template for APAR module with unit-specific address
+        $template = \App\Models\KartuTemplate::getTemplate('apar', $apar->unit_id);
 
         // Calculate revisi number for display
         $latestKartu = KartuApar::where('apar_id', $aparId)
-            ->orderBy('revisi', 'desc')
+            ->orderBy('id', 'desc')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
+        if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
             // Jika kartu sebelumnya ditolak, increment revisi
-            $nextRevisi = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
+            $nextRevisi = str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT);
         } else {
             // Default untuk kartu pertama atau setelah approved
             $nextRevisi = '00';
@@ -70,7 +70,7 @@ class KartuKendaliController extends Controller
         }
 
         // Get template untuk validasi dinamis
-        $template = KartuTemplate::getTemplate('apar');
+        $template = KartuTemplate::getTemplate('apar', $request->input('apar_id') ? Apar::find($request->input('apar_id'))->unit_id ?? null : null);
 
         // Kolom DB valid untuk kartu APAR
         $aparDbColumns = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
@@ -149,8 +149,10 @@ class KartuKendaliController extends Controller
             ->first();
 
         if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
-            $saveData['revisi'] = $latestKartu->revisi ?? '00';
+            // Jika kartu terakhir ditolak, increment revisi
+            $saveData['revisi'] = str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT);
         } else {
+            // Jika kartu terakhir di-approve atau belum ada kartu, reset ke 00
             $saveData['revisi'] = '00';
         }
 

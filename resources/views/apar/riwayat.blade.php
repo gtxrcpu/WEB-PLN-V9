@@ -113,15 +113,23 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Approved
+                    Approved (Selesai)
                   </span>
-                @elseif($kartu->rejected_at)
+                @elseif($kartu->rejected_at || $kartu->leader_rejected_at)
                   <span
                     class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Direvisi ({{ $kartu->revisi }})
+                  </span>
+                @elseif($kartu->leader_approved_at)
+                  <span
+                    class="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Menunggu Admin
                   </span>
                 @else
                   <span
@@ -130,20 +138,31 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Pending
+                    Pending Leader
                   </span>
                 @endif
               </td>
               <td class="px-6 py-4 text-sm text-gray-700">
-                @if($kartu->isApproved())
+                @if($kartu->approved_at)
                   <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <div class="font-medium">{{ get_user_display_name($kartu->approver, 'Unknown Approver') }}</div>
+                      <div class="font-medium">Admin: {{ get_user_display_name($kartu->approver, 'Unknown Admin') }}</div>
                       <div class="text-xs text-gray-500">{{ $kartu->approved_at->format('d M Y, H:i') }}</div>
+                    </div>
+                  </div>
+                @elseif($kartu->leader_approved_at)
+                  <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <div class="font-medium">Leader: {{ get_user_display_name($kartu->leaderApprover, 'Unknown Leader') }}</div>
+                      <div class="text-xs text-gray-500">{{ $kartu->leader_approved_at->format('d M Y, H:i') }}</div>
                     </div>
                   </div>
                 @else

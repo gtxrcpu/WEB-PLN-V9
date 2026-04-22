@@ -49,8 +49,8 @@
                         @if($template->company_name)
                             <div class="font-bold text-sm">{{ $template->company_name }}</div>
                         @endif
-                        @if($template->company_address)
-                            <div class="text-xs">{{ $template->company_address }}</div>
+                        @if($template->resolved_address ?? $template->company_address)
+                            <div class="text-xs">{{ $template->resolved_address ?? $template->company_address }}</div>
                         @endif
                         @if($template->company_phone)
                             <div class="text-xs">{{ $template->company_phone }}</div>

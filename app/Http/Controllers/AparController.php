@@ -233,10 +233,10 @@ class AparController extends Controller
             }
         }
 
-        $kartu = \App\Models\KartuApar::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
+        $kartu = \App\Models\KartuApar::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
 
-        // Get template for APAR module
-        $template = \App\Models\KartuTemplate::getTemplate('apar');
+        // Get template for APAR module with unit-specific address
+        $template = \App\Models\KartuTemplate::getTemplate('apar', $apar->unit_id);
 
         // Fill template with real data
         if ($template) {

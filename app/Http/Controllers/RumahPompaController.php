@@ -22,7 +22,8 @@ class RumahPompaController extends Controller
     public function create()
     {
         // Preview serial without incrementing counter
-        $nextSerial = RumahPompa::generateNextSerial(null, false);
+        $unitId = $this->getAuthUserUnitId();
+        $nextSerial = RumahPompa::generateNextSerial($unitId, false);
 
         // Default values
         $default = [
@@ -51,12 +52,13 @@ class RumahPompaController extends Controller
         ]);
 
         // Generate serial and increment counter
-        $serial = RumahPompa::generateNextSerial(null, true);
+        $unitId = $this->getAuthUserUnitId();
+        $serial = RumahPompa::generateNextSerial($unitId, true);
         $barcode = $serial;
 
         $rumahPompa = RumahPompa::create([
             'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(),
+            'unit_id' => $unitId,
             'barcode' => $barcode,
             'serial_no' => $serial,
             'location_code' => $request->location_code,
@@ -166,7 +168,7 @@ class RumahPompaController extends Controller
         }
 
         $kartu = \App\Models\KartuRumahPompa::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
-        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa');
+        $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         if ($template) {
             $labelMap = [

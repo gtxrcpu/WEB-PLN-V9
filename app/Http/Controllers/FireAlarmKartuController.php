@@ -22,7 +22,7 @@ class FireAlarmKartuController extends Controller
         }
 
         $fireAlarm = FireAlarm::findOrFail($fireAlarmId);
-                $template = \App\Models\KartuTemplate::getTemplate('fire-alarm');
+                $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
 
         $latestKartu = KartuFireAlarm::where('fire_alarm_id', $fireAlarmId)
             ->orderBy('revisi', 'desc')
@@ -42,7 +42,8 @@ class FireAlarmKartuController extends Controller
      */
     public function store(Request $request)
     {
-        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm');
+        $fireAlarm = FireAlarm::findOrFail($request->fire_alarm_id);
+        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
         
         // Debug: Log request data
         \Log::info('Fire Alarm Kartu Store Request', [

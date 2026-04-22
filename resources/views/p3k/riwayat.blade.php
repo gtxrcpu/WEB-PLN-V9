@@ -232,14 +232,14 @@
                                     <p class="text-sm font-semibold text-slate-900">{{ $kartu->tanggal->format('d/m/Y') }}</p>
                                 </div>
                             </div>
-                            @if($kartu->rejected_at)
+                            @if($kartu->rejected_at || $kartu->leader_rejected_at)
                                 <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
                                     <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                     <div class="flex-1">
                                         <p class="text-xs text-slate-500">Ditolak oleh</p>
-                                        <p class="text-sm font-semibold text-red-700">{{ get_user_display_name($kartu->rejector, 'Unknown Rejector') }}</p>
+                                        <p class="text-sm font-semibold text-red-700">{{ get_user_display_name($kartu->rejected_at ? $kartu->rejector : $kartu->leaderRejector, 'Unknown Rejector') }}</p>
                                     </div>
                                     <div class="text-right">
                                         <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
@@ -253,11 +253,24 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                     <div class="flex-1">
-                                        <p class="text-xs text-slate-500">Di-approve oleh</p>
+                                        <p class="text-xs text-slate-500">Di-approve oleh Admin</p>
                                         <p class="text-sm font-semibold text-slate-900">{{ get_user_display_name($kartu->approver, 'Unknown Approver') }}</p>
                                     </div>
                                     <div class="text-right">
                                         <p class="text-xs text-slate-500">{{ $kartu->approved_at->format('d M Y, H:i') }}</p>
+                                    </div>
+                                </div>
+                            @elseif($kartu->leader_approved_at)
+                                <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-slate-500">Di-approve oleh Leader</p>
+                                        <p class="text-sm font-semibold text-slate-900">{{ get_user_display_name($kartu->leaderApprover, 'Unknown Leader') }} <span class="font-normal text-xs text-blue-600">(Menunggu Admin)</span></p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-slate-500">{{ $kartu->leader_approved_at->format('d M Y, H:i') }}</p>
                                     </div>
                                 </div>
                             @else
@@ -265,7 +278,7 @@
                                     <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    <p class="text-sm text-slate-600 italic">Menunggu approval</p>
+                                    <p class="text-sm text-slate-600 italic">Menunggu approval Leader & Admin</p>
                                 </div>
                             @endif
                         </div>

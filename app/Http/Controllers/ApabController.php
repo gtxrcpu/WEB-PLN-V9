@@ -29,7 +29,8 @@ class ApabController extends Controller
     public function create()
     {
         // Preview serial without incrementing counter
-        $nextSerial = Apab::generateNextSerial(null, false);
+        $unitId = $this->getAuthUserUnitId();
+        $nextSerial = Apab::generateNextSerial($unitId, false);
 
         // Default values
         $default = [
@@ -61,12 +62,13 @@ class ApabController extends Controller
         ]);
 
         // Generate serial and increment counter
-        $serial = Apab::generateNextSerial(null, true);
+        $unitId = $this->getAuthUserUnitId();
+        $serial = Apab::generateNextSerial($unitId, true);
         $barcode = $serial;
 
         $apab = Apab::create([
             'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit
+            'unit_id' => $unitId, // Auto-assign unit
             'barcode' => $barcode,
             'serial_no' => $serial,
             'lokasi' => $request->lokasi,
@@ -197,7 +199,7 @@ class ApabController extends Controller
         }
 
         $kartu = \App\Models\KartuApab::with(['user', 'approver', 'signature'])->findOrFail($kartuId);
-        $template = \App\Models\KartuTemplate::getTemplate('apab');
+        $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
 
         return view('apab.view-kartu', compact('apab', 'kartu', 'template'));
     }

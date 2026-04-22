@@ -37,15 +37,15 @@
             }
           }
         @endphp
-        <div class="flex items-center gap-2 sm:gap-4 z-10 shrink-0">
-          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0 z-10">
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/danantara.png') }}" alt="Danantara" class="h-6 sm:h-8 lg:h-9 w-auto object-contain text-black">
           </a>
-          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/hsse.png') }}" alt="HSSE" class="h-6 sm:h-8 lg:h-9 w-auto object-contain text-black">
           </a>
-          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-opacity">
-            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-6 sm:h-8 md:h-9 w-auto object-contain">
+          <a href="{{ route($dashboardRoute) }}" class="hover:opacity-80 transition-all duration-200 hover:scale-105">
+            <img src="{{ asset('images/logoo.png') }}" alt="PLN" class="h-6 sm:h-8 lg:h-9 w-auto object-contain text-black">
           </a>
         </div>
         <div class="flex items-center gap-2 z-10 hidden lg:flex">

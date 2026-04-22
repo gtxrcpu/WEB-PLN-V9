@@ -38,6 +38,9 @@ Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(funct
 
     // P3K
     Route::get('/p3k', [\App\Http\Controllers\GuestController::class, 'p3k'])->name('p3k');
+    Route::get('/p3k/pilih-jenis', [\App\Http\Controllers\GuestController::class, 'p3kPilihJenis'])->name('p3k.pilih-jenis');
+    Route::get('/p3k/pilih-lokasi', [\App\Http\Controllers\GuestController::class, 'p3kPilihLokasi'])->name('p3k.pilih-lokasi');
+    Route::get('/p3k/by-lokasi', [\App\Http\Controllers\GuestController::class, 'p3kByLokasi'])->name('p3k.by-lokasi');
     Route::get('/p3k/{p3k}/riwayat', [\App\Http\Controllers\GuestController::class, 'p3kRiwayat'])->name('p3k.riwayat');
 
     // APAB
@@ -136,6 +139,9 @@ Route::middleware(['auth', 'role:leader|superadmin'])->prefix('leader')->name('l
 
     // Manage users di unit sendiri
     Route::resource('users', \App\Http\Controllers\Leader\UserController::class);
+
+    // Manage signatures di unit sendiri
+    Route::resource('signatures', \App\Http\Controllers\Leader\SignatureController::class);
 
     // Reference Videos - Leader can upload for their unit or all units
     Route::get('/reference-videos', [\App\Http\Controllers\Leader\ReferenceVideoController::class, 'index'])->name('reference-videos.index');

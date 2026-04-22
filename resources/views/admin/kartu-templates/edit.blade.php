@@ -64,6 +64,7 @@
       {{-- Company Info --}}
       <div class="bg-white rounded-xl shadow-lg p-6">
         <h2 class="text-lg font-bold mb-4 text-blue-600">Informasi Perusahaan</h2>
+        
         <div class="grid grid-cols-2 gap-4">
           <div class="col-span-2">
             <label class="block text-sm font-semibold mb-2">Nama Perusahaan</label>
@@ -71,8 +72,9 @@
               class="w-full px-4 py-2 border rounded-lg">
           </div>
           <div class="col-span-2">
-            <label class="block text-sm font-semibold mb-2">Alamat</label>
+            <label class="block text-sm font-semibold mb-2">Alamat Default (Global)</label>
             <textarea name="company_address" rows="2" class="w-full px-4 py-2 border rounded-lg">{{ old('company_address', $template->company_address) }}</textarea>
+            <p class="text-xs text-gray-500 mt-1">Alamat ini akan digunakan jika unit tidak memiliki alamat khusus</p>
           </div>
           <div>
             <label class="block text-sm font-semibold mb-2">Telepon</label>
@@ -89,6 +91,37 @@
             <input type="email" name="company_email" value="{{ old('company_email', $template->company_email) }}"
               class="w-full px-4 py-2 border rounded-lg">
           </div>
+        </div>
+      </div>
+
+      {{-- Alamat Per Unit --}}
+      <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-lg font-bold mb-4 text-purple-600">Alamat Khusus Per Unit</h2>
+        <p class="text-sm text-gray-600 mb-4">Atur alamat khusus untuk setiap unit. Jika tidak diisi, akan menggunakan alamat default.</p>
+        
+        <div class="space-y-3">
+          @foreach($units as $unit)
+            @php
+              $unitAddressValue = is_array($template->unit_address) && isset($template->unit_address[$unit->id]) 
+                ? $template->unit_address[$unit->id] 
+                : '';
+            @endphp
+            <div class="p-4 border rounded-lg hover:border-purple-300 transition-colors">
+              <label class="block text-sm font-semibold mb-2">
+                <span class="inline-flex items-center gap-2">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                  </svg>
+                  {{ $unit->code }} - {{ $unit->name }}
+                </span>
+              </label>
+              <textarea 
+                name="unit_addresses[{{ $unit->id }}]" 
+                rows="2" 
+                class="w-full px-3 py-2 border rounded-lg text-sm"
+                placeholder="Kosongkan untuk menggunakan alamat default">{{ old('unit_addresses.'.$unit->id, $unitAddressValue) }}</textarea>
+            </div>
+          @endforeach
         </div>
       </div>
 
@@ -227,9 +260,9 @@
                             x-model="field.type"
                             required
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                      <option value="checkbox">âœ Checkbox</option>
-                      <option value="text">ðŸ Text</option>
-                      <option value="textarea">ðŸ Textarea</option>
+                      <option value="checkbox">ï¿½ Checkbox</option>
+                      <option value="text">ï¿½ Text</option>
+                      <option value="textarea">ï¿½ Textarea</option>
                     </select>
                   </td>
                   @endif

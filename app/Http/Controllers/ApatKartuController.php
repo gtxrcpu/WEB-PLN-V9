@@ -19,7 +19,8 @@ class ApatKartuController extends Controller
         $apat = Apat::findOrFail($apatId);
         
         // Get template for APAT module
-        $template = \App\Models\KartuTemplate::getTemplate('apat');
+        $apat = Apat::findOrFail($apatId);
+        $template = \App\Models\KartuTemplate::getTemplate('apat', $apat->unit_id);
 
         $latestKartu = KartuApat::where('apat_id', $apatId)
             ->latest('updated_at')
@@ -43,7 +44,8 @@ class ApatKartuController extends Controller
      */
     public function store(Request $request)
     {
-        $template = \App\Models\KartuTemplate::getTemplate('apat');
+        $apat = Apat::findOrFail($request->apat_id);
+        $template = \App\Models\KartuTemplate::getTemplate('apat', $apat->unit_id);
         
         // Build validation rules
         $rules = [

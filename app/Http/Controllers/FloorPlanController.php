@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
 use App\Models\FloorPlan;
+use App\Models\Unit;
 use App\Models\Apar;
 use App\Models\Apat;
 use App\Models\FireAlarm;
@@ -11,28 +13,66 @@ use App\Models\RumahPompa;
 use App\Models\Apab;
 use App\Models\P3k;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class FloorPlanController extends Controller
 {
+    use FiltersByUnit;
+
     /**
-     * Display the floor plan view for the current user's unit
+     * Display the floor plan view for the current user's unit.
+     * Supports: regular user, leader, petugas, inspector, superadmin (via session viewing_unit_id).
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Get the current user's unit
-        $unit = auth()->user()->unit;
-        
-        if (!$unit) {
-            return view('floor-plan.index', ['floorPlan' => null]);
+        $user = auth()->user();
+
+        // Resolve effective unit_id:
+        // 1. User punya unit sendiri -> gunakan unit mereka
+        // 2. Superadmin/admin dengan viewing_unit_id di session -> gunakan itu
+        // 3. Superadmin tanpa session -> tampilkan selector unit
+        $effectiveUnitId = $this->getAuthUserUnitId();
+
+        // Jika tidak ada unit terdeteksi, tampilkan halaman dengan daftar unit untuk dipilih
+        if (!$effectiveUnitId) {
+            // Untuk superadmin: tampilkan semua unit dengan floor plan yang tersedia
+            $unitsWithFloorPlan = Unit::whereHas('floorPlans', function ($q) {
+                $q->where('is_active', true);
+            })->get();
+
+            return view('floor-plan.index', [
+                'floorPlan'           => null,
+                'floorPlans'          => collect(),
+                'unit'                => null,
+                'unitsWithFloorPlan'  => $unitsWithFloorPlan,
+                'isSuperadmin'        => $user && $user->hasRole('superadmin'),
+            ]);
         }
-        
-        // Get the active floor plan for this unit
-        $floorPlan = FloorPlan::where('unit_id', $unit->id)
+
+        $unit = Unit::find($effectiveUnitId);
+
+        // Ambil semua floor plan aktif untuk unit ini
+        $floorPlans = FloorPlan::where('unit_id', $effectiveUnitId)
             ->where('is_active', true)
-            ->first();
-            
-        return view('floor-plan.index', compact('floorPlan'));
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Ambil floor plan yang dipilih (dari query param atau yang pertama)
+        $selectedId = $request->query('floor_plan_id');
+        if ($selectedId) {
+            $floorPlan = $floorPlans->firstWhere('id', (int) $selectedId) ?? $floorPlans->first();
+        } else {
+            $floorPlan = $floorPlans->first();
+        }
+
+        return view('floor-plan.index', [
+            'floorPlan'           => $floorPlan,
+            'floorPlans'          => $floorPlans,
+            'unit'                => $unit,
+            'unitsWithFloorPlan'  => collect(),
+            'isSuperadmin'        => $user && $user->hasRole('superadmin'),
+        ]);
     }
 
     /**
@@ -42,10 +82,10 @@ class FloorPlanController extends Controller
     {
         // Get all equipment for this floor plan
         $equipment = $floorPlan->getAllEquipment();
-        
+
         // Format equipment data for map display
         $formattedEquipment = $this->formatEquipmentForMap($equipment);
-        
+
         return response()->json([
             'equipment' => $formattedEquipment
         ]);
@@ -57,28 +97,28 @@ class FloorPlanController extends Controller
     public function uploadFloorPlan(Request $request)
     {
         $request->validate([
-            'unit_id' => 'required|exists:units,id',
-            'name' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg,svg|max:10240',
+            'unit_id'     => 'required|exists:units,id',
+            'name'        => 'required|string|max:255',
+            'image'       => 'required|image|mimes:jpeg,png,jpg,svg|max:10240',
             'description' => 'nullable|string'
         ]);
 
         // Store the uploaded image
         $path = $request->file('image')->store('floor-plans', 'public');
-        
+
         // Get image dimensions
         $imagePath = storage_path('app/public/' . $path);
         list($width, $height) = getimagesize($imagePath);
 
         // Create the floor plan record
-        $floorPlan = FloorPlan::create([
-            'unit_id' => $request->unit_id,
-            'name' => $request->name,
-            'image_path' => $path,
-            'width' => $width,
-            'height' => $height,
+        FloorPlan::create([
+            'unit_id'     => $request->unit_id,
+            'name'        => $request->name,
+            'image_path'  => $path,
+            'width'       => $width,
+            'height'      => $height,
             'description' => $request->description,
-            'is_active' => true
+            'is_active'   => true
         ]);
 
         return redirect()->route('admin.floor-plans.index')
@@ -92,30 +132,30 @@ class FloorPlanController extends Controller
     {
         $request->validate([
             'equipment_type' => 'required|string',
-            'equipment_id' => 'required|integer',
-            'floor_plan_id' => 'required|exists:floor_plans,id',
-            'x' => 'required|numeric|min:0|max:100',
-            'y' => 'required|numeric|min:0|max:100'
+            'equipment_id'   => 'required|integer',
+            'floor_plan_id'  => 'required|exists:floor_plans,id',
+            'x'              => 'required|numeric|min:0|max:100',
+            'y'              => 'required|numeric|min:0|max:100'
         ]);
 
         // Get the model class for the equipment type
         $modelClass = $this->getModelClass($request->equipment_type);
-        
+
         if (!$modelClass) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid equipment type'
             ], 400);
         }
-        
+
         // Find the equipment
         $equipment = $modelClass::findOrFail($request->equipment_id);
-        
+
         // Update the coordinates
         $equipment->update([
             'floor_plan_id' => $request->floor_plan_id,
-            'floor_plan_x' => $request->x,
-            'floor_plan_y' => $request->y
+            'floor_plan_x'  => $request->x,
+            'floor_plan_y'  => $request->y
         ]);
 
         return response()->json([
@@ -126,49 +166,49 @@ class FloorPlanController extends Controller
 
     /**
      * Format equipment data for map display
-     * 
-     * @param array $equipment Array of equipment grouped by type
-     * @return array Formatted equipment array
+     *
+     * @param  array  $equipment  Array of equipment grouped by type
+     * @return array  Formatted equipment array
      */
     private function formatEquipmentForMap($equipment)
     {
         $formatted = [];
-        
+
         foreach ($equipment as $type => $items) {
             foreach ($items as $item) {
                 $formatted[] = [
-                    'id' => $item->id,
-                    'type' => $type,
-                    'name' => $item->name ?? $item->barcode ?? $item->serial_no,
+                    'id'        => $item->id,
+                    'type'      => $type,
+                    'name'      => $item->name ?? $item->barcode ?? $item->serial_no,
                     'serial_no' => $item->serial_no ?? $item->barcode,
-                    'status' => $item->status ?? 'unknown',
-                    'x' => (float) $item->floor_plan_x,
-                    'y' => (float) $item->floor_plan_y,
-                    'location' => $item->location_code ?? $item->lokasi ?? '-',
-                    'url' => $this->getEquipmentUrl($type, $item->id)
+                    'status'    => $item->status ?? 'unknown',
+                    'x'         => (float) $item->floor_plan_x,
+                    'y'         => (float) $item->floor_plan_y,
+                    'location'  => $item->location_code ?? $item->lokasi ?? '-',
+                    'url'       => $this->getEquipmentUrl($type, $item->id)
                 ];
             }
         }
-        
+
         return $formatted;
     }
 
     /**
      * Get the model class for a given equipment type
-     * 
-     * @param string $type Equipment type
-     * @return string|null Model class name or null if invalid
+     *
+     * @param  string  $type  Equipment type
+     * @return string|null  Model class name or null if invalid
      */
     private function getModelClass($type)
     {
         $models = [
-            'apar' => Apar::class,
-            'apat' => Apat::class,
-            'fire_alarm' => FireAlarm::class,
+            'apar'        => Apar::class,
+            'apat'        => Apat::class,
+            'fire_alarm'  => FireAlarm::class,
             'box_hydrant' => BoxHydrant::class,
             'rumah_pompa' => RumahPompa::class,
-            'apab' => Apab::class,
-            'p3k' => P3k::class,
+            'apab'        => Apab::class,
+            'p3k'         => P3k::class,
         ];
 
         return $models[$type] ?? null;
@@ -176,29 +216,29 @@ class FloorPlanController extends Controller
 
     /**
      * Get the URL for viewing equipment details
-     * 
-     * @param string $type Equipment type
-     * @param int $id Equipment ID
-     * @return string URL to equipment details page
+     *
+     * @param  string  $type  Equipment type
+     * @param  int     $id    Equipment ID
+     * @return string  URL to equipment details page
      */
     private function getEquipmentUrl($type, $id)
     {
         $routes = [
-            'apar' => 'apar.riwayat',
-            'apat' => 'apat.riwayat',
-            'fire_alarm' => 'fire-alarm.riwayat',
+            'apar'        => 'apar.riwayat',
+            'apat'        => 'apat.riwayat',
+            'fire_alarm'  => 'fire-alarm.riwayat',
             'box_hydrant' => 'box-hydrant.riwayat',
             'rumah_pompa' => 'rumah-pompa.riwayat',
-            'apab' => 'apab.riwayat',
-            'p3k' => 'p3k.riwayat',
+            'apab'        => 'apab.riwayat',
+            'p3k'         => 'p3k.riwayat',
         ];
 
         $routeName = $routes[$type] ?? null;
-        
+
         if ($routeName && \Route::has($routeName)) {
             return route($routeName, $id);
         }
-        
+
         return '#';
     }
 }

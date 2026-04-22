@@ -56,20 +56,18 @@ class Apat extends Model
      */
     public static function generateNextSerial($unitId = null, $incrementCounter = true): string
     {
-        // NEW FORMAT: Include unit name for uniqueness
-        $format = \App\Models\AparSetting::get('apat_kode_format', 'APAT-{UNIT}-{NNN}');
-
         // Determine unit from auth user if not provided
         if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
             $unitId = auth()->user()->unit_id;
         }
 
-        // Counter key based on unit (per-unit independent counter)
-        $counterKey = $unitId ? "apat_kode_counter_{$unitId}" : "apat_kode_counter_induk";
-        $counter = (int) \App\Models\AparSetting::get($counterKey, 1);
+        // Get unit-specific format and counter
+        $format = \App\Models\AparSetting::getByUnit('apat_kode_format', $unitId, 'APAT-{UNIT}-{NNN}');
+        $counter = (int) \App\Models\AparSetting::getByUnit('apat_kode_counter', $unitId, 1);
 
-        // Get unit name for format (more readable than code)
-        $unitName = $unitId ? (\App\Models\Unit::find($unitId)?->name ?? 'INDUK') : 'INDUK';
+        // Get unit code for format
+        $unit = $unitId ? \App\Models\Unit::find($unitId) : null;
+        $unitCode = $unit ? $unit->code : 'INDUK';
 
         // Check existing data to ensure counter is in sync FOR THIS UNIT ONLY
         $query = self::query();
@@ -83,9 +81,10 @@ class Apat extends Model
         $lastApat = $query->orderByRaw('CAST(SUBSTRING_INDEX(serial_no, "-", -1) AS UNSIGNED) DESC')->first();
 
         if ($lastApat && $lastApat->serial_no) {
-            // Extract number from last serial (e.g., "APAT-INDUK-005" -> 5)
+            // Extract number from last serial (e.g., "APAT-UP2WI-005" -> 5)
             $parts = explode('-', $lastApat->serial_no);
-            $lastNumber = isset($parts[2]) ? (int) ltrim($parts[2], '0') : 0;
+            $lastStr = end($parts);
+            $lastNumber = is_numeric($lastStr) ? (int) ltrim($lastStr, '0') : 0;
 
             // Use the higher value between counter and last number + 1
             $counter = max($counter, $lastNumber + 1);
@@ -98,16 +97,21 @@ class Apat extends Model
         do {
             $serial = str_replace([
                 '{UNIT}',
+                '{YYYY}',
+                '{YY}',
+                '{MM}',
                 '{NNNN}',
                 '{NNN}',
             ], [
-                $unitName,
+                $unitCode,
+                date('Y'),
+                date('y'),
+                date('m'),
                 str_pad($counter + $attempts, 4, '0', STR_PAD_LEFT),
                 str_pad($counter + $attempts, 3, '0', STR_PAD_LEFT),
             ], $format);
 
             // Check if this serial already exists IN THIS UNIT ONLY
-            // Use where closure to properly group OR conditions with unit_id filter
             $duplicateQuery = self::where(function ($q) use ($serial) {
                 $q->where('serial_no', $serial)->orWhere('barcode', $serial);
             });
@@ -130,7 +134,7 @@ class Apat extends Model
 
         // Increment counter only if requested
         if ($incrementCounter) {
-            \App\Models\AparSetting::set($counterKey, $counter + $attempts + 1);
+            \App\Models\AparSetting::setByUnit('apat_kode_counter', $counter + $attempts + 1, $unitId);
         }
 
         return $serial;
@@ -147,7 +151,7 @@ class Apat extends Model
             'id' => $this->id
         ]);
 
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'APAT', $this->serial_no);
     }
 
     /**
@@ -165,7 +169,7 @@ class Apat extends Model
         ]);
 
         try {
-            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url, 'APAT', $this->serial_no);
             $path = 'qrcodes/apat/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);
 

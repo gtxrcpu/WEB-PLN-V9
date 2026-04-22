@@ -54,6 +54,7 @@ class KartuFireAlarm extends Model
 
     public function isApproved(): bool
     {
-        return ! is_null($this->approved_at);
+        // Approved if EITHER leader OR admin has approved
+        return !is_null($this->leader_approved_at) || !is_null($this->approved_at);
     }
 }

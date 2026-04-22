@@ -459,7 +459,7 @@
             'Fire Alarm' => 'admin.fire-alarm.index',
             'Box Hydrant' => 'admin.box-hydrant.index',
              'Rumah Pompa' => 'admin.rumah-pompa.index',
-            'P3K' => 'admin.p3k.index',
+            'P3K' => 'p3k.pilih-jenis',
             'CCTV' => 'admin.cctvs.index',
             'Referensi' => 'admin.reference-videos.index',
             default => $route

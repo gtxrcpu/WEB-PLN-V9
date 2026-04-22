@@ -17,10 +17,25 @@
                             </svg>
                         </div>
                         <div>
-                            <h1 class="text-xl font-bold text-slate-800">Denah Lokasi Peralatan</h1>
+                            <h1 class="text-xl font-bold text-slate-800">Denah Lokasi Peralatan {{ $unit ? '- ' . $unit->name : '' }}</h1>
                             <p class="text-sm text-slate-500">Real-time equipment monitoring</p>
                         </div>
                     </div>
+
+                    @if($floorPlans && $floorPlans->count() > 1)
+                    <!-- Floor Plan Selector -->
+                    <div class="flex-shrink-0">
+                        <form method="GET" action="{{ route('floor-plan.index') }}" class="flex items-center gap-2">
+                            <select name="floor_plan_id" onchange="this.form.submit()" class="bg-white border text-sm border-slate-300 text-slate-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                @foreach($floorPlans as $fp)
+                                    <option value="{{ $fp->id }}" {{ $floorPlan && $floorPlan->id == $fp->id ? 'selected' : '' }}>
+                                        {{ $fp->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
+                    @endif
 
                     <!-- Search Bar -->
                     <div class="flex-1 max-w-md">
@@ -320,17 +335,58 @@
                             </div>
                         </div>
                         @else
-                        <!-- Empty State -->
+                        <!-- Empty State / Selector State -->
                         <div class="p-12 text-center">
-                            <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-bold text-slate-800 mb-2">Denah Belum Tersedia</h3>
-                            <p class="text-slate-500 max-w-md mx-auto">
-                                Silakan hubungi administrator untuk mengunggah denah unit Anda.
-                            </p>
+                            @if(isset($isSuperadmin) && $isSuperadmin && !$unit)
+                                <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">Pilih Unit Terlebih Dahulu</h3>
+                                <p class="text-slate-500 max-w-md mx-auto mb-6">
+                                    Sebagai superadmin, silakan pilih salah satu unit di bawah ini untuk melihat denah lokasinya.
+                                </p>
+                                
+                                @if(isset($unitsWithFloorPlan) && $unitsWithFloorPlan->count() > 0)
+                                    <form method="POST" action="{{ route('profile.update') }}" class="max-w-xs mx-auto">
+                                        @csrf
+                                        @method('PUT')
+                                        <!-- Ini hanya form palsu jika tidak ada route ganti unit khusus, kita asumsikan admin switch dipanggil via POST ke unit/switch -->
+                                    </form>
+                                    
+                                    <div class="max-w-md mx-auto bg-slate-50 p-6 rounded-xl border border-slate-200">
+                                        <form method="POST" action="{{ route('unit.switch') }}" class="space-y-4">
+                                            @csrf
+                                            <div>
+                                                <label for="unit_id" class="block text-sm font-medium text-slate-700 text-left mb-2">Pilih Unit</label>
+                                                <select id="unit_id" name="unit_id" class="bg-white border border-slate-300 text-slate-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                                    <option value="" disabled selected>Pilih Unit...</option>
+                                                    @foreach($unitsWithFloorPlan as $u)
+                                                        <option value="{{ $u->id }}">{{ $u->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                                                Tampilkan Denah
+                                            </button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <p class="text-red-500 font-medium p-4 bg-red-50 rounded-lg">Belum ada unit yang mengunggah denah lokasi.</p>
+                                @endif
+                                
+                            @else
+                                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800 mb-2">Denah Belum Tersedia</h3>
+                                <p class="text-slate-500 max-w-md mx-auto text-center">
+                                    Silakan hubungi administrator untuk mengunggah denah unit Anda.
+                                </p>
+                            @endif
                         </div>
                         @endif
                     </div>

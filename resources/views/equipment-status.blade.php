@@ -187,6 +187,58 @@
             margin-bottom: 0;
         }
 
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:active {
+            transform: scale(0.98);
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 0.75rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
         .footer {
             margin-top: 2rem;
             text-align: center;
@@ -197,6 +249,62 @@
         .pln-logo-small {
             height: 24px;
             margin-bottom: 0.5rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+
+            .container {
+                border-radius: 12px;
+            }
+
+            .header {
+                padding: 1.5rem 1rem;
+            }
+
+            .module-logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            .serial-number {
+                font-size: 1.25rem;
+            }
+
+            .btn {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .btn-icon svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .actions {
+                padding: 1rem;
+            }
+
+            .divider span {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Animation untuk tombol */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .btn:hover {
+            animation: pulse 1.5s ease-in-out infinite;
         }
     </style>
 </head>
@@ -250,6 +358,23 @@
         </div>
 
         <div class="actions">
+            <a href="#" onclick="navigateToKartuKendali(event)" class="btn btn-success btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Buat Kartu Kendali
+            </a>
+            <a href="#" onclick="navigateToEdit(event)" class="btn btn-secondary btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Data
+            </a>
+            
+            <div class="divider">
+                <span>Atau</span>
+            </div>
+            
             <a href="{{ route('guest.' . $module) }}" class="btn btn-primary">
                 Lihat Daftar {{ strtoupper(str_replace('-', ' ', $module)) }}
             </a>
@@ -264,6 +389,121 @@
         <p>Sistem Manajemen Peralatan Terintegrasi</p>
         <p>&copy; {{ date('Y') }} PT PLN (Persero)</p>
     </div>
+
+    <script>
+        // Data equipment dari backend
+        const equipmentData = {
+            id: {{ $equipment->id }},
+            module: '{{ $module }}',
+            serialNo: '{{ $equipment->serial_no ?? $equipment->name ?? '' }}',
+            status: '{{ $equipment->status ?? '' }}'
+        };
+
+        // Route mapping untuk create kartu kendali
+        const kartuRoutes = {
+            'apar': '{{ route('kartu.create') }}?apar_id={{ $equipment->id }}',
+            'apat': '{{ route('apat.kartu.create') }}?apat_id={{ $equipment->id }}',
+            'apab': '{{ route('apab.kartu.create') }}?apab_id={{ $equipment->id }}',
+            'fire-alarm': '{{ route('fire-alarm.kartu.create') }}?fire_alarm_id={{ $equipment->id }}',
+            'box-hydrant': '{{ route('box-hydrant.kartu.create') }}?box_hydrant_id={{ $equipment->id }}',
+            'rumah-pompa': '{{ route('rumah-pompa.kartu.create') }}?rumah_pompa_id={{ $equipment->id }}',
+            'p3k': '{{ route('p3k.kartu.create') }}?p3k_id={{ $equipment->id }}'
+        };
+
+        // Route mapping untuk edit
+        const editRoutes = {
+            'apar': '{{ route('apar.edit', ['apar' => $equipment->id]) }}',
+            'apat': '{{ route('apat.edit', ['apat' => $equipment->id]) }}',
+            'apab': '{{ route('apab.edit', ['apab' => $equipment->id]) }}',
+            'fire-alarm': '{{ route('fire-alarm.edit', ['fireAlarm' => $equipment->id]) }}',
+            'box-hydrant': '{{ route('box-hydrant.edit', ['boxHydrant' => $equipment->id]) }}',
+            'rumah-pompa': '{{ route('rumah-pompa.edit', ['rumahPompa' => $equipment->id]) }}',
+            'p3k': '{{ route('p3k.edit', ['p3k' => $equipment->id]) }}'
+        };
+
+        // Flag untuk tracking perubahan data (jika ada form di masa depan)
+        let hasUnsavedChanges = false;
+
+        /**
+         * Navigasi ke halaman Buat Kartu Kendali
+         */
+        function navigateToKartuKendali(event) {
+            event.preventDefault();
+            
+            if (hasUnsavedChanges) {
+                if (!confirm('⚠️ Anda memiliki perubahan yang belum disimpan. Yakin ingin melanjutkan?')) {
+                    return;
+                }
+            }
+
+            // Konfirmasi navigasi
+            const confirmed = confirm(
+                `📋 Anda akan membuat Kartu Kendali baru untuk:\n\n` +
+                `${equipmentData.serialNo}\n` +
+                `Status: ${equipmentData.status}\n\n` +
+                `Lanjutkan?`
+            );
+
+            if (confirmed) {
+                const kartuRoute = kartuRoutes[equipmentData.module];
+                if (kartuRoute) {
+                    window.location.href = kartuRoute;
+                } else {
+                    alert('❌ Fitur Kartu Kendali belum tersedia untuk modul ini.');
+                }
+            }
+        }
+
+        /**
+         * Navigasi ke halaman Edit
+         */
+        function navigateToEdit(event) {
+            event.preventDefault();
+            
+            if (hasUnsavedChanges) {
+                if (!confirm('⚠️ Anda memiliki perubahan yang belum disimpan. Yakin ingin melanjutkan?')) {
+                    return;
+                }
+            }
+
+            // Konfirmasi navigasi
+            const confirmed = confirm(
+                `✏️ Anda akan mengedit data:\n\n` +
+                `${equipmentData.serialNo}\n` +
+                `Status: ${equipmentData.status}\n\n` +
+                `Lanjutkan?`
+            );
+
+            if (confirmed) {
+                const editRoute = editRoutes[equipmentData.module];
+                if (editRoute) {
+                    window.location.href = editRoute;
+                } else {
+                    alert('❌ Fitur Edit belum tersedia untuk modul ini.');
+                }
+            }
+        }
+
+        /**
+         * Deteksi perubahan pada form (jika ada)
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('change', function() {
+                    hasUnsavedChanges = true;
+                });
+            });
+
+            // Warning sebelum meninggalkan halaman jika ada perubahan
+            window.addEventListener('beforeunload', function(e) {
+                if (hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>

@@ -29,7 +29,8 @@ class FireAlarmController extends Controller
     public function create()
     {
         // Preview serial without incrementing counter
-        $nextSerial = FireAlarm::generateNextSerial(null, false);
+        $unitId = $this->getAuthUserUnitId();
+        $nextSerial = FireAlarm::generateNextSerial($unitId, false);
 
         // Default values
         $default = [
@@ -61,12 +62,13 @@ class FireAlarmController extends Controller
         ]);
 
         // Generate serial and increment counter
-        $serial = FireAlarm::generateNextSerial(null, true);
+        $unitId = $this->getAuthUserUnitId();
+        $serial = FireAlarm::generateNextSerial($unitId, true);
         $barcode = $serial;
 
         $fireAlarm = FireAlarm::create([
             'user_id' => Auth::id(),
-            'unit_id' => $this->getAuthUserUnitId(), // Auto-assign unit
+            'unit_id' => $unitId, // Auto-assign unit
             'barcode' => $barcode,
             'serial_no' => $serial,
             'location_code' => $request->location_code,
@@ -200,8 +202,8 @@ class FireAlarmController extends Controller
 
         $kartu = \App\Models\KartuFireAlarm::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
 
-        // Get template for Fire Alarm module
-        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm');
+        // Get template for Fire Alarm module with unit-specific address
+        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
 
         // Fill template with real data
         if ($template) {

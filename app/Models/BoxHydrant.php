@@ -41,7 +41,7 @@ class BoxHydrant extends Model
             'id' => $this->id
         ]);
 
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'BOX HYDRANT', $this->serial_no);
     }
 
     public function refreshQrSvg(): void
@@ -64,7 +64,7 @@ class BoxHydrant extends Model
 
     /**
      * Generate next serial number for Box Hydrant with unit-based format
-     * Format: BOXHYDRANT-{UNIT}-{NNN} (e.g., BOX HYDRANT-UP2WIII-001, BOXHYDRANT-INDUK-001)
+     * Format: H6-{UNIT}-{NNN} (e.g., H6-UP2WI-001, H6-INDUK-001)
      * 
      * @param int|null $unitId Unit ID (null = Induk)
      * @param bool $incrementCounter Whether to increment counter (false = preview only)
@@ -72,35 +72,61 @@ class BoxHydrant extends Model
      */
     public static function generateNextSerial($unitId = null, bool $incrementCounter = true): string
     {
-        // Format from settings or default
-        $format = \App\Models\AparSetting::get('box_hydrant_kode_format', 'BOXHYDRANT-{UNIT}-{NNN}');
-
         // Determine unit from auth user if not provided
-        if ($unitId === null && auth()->check() && auth()->user()->unit_id) {
-            $unitId = auth()->user()->unit_id;
+        if ($unitId === null && auth()->check()) {
+            if (auth()->user()->unit_id) {
+                $unitId = auth()->user()->unit_id;
+            } elseif (session('viewing_unit_id')) {
+                $unitId = session('viewing_unit_id');
+            }
         }
 
-        // Get unit name for format
-        $unitName = $unitId ? (\App\Models\Unit::find($unitId)?->name ?? 'INDUK') : 'INDUK';
+        // Get unit-specific format and counter (same as APAR)
+        // Note: Use 'box-hydrant' (with dash) to match admin panel key
+        $format = \App\Models\AparSetting::getByUnit('box-hydrant_kode_format', $unitId, 'H6-{UNIT}-{NNN}');
+        $counter = (int) \App\Models\AparSetting::getByUnit('box-hydrant_kode_counter', $unitId, 1);
 
-        // Counter key based on unit (per-unit independent counter)
-        $counterKey = $unitId ? "box_hydrant_kode_counter_{$unitId}" : "box_hydrant_kode_counter_induk";
-        $currentCounter = (int) \App\Models\AparSetting::get($counterKey, 1);
+        // Get unit code for format
+        $unit = $unitId ? \App\Models\Unit::find($unitId) : null;
+        $unitCode = $unit ? $unit->code : 'INDUK';
 
-        // Try up to 10 times to find unique serial
-        $maxAttempts = 10;
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $tryCounter = $currentCounter + $attempt;
+        // Check existing data to ensure counter is in sync FOR THIS UNIT ONLY
+        $query = self::query();
+        if ($unitId) {
+            $query->where('unit_id', $unitId);
+        } else {
+            $query->whereNull('unit_id');
+        }
 
-            // Replace placeholders
+        // Get the highest serial number from existing data FOR THIS UNIT
+        $lastBoxHydrant = $query->orderByRaw('CAST(SUBSTRING_INDEX(serial_no, "-", -1) AS UNSIGNED) DESC')->first();
+
+        if ($lastBoxHydrant && $lastBoxHydrant->serial_no) {
+            $parts = explode('-', $lastBoxHydrant->serial_no);
+            $lastStr = end($parts);
+            $lastNumber = is_numeric($lastStr) ? (int) ltrim($lastStr, '0') : 0;
+            $counter = max($counter, $lastNumber + 1);
+        }
+
+        // Generate serial with retry logic for duplicate prevention
+        $maxRetries = 10;
+        $attempts = 0;
+
+        do {
             $serial = str_replace([
                 '{UNIT}',
+                '{YYYY}',
+                '{YY}',
+                '{MM}',
                 '{NNNN}',
                 '{NNN}',
             ], [
-                $unitName,
-                str_pad($tryCounter, 4, '0', STR_PAD_LEFT),
-                str_pad($tryCounter, 3, '0', STR_PAD_LEFT),
+                $unitCode,
+                date('Y'),
+                date('y'),
+                date('m'),
+                str_pad($counter + $attempts, 4, '0', STR_PAD_LEFT),
+                str_pad($counter + $attempts, 3, '0', STR_PAD_LEFT),
             ], $format);
 
             // Check for duplicates within same unit
@@ -109,27 +135,22 @@ class BoxHydrant extends Model
                     $q->where('serial_no', $serial)
                         ->orWhere('barcode', $serial);
                 })
-                ->where('unit_id', $unitId)
+                ->when($unitId, fn($q) => $q->where('unit_id', $unitId), fn($q) => $q->whereNull('unit_id'))
                 ->exists();
 
             if (!$exists) {
-                // Found unique serial!
-                if ($incrementCounter) {
-                    // Update counter for next time
-                    \App\Models\AparSetting::set($counterKey, $tryCounter + 1);
-                }
-                return $serial;
+                break;
             }
-        }
 
-        // If all attempts failed, use timestamp fallback
-        $fallback = str_replace(['{UNIT}', '{NNN}'], [$unitName, date('His')], 'BOXHYDRANT-{UNIT}-{NNN}');
+            $attempts++;
+        } while ($attempts < $maxRetries);
 
+        // Increment counter only if requested
         if ($incrementCounter) {
-            \App\Models\AparSetting::set($counterKey, $currentCounter + $maxAttempts + 1);
+            \App\Models\AparSetting::setByUnit('box-hydrant_kode_counter', $counter + $attempts + 1, $unitId);
         }
 
-        return $fallback;
+        return $serial;
     }
 
     /**
@@ -147,7 +168,7 @@ class BoxHydrant extends Model
         ]);
 
         try {
-            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url, 'BOX HYDRANT', $this->serial_no);
 
             $path = 'qrcodes/box-hydrant/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);

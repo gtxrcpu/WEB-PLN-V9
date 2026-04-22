@@ -19,7 +19,7 @@ class BoxHydrantKartuController extends Controller
         }
 
         $boxHydrant = BoxHydrant::findOrFail($boxHydrantId);
-        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant');
+        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
 
         $latestKartu = KartuBoxHydrant::where('box_hydrant_id', $boxHydrantId)
             ->orderBy('revisi', 'desc')
@@ -36,7 +36,8 @@ class BoxHydrantKartuController extends Controller
 
     public function store(Request $request)
     {
-        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant');
+        $boxHydrant = BoxHydrant::findOrFail($request->box_hydrant_id);
+        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
         
         // Debug: Log request data
         \Log::info('Box Hydrant Kartu Store Request', [
