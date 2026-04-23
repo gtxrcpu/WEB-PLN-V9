@@ -112,6 +112,12 @@ Route::middleware(['auth', 'role:superadmin'])->prefix('admin')->name('admin.')-
 
     // Reference Videos (Superadmin only can upload/manage)
     Route::resource('reference-videos', \App\Http\Controllers\Admin\ReferenceVideoController::class);
+
+    // QR Code Regeneration (Fix scanning issues)
+    Route::get('/qr-regeneration', [\App\Http\Controllers\QrRegenerationController::class, 'index'])->name('qr.index');
+    Route::post('/qr-regeneration/regenerate', [\App\Http\Controllers\QrRegenerationController::class, 'regenerate'])->name('qr.regenerate');
+    Route::post('/qr-regeneration/test', [\App\Http\Controllers\QrRegenerationController::class, 'testQr'])->name('qr.test');
+    Route::post('/qr-regeneration/validate', [\App\Http\Controllers\QrRegenerationController::class, 'validateQr'])->name('qr.validate');
 });
 
 // Petugas Routes (Simple UI - Input & View Only)
