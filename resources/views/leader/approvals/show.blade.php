@@ -183,6 +183,125 @@
           <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
             <h3 class="font-bold text-gray-900">Rincian Pemeriksaan</h3>
           </div>
+
+          @php
+            // Kartu pemeriksaan = catatan diawali [PMK]
+            $isPemeriksaan = $kartu->catatan && str_starts_with($kartu->catatan, '[PMK]');
+            if ($isPemeriksaan) {
+              $rawCatatan = ltrim(str_replace('[PMK]', '', $kartu->catatan ?? ''));
+              $catatanParts = [];
+              foreach (explode(' | ', $rawCatatan) as $part) {
+                [$k, $v] = array_pad(explode(': ', $part, 2), 2, '');
+                $catatanParts[trim($k)] = trim($v);
+              }
+              $kondisiVal   = $kartu->kesimpulan ?? '—';
+              $kLow         = strtolower($kondisiVal);
+              $kondisiBadge = match(true) {
+                $kLow === 'baik'                                     => 'bg-green-100 text-green-700 border-green-200',
+                in_array($kLow, ['tidak baik','tidak_baik','rusak']) => 'bg-red-100 text-red-700 border-red-200',
+                $kLow === 'isi ulang'                                => 'bg-amber-100 text-amber-700 border-amber-200',
+                default                                              => 'bg-gray-100 text-gray-700 border-gray-200',
+              };
+            }
+          @endphp
+
+          @if($isPemeriksaan)
+          {{-- KARTU PEMERIKSAAN: tabel sesuai modul --}}
+          <div class="overflow-x-auto px-6 pb-6">
+            @if($moduleKey === 'apar')
+            <table class="w-full text-xs border-collapse" style="min-width: 900px;">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">NO. SERI</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">JENIS KIMIA</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-16">BERAT<br>(Kg)</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">KONDISI</th>
+                  <th colspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">TANGGAL</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KETERANGAN</th>
+                </tr>
+                <tr>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">PENGISIAN</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">KADALUARSA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-white">
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">{{ $catatanParts['Jenis Kimia'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">{{ $catatanParts['Berat'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center">
+                    <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
+                  </td>
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700 text-xs">
+                    @php $tglP = $catatanParts['Tgl Pengisian'] ?? ''; @endphp
+                    {{ $tglP ? \Carbon\Carbon::parse($tglP)->format('d/m/Y') : '—' }}
+                  </td>
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700 text-xs">
+                    @php $tglK = $catatanParts['Tgl Kadaluarsa'] ?? ''; @endphp
+                    {{ $tglK ? \Carbon\Carbon::parse($tglK)->format('d/m/Y') : '—' }}
+                  </td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            @elseif($moduleKey === 'box_hydrant')
+            <table class="w-full text-xs border-collapse" style="min-width: 700px;">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NAMA BARANG</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">NO. SERI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KONDISI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-36">KETERANGAN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-white">
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Nama Barang'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center">
+                    <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
+                  </td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            @else
+            {{-- APAT / Fire Alarm / fallback: NO | LOKASI | NO.SERI | KONDISI | KETERANGAN --}}
+            <table class="w-full text-xs border-collapse" style="min-width: 650px;">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">NO. SERI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KONDISI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-36">KETERANGAN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="bg-white">
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-center">
+                    <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
+                  </td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            @endif
+          </div>
+
+          @else
+          {{-- KARTU KENDALI: grid komponen per modul --}}
           <div class="p-6">
             <!-- Checklist Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -383,6 +502,7 @@
               @endif
             </div>
           </div>
+          @endif {{-- end isPemeriksaan --}}
         </div>
       </div>
 

@@ -12,6 +12,13 @@ class UnitSwitchController extends Controller
      */
     public function switch(Request $request)
     {
+        $user = auth()->user();
+        
+        // Hanya Admin (yang tidak terikat unit) yang boleh switch unit
+        if ($user && $user->unit_id) {
+            return back()->with('error', 'Petugas tidak diperbolehkan mengganti unit kerja.');
+        }
+
         $unitId = $request->input('unit_id');
         
         // Validasi unit exists
@@ -37,6 +44,11 @@ class UnitSwitchController extends Controller
      */
     public function clear()
     {
+        $user = auth()->user();
+        if ($user && $user->unit_id) {
+            return back()->with('error', 'Petugas tidak diperbolehkan mengganti unit kerja.');
+        }
+
         session()->forget('viewing_unit_id');
         return back()->with('success', 'Sekarang melihat semua unit');
     }

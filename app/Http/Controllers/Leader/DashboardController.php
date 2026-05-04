@@ -26,9 +26,14 @@ class DashboardController extends Controller
         if ($unitId) {
             $stats = [
                 'total_equipment' => Apar::where('unit_id', $unitId)->count(),
-                'pending_approvals' => KartuApar::whereHas('apar', function ($q) use ($unitId) {
-                    $q->where('unit_id', $unitId);
-                })->whereNull('approved_at')->count(),
+                'pending_approvals' => 
+                    KartuApar::whereHas('apar', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuApat::whereHas('apat', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuApab::whereHas('apab', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuFireAlarm::whereHas('fireAlarm', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuBoxHydrant::whereHas('boxHydrant', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuRumahPompa::whereHas('rumahPompa', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuP3k::whereHas('p3k', function ($q) use ($unitId) { $q->where('unit_id', $unitId); })->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count(),
                 'approved_this_month' => KartuApar::whereHas('apar', function ($q) use ($unitId) {
                     $q->where('unit_id', $unitId);
                 })->whereNotNull('approved_at')
@@ -39,7 +44,14 @@ class DashboardController extends Controller
         } else {
             $stats = [
                 'total_equipment' => Apar::count(),
-                'pending_approvals' => KartuApar::whereNull('approved_at')->count(),
+                'pending_approvals' => 
+                    KartuApar::whereHas('apar')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuApat::whereHas('apat')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuApab::whereHas('apab')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuFireAlarm::whereHas('fireAlarm')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuBoxHydrant::whereHas('boxHydrant')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuRumahPompa::whereHas('rumahPompa')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count() +
+                    \App\Models\KartuP3k::whereHas('p3k')->whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_approved_at')->whereNull('leader_rejected_at')->count(),
                 'approved_this_month' => KartuApar::whereNotNull('approved_at')
                     ->whereMonth('approved_at', now()->month)
                     ->count(),
@@ -136,22 +148,45 @@ class DashboardController extends Controller
         $trendData = $this->getInspectionTrend($unitId);
 
         // Recent pending approvals
-        if ($unitId) {
-            $pendingApprovals = KartuApar::with(['apar', 'user'])
-                ->whereHas('apar', function ($q) use ($unitId) {
+        $allPendingLists = collect();
+        $models = [
+            'apar' => [\App\Models\KartuApar::class, 'apar'],
+            'apat' => [\App\Models\KartuApat::class, 'apat'],
+            'apab' => [\App\Models\KartuApab::class, 'apab'],
+            'fireAlarm' => [\App\Models\KartuFireAlarm::class, 'fireAlarm'],
+            'boxHydrant' => [\App\Models\KartuBoxHydrant::class, 'boxHydrant'],
+            'rumahPompa' => [\App\Models\KartuRumahPompa::class, 'rumahPompa'],
+            'p3k' => [\App\Models\KartuP3k::class, 'p3k'],
+        ];
+
+        foreach ($models as $moduleKey => $config) {
+            $modelClass = $config[0];
+            $relation = $config[1];
+
+            $query = $modelClass::with([$relation, 'user'])
+                ->whereNull('approved_at')
+                ->whereNull('rejected_at')
+                ->whereNull('leader_approved_at')
+                ->whereNull('leader_rejected_at');
+
+            if ($unitId) {
+                $query->whereHas($relation, function ($q) use ($unitId) {
                     $q->where('unit_id', $unitId);
-                })
-                ->whereNull('approved_at')
-                ->latest()
-                ->take(10)
-                ->get();
-        } else {
-            $pendingApprovals = KartuApar::with(['apar', 'user'])
-                ->whereNull('approved_at')
-                ->latest()
-                ->take(10)
-                ->get();
+                });
+            } else {
+                $query->whereHas($relation);
+            }
+
+            $pending = $query->latest()->take(10)->get()->map(function($item) use ($moduleKey, $relation) {
+                $item->module_type = $moduleKey;
+                // Add an equipment_name accessor hack for the dashboard blade view
+                $item->equipment_name = $item->{$relation}->name ?? $item->{$relation}->location_code ?? strtoupper($moduleKey);
+                return $item;
+            });
+            $allPendingLists = $allPendingLists->merge($pending);
         }
+
+        $pendingApprovals = $allPendingLists->sortByDesc('created_at')->take(10)->values();
 
         return view('leader.dashboard', compact(
             'stats',

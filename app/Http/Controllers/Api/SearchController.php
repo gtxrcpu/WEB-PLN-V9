@@ -24,9 +24,11 @@ class SearchController extends Controller
         $results = [];
 
         // Search APAR
-        $apars = Apar::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $apars = Apar::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('location_code', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         
@@ -45,9 +47,11 @@ class SearchController extends Controller
         }
 
         // Search APAT
-        $apats = Apat::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $apats = Apat::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('lokasi', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         
@@ -66,9 +70,11 @@ class SearchController extends Controller
         }
 
         // Search APAB
-        $apabs = Apab::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $apabs = Apab::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('location_code', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         
@@ -87,9 +93,11 @@ class SearchController extends Controller
         }
 
         // Search Fire Alarm
-        $fireAlarms = FireAlarm::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $fireAlarms = FireAlarm::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('location_code', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         
@@ -108,9 +116,11 @@ class SearchController extends Controller
         }
 
         // Search Box Hydrant
-        $boxHydrants = BoxHydrant::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $boxHydrants = BoxHydrant::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('location_code', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         
@@ -129,9 +139,11 @@ class SearchController extends Controller
         }
 
         // Search Rumah Pompa
-        $rumahPompas = RumahPompa::where('serial_no', 'LIKE', "%{$query}%")
-            ->orWhere('barcode', 'LIKE', "%{$query}%")
-            ->orWhere('location_code', 'LIKE', "%{$query}%")
+        $rumahPompas = RumahPompa::forAuthUser()->where(function($q) use ($query) {
+            $q->where('serial_no', 'LIKE', "%{$query}%")
+                ->orWhere('barcode', 'LIKE', "%{$query}%")
+                ->orWhere('location_code', 'LIKE', "%{$query}%");
+        })
             ->limit(5)
             ->get();
         

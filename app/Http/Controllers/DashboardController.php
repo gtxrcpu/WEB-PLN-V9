@@ -16,40 +16,40 @@ class DashboardController extends Controller
     {
         // Ambil data status dari setiap modul
         $aparData = [
-            'baik' => Apar::where('status', 'baik')->count(),
-            'isi_ulang' => Apar::where('status', 'isi ulang')->count(),
-            'rusak' => Apar::where('status', 'rusak')->count(),
-            'total' => Apar::count()
+            'baik' => Apar::forAuthUser()->where('status', 'baik')->count(),
+            'isi_ulang' => Apar::forAuthUser()->where('status', 'isi ulang')->count(),
+            'rusak' => Apar::forAuthUser()->where('status', 'rusak')->count(),
+            'total' => Apar::forAuthUser()->count()
         ];
 
         $apatData = [
-            'baik' => Apat::where('status', 'baik')->count(),
-            'rusak' => Apat::where('status', 'rusak')->count(),
-            'total' => Apat::count()
+            'baik' => Apat::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => Apat::forAuthUser()->where('status', 'rusak')->count(),
+            'total' => Apat::forAuthUser()->count()
         ];
 
         $apabData = [
-            'baik' => Apab::where('status', 'baik')->count(),
-            'tidak_baik' => Apab::where('status', 'tidak_baik')->count(),
-            'total' => Apab::count()
+            'baik' => Apab::forAuthUser()->where('status', 'baik')->count(),
+            'tidak_baik' => Apab::forAuthUser()->where('status', '!=', 'baik')->count(),
+            'total' => Apab::forAuthUser()->count()
         ];
 
         $fireAlarmData = [
-            'baik' => FireAlarm::where('status', 'baik')->count(),
-            'rusak' => FireAlarm::where('status', 'rusak')->count(),
-            'total' => FireAlarm::count()
+            'baik' => FireAlarm::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => FireAlarm::forAuthUser()->where('status', 'rusak')->count(),
+            'total' => FireAlarm::forAuthUser()->count()
         ];
 
         $boxHydrantData = [
-            'baik' => BoxHydrant::where('status', 'baik')->count(),
-            'rusak' => BoxHydrant::where('status', 'rusak')->count(),
-            'total' => BoxHydrant::count()
+            'baik' => BoxHydrant::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => BoxHydrant::forAuthUser()->where('status', 'rusak')->count(),
+            'total' => BoxHydrant::forAuthUser()->count()
         ];
 
         $rumahPompaData = [
-            'baik' => RumahPompa::where('status', 'baik')->count(),
-            'rusak' => RumahPompa::where('status', 'rusak')->count(),
-            'total' => RumahPompa::count()
+            'baik' => RumahPompa::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => RumahPompa::forAuthUser()->where('status', 'rusak')->count(),
+            'total' => RumahPompa::forAuthUser()->count()
         ];
 
         // Total keseluruhan
@@ -76,6 +76,9 @@ class DashboardController extends Controller
      */
     private function getInspectionTrend()
     {
+        $user = auth()->user();
+        $unitId = $user ? $user->unit_id : null;
+        
         $months = [];
         $data = [
             'APAR' => [],
@@ -93,59 +96,31 @@ class DashboardController extends Controller
             $year = $date->year;
             $month = $date->month;
 
-            // Hitung inspeksi per modul per bulan dengan try-catch untuk handle tabel yang belum ada
-            try {
-                $data['APAR'][] = \DB::table('kartu_apars')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['APAR'][] = 0;
-            }
+            // Hitung inspeksi per modul per bulan
+            $modules = [
+                'APAR' => ['kartu_apars', 'apars', 'apar_id'],
+                'APAT' => ['kartu_apats', 'apats', 'apat_id'],
+                'APAB' => ['kartu_apabs', 'apabs', 'apab_id'],
+                'Fire Alarm' => ['kartu_fire_alarms', 'fire_alarms', 'fire_alarm_id'],
+                'Box Hydrant' => ['kartu_box_hydrants', 'box_hydrants', 'box_hydrant_id'],
+                'Rumah Pompa' => ['kartu_rumah_pompas', 'rumah_pompas', 'rumah_pompa_id'],
+            ];
 
-            try {
-                $data['APAT'][] = \DB::table('kartu_apats')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['APAT'][] = 0;
-            }
-
-            try {
-                $data['APAB'][] = \DB::table('kartu_apabs')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['APAB'][] = 0;
-            }
-
-            try {
-                $data['Fire Alarm'][] = \DB::table('kartu_fire_alarms')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['Fire Alarm'][] = 0;
-            }
-
-            try {
-                $data['Box Hydrant'][] = \DB::table('kartu_box_hydrants')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['Box Hydrant'][] = 0;
-            }
-
-            try {
-                $data['Rumah Pompa'][] = \DB::table('kartu_rumah_pompas')
-                    ->whereYear('tgl_periksa', $year)
-                    ->whereMonth('tgl_periksa', $month)
-                    ->count();
-            } catch (\Exception $e) {
-                $data['Rumah Pompa'][] = 0;
+            foreach ($modules as $label => $config) {
+                try {
+                    $query = \DB::table($config[0]);
+                    
+                    if ($unitId) {
+                        $query->join($config[1], $config[0].'.'.$config[2], '=', $config[1].'.id')
+                            ->where($config[1].'.unit_id', $unitId);
+                    }
+                    
+                    $data[$label][] = $query->whereYear($config[0].'.tgl_periksa', $year)
+                        ->whereMonth($config[0].'.tgl_periksa', $month)
+                        ->count();
+                } catch (\Exception $e) {
+                    $data[$label][] = 0;
+                }
             }
         }
 

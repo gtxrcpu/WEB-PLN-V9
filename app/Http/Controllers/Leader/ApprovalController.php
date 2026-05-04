@@ -62,10 +62,20 @@ class ApprovalController extends Controller
                 'equipment' => 'rumahPompa',
                 'label' => 'Rumah Pompa'
             ],
-            'p3k' => [
-                'model' => \App\Models\KartuP3k::class,
+            'p3k_pemeriksaan' => [
+                'model' => \App\Models\KartuP3kPemeriksaan::class,
                 'equipment' => 'p3k',
-                'label' => 'P3K'
+                'label' => 'P3K Pemeriksaan'
+            ],
+            'p3k_pemakaian' => [
+                'model' => \App\Models\KartuP3kPemakaian::class,
+                'equipment' => 'p3k',
+                'label' => 'P3K Pemakaian'
+            ],
+            'p3k_stock' => [
+                'model' => \App\Models\KartuP3kStock::class,
+                'equipment' => 'p3k',
+                'label' => 'P3K Stock'
             ],
         ];
 
@@ -86,10 +96,15 @@ class ApprovalController extends Controller
                 ->whereNull('leader_approved_at')
                 ->whereNull('leader_rejected_at');
 
+            // P3K kartu punya unit_id langsung, tidak perlu whereHas
             if ($unitId) {
-                $query->whereHas($equipment, function ($q) use ($unitId) {
-                    $q->where('unit_id', $unitId);
-                });
+                if (str_starts_with($moduleKey, 'p3k_')) {
+                    $query->where('unit_id', $unitId);
+                } else {
+                    $query->whereHas($equipment, function ($q) use ($unitId) {
+                        $q->where('unit_id', $unitId);
+                    });
+                }
             }
 
             $pending = $query->get()
@@ -162,8 +177,17 @@ class ApprovalController extends Controller
                 if (!$kartu) continue;
 
                 // Pastikan kartu ini dari unit leader
-                if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-                    continue;
+                // P3K kartu punya unit_id langsung
+                if ($unitId) {
+                    if (str_starts_with($module, 'p3k_')) {
+                        if ($kartu->unit_id !== $unitId) {
+                            continue;
+                        }
+                    } else {
+                        if ($kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                            continue;
+                        }
+                    }
                 }
 
                 if (!$kartu->leader_approved_at) {
@@ -198,7 +222,9 @@ class ApprovalController extends Controller
             'fire_alarm' => ['model' => \App\Models\KartuFireAlarm::class, 'equipment' => 'fireAlarm'],
             'box_hydrant' => ['model' => \App\Models\KartuBoxHydrant::class, 'equipment' => 'boxHydrant'],
             'rumah_pompa' => ['model' => \App\Models\KartuRumahPompa::class, 'equipment' => 'rumahPompa'],
-            'p3k' => ['model' => \App\Models\KartuP3k::class, 'equipment' => 'p3k'],
+            'p3k_pemeriksaan' => ['model' => \App\Models\KartuP3kPemeriksaan::class, 'equipment' => 'p3k'],
+            'p3k_pemakaian' => ['model' => \App\Models\KartuP3kPemakaian::class, 'equipment' => 'p3k'],
+            'p3k_stock' => ['model' => \App\Models\KartuP3kStock::class, 'equipment' => 'p3k'],
         ];
 
         if (!isset($models[$module])) {
@@ -219,8 +245,17 @@ class ApprovalController extends Controller
         $kartu = $modelClass::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id);
 
         // Pastikan kartu ini dari unit leader
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // P3K kartu punya unit_id langsung
+        if ($unitId) {
+            if (str_starts_with($module, 'p3k_')) {
+                if ($kartu->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
         }
 
         $signatures = Signature::where('is_active', true)
@@ -247,8 +282,17 @@ class ApprovalController extends Controller
         $kartu = $modelClass::with([$equipmentRelation])->findOrFail($id);
 
         // Pastikan kartu ini dari unit leader
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // P3K kartu punya unit_id langsung
+        if ($unitId) {
+            if (str_starts_with($module, 'p3k_')) {
+                if ($kartu->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
         }
 
         $kartu->update([
@@ -276,8 +320,17 @@ class ApprovalController extends Controller
         $kartu = $modelClass::with([$equipmentRelation])->findOrFail($id);
 
         // Pastikan kartu ini dari unit leader
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // P3K kartu punya unit_id langsung
+        if ($unitId) {
+            if (str_starts_with($module, 'p3k_')) {
+                if ($kartu->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ($kartu->{$equipmentRelation}->unit_id !== $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
         }
 
         // Validasi rejection reason

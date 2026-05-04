@@ -310,6 +310,17 @@
                                         <span>Buat Kartu Kendali</span>
                                     </a>
                                 @endif
+
+                                {{-- Kartu Pemeriksaan per APAR --}}
+                                <a href="{{ route('apar.kartu-pemeriksaan.create', ['apar_id' => $apar->id]) }}"
+                                    class="group/btn relative overflow-hidden inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-semibold hover:from-emerald-700 hover:to-teal-700 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300">
+                                    <svg class="w-5 h-5 group-hover/btn:scale-110 transition-transform" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                    <span>Kartu Pemeriksaan</span>
+                                </a>
                                 @endhasanyrole
 
                                 <a href="{{ route('apar.riwayat', $apar) }}"

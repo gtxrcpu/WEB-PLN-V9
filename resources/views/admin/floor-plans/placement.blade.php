@@ -134,7 +134,14 @@
                                             class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all">
                                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
                                                 :style="`background-color: ${getColor(type)}`">
-                                                <span x-text="getTypeLabel(type).charAt(0)"></span>
+                                                <template x-if="type === 'cctv'">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                </template>
+                                                <template x-if="type !== 'cctv'">
+                                                    <span x-text="getTypeLabel(type).charAt(0)"></span>
+                                                </template>
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <p class="text-sm font-semibold text-slate-800 truncate"
@@ -210,7 +217,14 @@
                                             <!-- Marker -->
                                             <div class="w-10 h-10 rounded-full border-3 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold ring-2 ring-offset-1"
                                                 :style="`background-color: ${getColor(marker.type)}; --tw-ring-color: ${getColor(marker.type)}40;`">
-                                                <span x-text="getTypeLabel(marker.type).charAt(0)"></span>
+                                                <template x-if="marker.type === 'cctv'">
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                    </svg>
+                                                </template>
+                                                <template x-if="marker.type !== 'cctv'">
+                                                    <span x-text="getTypeLabel(marker.type).charAt(0)"></span>
+                                                </template>
                                             </div>
 
                                             <!-- Delete Button (visible on hover) -->
@@ -275,7 +289,8 @@
                     box_hydrant: '#06B6D4',
                     rumah_pompa: '#8B5CF6',
                     apab: '#10B981',
-                    p3k: '#EC4899'
+                    p3k: '#EC4899',
+                    cctv: '#000000'
                 },
 
                 init() {
@@ -291,7 +306,7 @@
                     console.log('Placed equipment from server:', placed);
 
                     // Process placed equipment
-                    const types = ['apar', 'apat', 'fire_alarm', 'box_hydrant', 'rumah_pompa', 'apab', 'p3k'];
+                    const types = ['apar', 'apat', 'fire_alarm', 'box_hydrant', 'rumah_pompa', 'apab', 'p3k', 'cctv'];
                     let markerIndex = 0;
                     types.forEach(type => {
                         if (placed[type] && Array.isArray(placed[type])) {
@@ -351,7 +366,8 @@
                         box_hydrant: 'Box Hydrant',
                         rumah_pompa: 'R. Pompa',
                         apab: 'APAB',
-                        p3k: 'P3K'
+                        p3k: 'P3K',
+                        cctv: 'CCTV'
                     };
                     return labels[type] || type;
                 },

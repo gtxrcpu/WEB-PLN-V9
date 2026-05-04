@@ -1,8 +1,8 @@
 <x-kartu-layout 
     :title="'Kartu ' . ucfirst($jenis) . ' P3K'" 
-    :subtitle="$lokasi"
-    backRoute="p3k.pilih-lokasi"
-    :backParams="['jenis' => $jenis]"
+    :subtitle="$lokasi ?? ''"
+    back-route="p3k.list-by-jenis"
+    :back-params="['jenis' => $jenis]"
     module="p3k-{{ $jenis }}"
     :next-revisi="$nextRevisi ?? null"
     :template="$template">
@@ -314,7 +314,7 @@
                 <span class="text-red-600">*</span> Wajib diisi
             </p>
             <div class="flex gap-3">
-                <a href="{{ route('p3k.pilih-lokasi', ['jenis' => $jenis]) }}" 
+                <a href="{{ route('p3k.list-by-jenis', $jenis) }}" 
                     class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
                     Batal
                 </a>

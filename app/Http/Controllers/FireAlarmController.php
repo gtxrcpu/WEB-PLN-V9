@@ -181,6 +181,101 @@ class FireAlarmController extends Controller
     }
 
     /**
+     * Form kartu pemeriksaan Fire Alarm (tabel NO/LOKASI/NO.SERI/KONDISI/KETERANGAN)
+     * Menerima fire_alarm_id untuk menampilkan form untuk Fire Alarm spesifik.
+     */
+    public function createPemeriksaan(Request $request)
+    {
+        $fireAlarmId = $request->query('fire_alarm_id');
+        $fireAlarm   = FireAlarm::findOrFail($fireAlarmId);
+
+        $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
+
+        // Hitung nextRevisi — sama persis dengan kartu kendali
+        $latestKartu = \App\Models\KartuFireAlarm::where('fire_alarm_id', $fireAlarmId)
+            ->where(function ($q) {
+                // Hanya kartu pemeriksaan (catatan diawali "[PMK]")
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
+            $nextRevisi = str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('fire-alarm.kartu-pemeriksaan', compact('fireAlarm', 'template', 'nextRevisi'));
+    }
+
+    /**
+     * Simpan kartu pemeriksaan Fire Alarm untuk satu Fire Alarm.
+     */
+    public function storePemeriksaan(Request $request)
+    {
+        $request->validate([
+            'fire_alarm_id' => ['required', 'exists:fire_alarms,id'],
+            'tgl_periksa'   => ['required', 'date'],
+            'petugas'       => ['required', 'string', 'max:100'],
+            'rows'          => ['required', 'array', 'min:1'],
+            'rows.*.lokasi'      => ['nullable', 'string', 'max:255'],
+            'rows.*.no_seri'     => ['nullable', 'string', 'max:100'],
+            'rows.*.kondisi'     => ['nullable', 'string', 'max:50'],
+            'rows.*.keterangan'  => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $fireAlarm = FireAlarm::findOrFail($request->fire_alarm_id);
+
+        // Tentukan revisi berdasarkan kartu pemeriksaan terakhir yang ditolak
+        $latestKartu = \App\Models\KartuFireAlarm::where('fire_alarm_id', $fireAlarm->id)
+            ->where(function ($q) {
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $revisi = ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at))
+            ? str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT)
+            : '00';
+
+        // Simpan setiap baris yang kondisinya diisi
+        $saved = 0;
+        foreach ($request->rows as $row) {
+            if (empty($row['kondisi'])) continue;
+
+            // Gabungkan lokasi & no_seri ke dalam catatan agar tersimpan
+            // Prefix [PMK] dipakai sebagai penanda kartu pemeriksaan (untuk query revisi)
+            $catatan = '[PMK] ' . trim(
+                ($row['lokasi']     ? 'Lokasi: ' . $row['lokasi'] . ' | '     : '') .
+                ($row['no_seri']    ? 'No. Seri: ' . $row['no_seri'] . ' | '  : '') .
+                ($row['keterangan'] ? 'Ket: ' . $row['keterangan']             : '')
+            , ' |');
+
+            \App\Models\KartuFireAlarm::create([
+                'fire_alarm_id'     => $fireAlarm->id,
+                'user_id'           => auth()->id(),
+                'panel_kontrol'     => $row['kondisi'],
+                'detector'          => $row['kondisi'],
+                'manual_call_point' => $row['kondisi'],
+                'alarm_bell'        => $row['kondisi'],
+                'battery_backup'    => $row['kondisi'],
+                'uji_fungsi'        => $row['kondisi'],
+                'kesimpulan'        => $row['kondisi'],
+                'tgl_periksa'       => $request->tgl_periksa,
+                'petugas'           => $request->petugas,
+                'catatan'           => $catatan ?: null,
+                'revisi'            => $revisi,
+            ]);
+            $saved++;
+        }
+
+        return redirect()
+            ->route('fire-alarm.index')
+            ->with('success', "Kartu Pemeriksaan Fire Alarm {$fireAlarm->serial_no} berhasil disimpan ({$saved} baris).");
+    }
+
+    /**
      * View detail kartu kendali dengan TTD
      * 
      * UNIT ACCESS CONTROL: Only allow access to Fire Alarm from same unit
@@ -200,7 +295,7 @@ class FireAlarmController extends Controller
             }
         }
 
-        $kartu = \App\Models\KartuFireAlarm::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
+        $kartu = \App\Models\KartuFireAlarm::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
 
         // Get template for Fire Alarm module with unit-specific address
         $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);

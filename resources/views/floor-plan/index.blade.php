@@ -180,22 +180,22 @@
                             </h3>
                         </div>
                         <div class="p-4 space-y-2">
-                            <template x-for="(filter, type) in filters" :key="'legend-' + type">
-                                <div 
-                                    class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition"
-                                    @click="highlightByType(type)"
-                                >
-                                    <span 
-                                        class="w-4 h-4 rounded-full shadow-sm"
-                                        :style="`background-color: ${filter.color}`"
-                                    ></span>
-                                    <span class="text-sm font-medium text-slate-700" x-text="filter.label"></span>
-                                    <span class="ml-auto text-xs text-slate-500" x-text="getEquipmentCount(type)"></span>
+                                    <template x-for="(filter, type) in filters" :key="'legend-' + type">
+                                        <div 
+                                            class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+                                            @click="highlightByType(type)"
+                                        >
+                                            <span 
+                                                class="w-4 h-4 rounded-full shadow-sm"
+                                                :style="`background-color: ${filter.color}`"
+                                            ></span>
+                                            <span class="text-sm font-medium text-slate-700" x-text="filter.label"></span>
+                                            <span class="ml-auto text-xs text-slate-500" x-text="getEquipmentCount(type)"></span>
+                                        </div>
+                                    </template>
                                 </div>
-                            </template>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
                 <!-- Floor Plan Area -->
                 <div class="flex-1">
@@ -273,10 +273,18 @@
                                                     :class="{ 'ring-4 ring-blue-400': isHighlighted(eq) }"
                                                     :style="`background-color: ${getColor(eq.type)};`"
                                                 >
-                                                    <!-- Simple Box Icon -->
-                                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                                    </svg>
+                                                    <!-- Simple Box Icon for general equipment -->
+                                                    <template x-if="eq.type !== 'cctv'">
+                                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                        </svg>
+                                                    </template>
+                                                    <!-- Camera Icon for CCTV -->
+                                                    <template x-if="eq.type === 'cctv'">
+                                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </template>
                                                 </div>
                                                 
                                                 <!-- Status Indicator -->
@@ -471,6 +479,19 @@
                         <label class="text-xs font-medium text-slate-500 uppercase tracking-wide">Lokasi</label>
                         <p class="text-slate-800 font-semibold" x-text="selectedEquipment?.location || '-'"></p>
                     </div>
+
+                    <!-- CCTV Preview -->
+                    <template x-if="selectedEquipment?.type === 'cctv' && selectedEquipment?.stream_url">
+                        <div class="mt-4 rounded-xl overflow-hidden bg-black aspect-video relative group">
+                            <video id="preview-video" class="w-full h-full object-cover" autoplay muted loop>
+                                <source :src="selectedEquipment.stream_url" type="application/x-mpegURL">
+                            </video>
+                            <div class="absolute top-2 left-2 flex items-center gap-1.5">
+                                <span class="flex h-2 w-2 rounded-full" :class="selectedEquipment.is_online ? 'bg-emerald-500 animate-ping' : 'bg-rose-500'"></span>
+                                <span class="text-[8px] font-bold text-white bg-black/40 backdrop-blur px-1.5 py-0.5 rounded uppercase tracking-widest" x-text="selectedEquipment.is_online ? 'Live' : 'Offline'"></span>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Footer -->
@@ -527,7 +548,8 @@
                     box_hydrant: { enabled: true, label: 'Box Hydrant', color: '#06B6D4' },
                     rumah_pompa: { enabled: true, label: 'Rumah Pompa', color: '#8B5CF6' },
                     apab: { enabled: true, label: 'APAB', color: '#10B981' },
-                    p3k: { enabled: true, label: 'P3K', color: '#EC4899' }
+                    p3k: { enabled: true, label: 'P3K', color: '#EC4899' },
+                    cctv: { enabled: true, label: 'CCTV', color: '#000000' }
                 },
 
                 init() {
@@ -539,7 +561,16 @@
                     this.loading = true;
                     @if($floorPlan)
                     try {
-                        const response = await fetch('{{ route("floor-plan.equipment-data", $floorPlan->id) }}');
+                        const response = await fetch('{{ route("floor-plan.equipment-data", $floorPlan->id) }}', {
+                            credentials: 'same-origin',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (!response.ok) {
+                            throw new Error('HTTP ' + response.status);
+                        }
                         const data = await response.json();
                         this.allEquipment = data.equipment || [];
                         this.updateVisibleMarkers();
@@ -556,12 +587,21 @@
                     if (saved) {
                         try {
                             const parsed = JSON.parse(saved);
-                            Object.keys(this.filters).forEach(type => {
-                                if (parsed[type] !== undefined) {
-                                    this.filters[type].enabled = parsed[type];
-                                }
-                            });
-                        } catch (e) {}
+                            // Hanya restore jika minimal 1 filter aktif, bukan semua nonaktif
+                            const anyEnabled = Object.values(parsed).some(v => v === true);
+                            if (anyEnabled) {
+                                Object.keys(this.filters).forEach(type => {
+                                    if (parsed[type] !== undefined) {
+                                        this.filters[type].enabled = parsed[type];
+                                    }
+                                });
+                            } else {
+                                // Jika semua dinonaktifkan sebelumnya, reset ke default semua aktif
+                                sessionStorage.removeItem('floorPlanFilters');
+                            }
+                        } catch (e) {
+                            sessionStorage.removeItem('floorPlanFilters');
+                        }
                     }
                 },
 

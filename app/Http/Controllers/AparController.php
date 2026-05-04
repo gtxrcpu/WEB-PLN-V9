@@ -121,6 +121,7 @@ class AparController extends Controller
      */
     public function edit(Apar $apar)
     {
+        $this->authorizeUnit($apar);
         return view('apar.edit', compact('apar'));
     }
 
@@ -129,6 +130,7 @@ class AparController extends Controller
      */
     public function update(Request $request, Apar $apar)
     {
+        $this->authorizeUnit($apar);
         $request->validate([
             'location_code' => 'required|string|max:50',
             'type' => 'required|string|max:100',
@@ -162,26 +164,20 @@ class AparController extends Controller
     }
 
     /**
-     * Tampilkan riwayat kartu kendali APAR
-     * 
-     * UNIT ACCESS CONTROL: Only allow access to APAR from same unit
+     * Tampilkan riwayat kartu kendali & kartu pemeriksaan APAR
      */
     public function riwayat(Request $request, Apar $apar)
     {
-        // Check unit access: petugas dan leader hanya bisa akses APAR dari unit mereka sendiri
+        // Check unit access
         $userUnitId = $this->getAuthUserUnitId();
-
-        // Superadmin dan Inspector bisa akses semua unit
         if (!auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
-            // Cek apakah APAR ini dari unit yang sama
             if ($apar->unit_id != $userUnitId) {
-                // Berbeda unit - tidak boleh akses
                 abort(403, 'Anda tidak memiliki akses ke APAR dari unit lain. QR Code ini untuk unit: ' .
                     ($apar->unit ? $apar->unit->name : 'Induk'));
             }
         }
 
-        $query = $apar->kartuApars()->with(['signature', 'user', 'approver']);
+        $query = $apar->kartuApars()->with(['signature', 'user', 'approver', 'leaderApprover']);
 
         // Filter by creator
         if ($request->filled('creator')) {
@@ -206,9 +202,125 @@ class AparController extends Controller
             }
         }
 
+        // Filter by jenis kartu (kendali vs pemeriksaan)
+        if ($request->filled('jenis')) {
+            if ($request->jenis === 'pemeriksaan') {
+                $query->where(function ($q) {
+                    $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+                });
+            } elseif ($request->jenis === 'kendali') {
+                $query->where(function ($q) {
+                    $q->whereNull('catatan')->orWhere('catatan', 'not like', '[PMK]%');
+                });
+            }
+        }
+
         $kartuKendali = $query->latest()->get();
 
         return view('apar.riwayat', compact('apar', 'kartuKendali'));
+    }
+
+    /**
+     * Form kartu pemeriksaan APAR (tabel NO/LOKASI/NO.SERI/KONDISI/KETERANGAN)
+     * Menerima apar_id untuk menampilkan form untuk APAR spesifik.
+     */
+    public function createPemeriksaan(Request $request)
+    {
+        $aparId = $request->query('apar_id');
+        $apar   = Apar::findOrFail($aparId);
+
+        $template = \App\Models\KartuTemplate::getTemplate('apar', $apar->unit_id);
+
+        // Hitung nextRevisi — sama persis dengan kartu kendali
+        $latestKartu = \App\Models\KartuApar::where('apar_id', $aparId)
+            ->where(function ($q) {
+                // Hanya kartu pemeriksaan (catatan diawali "[PMK]")
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
+            $nextRevisi = str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('apar.kartu-pemeriksaan', compact('apar', 'template', 'nextRevisi'));
+    }
+
+    /**
+     * Simpan kartu pemeriksaan APAR untuk satu APAR.
+     */
+    public function storePemeriksaan(Request $request)
+    {
+        $request->validate([
+            'apar_id'     => ['required', 'exists:apars,id'],
+            'tgl_periksa' => ['required', 'date'],
+            'petugas'     => ['required', 'string', 'max:100'],
+            'rows'        => ['required', 'array', 'min:1'],
+            'rows.*.lokasi'         => ['nullable', 'string', 'max:255'],
+            'rows.*.no_seri'        => ['nullable', 'string', 'max:100'],
+            'rows.*.jenis_kimia'    => ['nullable', 'string', 'max:100'],
+            'rows.*.berat'          => ['nullable', 'string', 'max:50'],
+            'rows.*.kondisi'        => ['nullable', 'string', 'max:50'],
+            'rows.*.tgl_pengisian'  => ['nullable', 'date'],
+            'rows.*.tgl_kadaluarsa' => ['nullable', 'date'],
+            'rows.*.keterangan'     => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $apar = Apar::findOrFail($request->apar_id);
+
+        // Tentukan revisi berdasarkan kartu pemeriksaan terakhir yang ditolak
+        $latestKartu = \App\Models\KartuApar::where('apar_id', $apar->id)
+            ->where(function ($q) {
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $revisi = ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at))
+            ? str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT)
+            : '00';
+
+        // Simpan setiap baris yang kondisinya diisi
+        $saved = 0;
+        foreach ($request->rows as $row) {
+            if (empty($row['kondisi'])) continue;
+
+            // Encode semua field ke catatan dengan prefix [PMK]
+            $parts = [];
+            if (!empty($row['lokasi']))         $parts[] = 'Lokasi: '         . $row['lokasi'];
+            if (!empty($row['no_seri']))         $parts[] = 'No. Seri: '       . $row['no_seri'];
+            if (!empty($row['jenis_kimia']))     $parts[] = 'Jenis Kimia: '    . $row['jenis_kimia'];
+            if (!empty($row['berat']))           $parts[] = 'Berat: '          . $row['berat'];
+            if (!empty($row['tgl_pengisian']))   $parts[] = 'Tgl Pengisian: '  . $row['tgl_pengisian'];
+            if (!empty($row['tgl_kadaluarsa']))  $parts[] = 'Tgl Kadaluarsa: ' . $row['tgl_kadaluarsa'];
+            if (!empty($row['keterangan']))      $parts[] = 'Ket: '            . $row['keterangan'];
+
+            $catatan = '[PMK] ' . implode(' | ', $parts);
+
+            \App\Models\KartuApar::create([
+                'apar_id'       => $apar->id,
+                'user_id'       => auth()->id(),
+                'pressure_gauge'=> $row['kondisi'],
+                'pin_segel'     => $row['kondisi'],
+                'selang'        => $row['kondisi'],
+                'tabung'        => $row['kondisi'],
+                'label'         => $row['kondisi'],
+                'kondisi_fisik' => $row['kondisi'],
+                'kesimpulan'    => $row['kondisi'],
+                'tgl_periksa'   => $request->tgl_periksa,
+                'petugas'       => $request->petugas,
+                'catatan'       => $catatan,
+                'revisi'        => $revisi,
+            ]);
+            $saved++;
+        }
+
+        return redirect()
+            ->route('apar.index')
+            ->with('success', "Kartu Pemeriksaan APAR {$apar->serial_no} berhasil disimpan ({$saved} baris).");
     }
 
     /**

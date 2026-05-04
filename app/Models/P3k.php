@@ -14,31 +14,6 @@ class P3k extends Model
 
     protected $guarded = [];
 
-    protected static function booted(): void
-    {
-        // Auto-generate serial_no P3K.xxx
-        static::creating(function (P3k $p3k) {
-            if (empty($p3k->serial_no)) {
-                $lastSerial = static::where('serial_no', 'like', 'P3K.%')
-                    ->orderBy('id', 'desc')
-                    ->value('serial_no');
-
-                $nextNumber = 1;
-
-                if ($lastSerial && preg_match('/P3K\.(\d+)/', $lastSerial, $m)) {
-                    $nextNumber = (int) $m[1] + 1;
-                }
-
-                $p3k->serial_no = 'P3K.' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-            }
-
-            // Barcode default = serial_no
-            if (empty($p3k->barcode)) {
-                $p3k->barcode = 'P3K ' . $p3k->serial_no;
-            }
-        });
-    }
-
     /**
      * Accessor: $p3k->qr_url → Generate QR as SVG data URI (no file, no HTTP request!)
      * This generates QR on-the-fly as base64 encoded SVG (works without imagick)
@@ -50,7 +25,7 @@ class P3k extends Model
             'id' => $this->id
         ]);
         
-        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url);
+        return \App\Helpers\QrCodeHelper::generateVisualSvgDataUri($url, 'P3K', $this->serial_no);
     }
 
     /**
@@ -68,7 +43,7 @@ class P3k extends Model
         ]);
 
         try {
-            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url);
+            $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url, 'P3K', $this->serial_no);
 
             $path = 'qrcodes/p3k/' . $this->serial_no . '.svg';
             Storage::disk('public')->put($path, $qrCode);

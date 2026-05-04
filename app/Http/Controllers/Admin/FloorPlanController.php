@@ -142,6 +142,15 @@ class FloorPlanController extends Controller
             'rumah_pompa' => RumahPompa::where('unit_id', $unitId)->get()->toArray(),
             'apab' => Apab::where('unit_id', $unitId)->get()->toArray(),
             'p3k' => P3k::where('unit_id', $unitId)->get()->toArray(),
+            // CCTV: tampilkan yang unit_id cocok ATAU yang belum diassign unit
+            'cctv' => \App\Models\Cctv::where(function($q) use ($unitId) {
+                $q->where('unit_id', $unitId)->orWhereNull('unit_id');
+            })->get()->map(function($c) {
+                // Pastikan field 'serial_no' ada agar konsisten dengan equipment lain
+                $arr = $c->toArray();
+                $arr['serial_no'] = $c->name; // CCTV pakai 'name' sebagai identifier
+                return $arr;
+            })->toArray(),
         ];
 
         // Get already placed equipment - query directly from database
@@ -153,6 +162,11 @@ class FloorPlanController extends Controller
             'rumah_pompa' => RumahPompa::where('floor_plan_id', $floorPlan->id)->whereNotNull('floor_plan_x')->get()->toArray(),
             'apab' => Apab::where('floor_plan_id', $floorPlan->id)->whereNotNull('floor_plan_x')->get()->toArray(),
             'p3k' => P3k::where('floor_plan_id', $floorPlan->id)->whereNotNull('floor_plan_x')->get()->toArray(),
+            'cctv' => \App\Models\Cctv::where('floor_plan_id', $floorPlan->id)->whereNotNull('floor_plan_x')->get()->map(function($c) {
+                $arr = $c->toArray();
+                $arr['serial_no'] = $c->name;
+                return $arr;
+            })->toArray(),
         ];
 
         return view('admin.floor-plans.placement', compact('floorPlan', 'equipment', 'placedEquipment'));
@@ -164,7 +178,7 @@ class FloorPlanController extends Controller
     public function savePlacement(Request $request, FloorPlan $floorPlan)
     {
         $request->validate([
-            'equipment_type' => 'required|string|in:apar,apat,fire_alarm,box_hydrant,rumah_pompa,apab,p3k',
+            'equipment_type' => 'required|string|in:apar,apat,fire_alarm,box_hydrant,rumah_pompa,apab,p3k,cctv',
             'equipment_id' => 'required|integer',
             'x' => 'required|numeric|min:0|max:100',
             'y' => 'required|numeric|min:0|max:100',
@@ -196,7 +210,7 @@ class FloorPlanController extends Controller
     public function removePlacement(Request $request, FloorPlan $floorPlan)
     {
         $request->validate([
-            'equipment_type' => 'required|string|in:apar,apat,fire_alarm,box_hydrant,rumah_pompa,apab,p3k',
+            'equipment_type' => 'required|string|in:apar,apat,fire_alarm,box_hydrant,rumah_pompa,apab,p3k,cctv',
             'equipment_id' => 'required|integer',
         ]);
 
@@ -233,6 +247,7 @@ class FloorPlanController extends Controller
             'rumah_pompa' => RumahPompa::class,
             'apab' => Apab::class,
             'p3k' => P3k::class,
+            'cctv' => \App\Models\Cctv::class,
         ];
 
         return $models[$type] ?? null;

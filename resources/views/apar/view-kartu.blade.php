@@ -341,99 +341,156 @@
 
         {{-- TABEL PEMERIKSAAN --}}
         <div class="mb-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-3">Hasil Pemeriksaan</h3>
-            <div class="border border-gray-300 rounded-lg overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700 w-1/3">Komponen</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Kondisi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @php
-                            // Kolom DB berurutan (harus sama dengan urutan inspect fields di template)
-                            $aparDbCols = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
+            @php
+                // Deteksi apakah ini kartu dari "Kartu Pemeriksaan" (bulk form)
+                // Cirinya: catatan diawali "[PMK]"
+                $isPemeriksaan = $kartu->catatan && str_starts_with($kartu->catatan, '[PMK]');
+                $kondisiSama   = $kartu->pressure_gauge === $kartu->kesimpulan;
+            @endphp
 
-                            // Mapping field DB -> label tampilan (fallback jika template tidak ada)
-                            $aparFieldDisplay = [
-                                'pressure_gauge' => 'Pressure Gauge',
-                                'pin_segel'      => 'Pin & Segel',
-                                'selang'         => 'Selang',
-                                'tabung'         => 'Tabung',
-                                'label'          => 'Label',
-                                'kondisi_fisik'  => 'Kondisi Fisik',
-                            ];
-
-                            $templateApar = \App\Models\KartuTemplate::getTemplate('apar');
-
-                            if ($templateApar && $templateApar->inspection_fields) {
-                                $viewRows = [];
-                                foreach ($templateApar->inspection_fields as $index => $tf) {
-                                    $key = $tf['key'] ?? null;
-
-                                    // Cari kolom DB: pakai key jika valid, fallback ke index-based
-                                    if ($key && isset($aparFieldDisplay[$key])) {
-                                        $dbCol = $key;
-                                    } elseif ($key && in_array($key, $aparDbCols)) {
-                                        $dbCol = $key;
-                                    } elseif (isset($aparDbCols[$index])) {
-                                        // Key NULL: gunakan urutan index (sesuai cara controller menyimpan)
-                                        $dbCol = $aparDbCols[$index];
-                                    } else {
-                                        $dbCol = null;
-                                    }
-
-                                    $viewRows[] = ['label' => $tf['label'], 'db_col' => $dbCol];
-                                }
-                            } else {
-                                // Fallback: tidak ada template, tampilkan semua kolom DB
-                                $viewRows = array_map(fn($col, $lbl) => ['label' => $lbl, 'db_col' => $col],
-                                    array_keys($aparFieldDisplay), array_values($aparFieldDisplay));
-                            }
-                        @endphp
-                        @foreach($viewRows as $row)
-                            @php
-                                $dbCol = $row['db_col'];
-                                $val   = $dbCol ? ($kartu->$dbCol ?? null) : null;
-                            @endphp
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $row['label'] }}</td>
-                                <td class="px-4 py-3">
-                                    @if($val === 'baik')
-                                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-200">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                            Baik
-                                        </span>
-                                    @elseif($val === 'tidak_baik')
-                                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-200">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                            Tidak Baik
-                                        </span>
-                                    @elseif($val && $val !== '-')
-                                        <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                                            {{ ucfirst(str_replace('_', ' ', $val)) }}
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-400 italic">
-                                            Tidak diisi / Belum ada data
-                                        </span>
-                                    @endif
-                                </td>
+            @if($isPemeriksaan)
+                {{-- ── TAMPILAN KARTU PEMERIKSAAN (tabel NO/LOKASI/NO.SERI/KONDISI/KETERANGAN) ── --}}
+                <h3 class="text-lg font-bold text-gray-900 mb-3">Hasil Pemeriksaan</h3>
+                @php
+                    // Parse catatan: "[PMK] Lokasi: xxx | No. Seri: yyy | Ket: zzz"
+                    $rawCatatan = $kartu->catatan ?? '';
+                    // Strip prefix [PMK]
+                    $rawCatatan = ltrim(str_replace('[PMK]', '', $rawCatatan));
+                    $catatanParts = [];
+                    foreach (explode(' | ', $rawCatatan) as $part) {
+                        [$k, $v] = array_pad(explode(': ', $part, 2), 2, '');
+                        $catatanParts[trim($k)] = trim($v);
+                    }
+                    $lokasiVal    = $catatanParts['Lokasi']    ?? ($apar->location_code ?? '—');
+                    $noSeriVal    = $catatanParts['No. Seri']  ?? ($apar->serial_no ?? '—');
+                    $keteranganVal = $catatanParts['Ket']      ?? '';
+                    $kondisiVal   = $kartu->kesimpulan ?? '—';
+                    $kondisiLower = strtolower($kondisiVal);
+                    $kondisiBadge = match(true) {
+                        $kondisiLower === 'baik'                          => 'bg-green-100 text-green-700 border-green-200',
+                        in_array($kondisiLower, ['tidak baik','tidak_baik','rusak']) => 'bg-red-100 text-red-700 border-red-200',
+                        $kondisiLower === 'isi ulang'                     => 'bg-amber-100 text-amber-700 border-amber-200',
+                        default                                           => 'bg-gray-100 text-gray-700 border-gray-200',
+                    };
+                @endphp
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-3 py-3 text-center font-bold text-gray-800 border-r border-gray-300 w-10">NO.</th>
+                                <th class="px-4 py-3 text-center font-bold text-gray-800 border-r border-gray-300">LOKASI</th>
+                                <th class="px-4 py-3 text-center font-bold text-gray-800 border-r border-gray-300 w-32">NO. SERI</th>
+                                <th class="px-4 py-3 text-center font-bold text-gray-800 border-r border-gray-300 w-36">KONDISI</th>
+                                <th class="px-4 py-3 text-center font-bold text-gray-800">KETERANGAN</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            <tr class="border-t border-gray-200">
+                                <td class="px-3 py-3 text-center border-r border-gray-200 text-gray-500">1</td>
+                                <td class="px-4 py-3 border-r border-gray-200 text-gray-800">{{ $lokasiVal }}</td>
+                                <td class="px-4 py-3 text-center border-r border-gray-200 font-mono text-gray-800">{{ $noSeriVal }}</td>
+                                <td class="px-4 py-3 text-center border-r border-gray-200">
+                                    <span class="inline-flex px-2.5 py-1 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">
+                                        {{ ucfirst($kondisiVal) }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-700">{{ $keteranganVal ?: '—' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                {{-- ── TAMPILAN KARTU KENDALI (tabel komponen) ── --}}
+                <h3 class="text-lg font-bold text-gray-900 mb-3">Hasil Pemeriksaan</h3>
+                <div class="border border-gray-300 rounded-lg overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 w-1/3">Komponen</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Kondisi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            @php
+                                $aparDbCols = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];
+                                $aparFieldDisplay = [
+                                    'pressure_gauge' => 'Pressure Gauge',
+                                    'pin_segel'      => 'Pin & Segel',
+                                    'selang'         => 'Selang',
+                                    'tabung'         => 'Tabung',
+                                    'label'          => 'Label',
+                                    'kondisi_fisik'  => 'Kondisi Fisik',
+                                ];
+                                $templateApar = \App\Models\KartuTemplate::getTemplate('apar');
+                                if ($templateApar && $templateApar->inspection_fields) {
+                                    $viewRows = [];
+                                    foreach ($templateApar->inspection_fields as $index => $tf) {
+                                        $key = $tf['key'] ?? null;
+                                        if ($key && isset($aparFieldDisplay[$key])) {
+                                            $dbCol = $key;
+                                        } elseif ($key && in_array($key, $aparDbCols)) {
+                                            $dbCol = $key;
+                                        } elseif (isset($aparDbCols[$index])) {
+                                            $dbCol = $aparDbCols[$index];
+                                        } else {
+                                            $dbCol = null;
+                                        }
+                                        $viewRows[] = ['label' => $tf['label'], 'db_col' => $dbCol];
+                                    }
+                                } else {
+                                    $viewRows = array_map(fn($col, $lbl) => ['label' => $lbl, 'db_col' => $col],
+                                        array_keys($aparFieldDisplay), array_values($aparFieldDisplay));
+                                }
+                            @endphp
+                            @foreach($viewRows as $row)
+                                @php
+                                    $dbCol = $row['db_col'];
+                                    $val   = $dbCol ? ($kartu->$dbCol ?? null) : null;
+                                    $vLow  = strtolower($val ?? '');
+                                @endphp
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $row['label'] }}</td>
+                                    <td class="px-4 py-3">
+                                        @if(in_array($vLow, ['baik']))
+                                            <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                {{ ucfirst($val) }}
+                                            </span>
+                                        @elseif(in_array($vLow, ['tidak_baik', 'tidak baik', 'rusak']))
+                                            <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-200">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                {{ ucfirst(str_replace('_', ' ', $val)) }}
+                                            </span>
+                                        @elseif($val && $val !== '-')
+                                            <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                                {{ ucfirst(str_replace('_', ' ', $val)) }}
+                                            </span>
+                                        @else
+                                            <span class="text-xs text-gray-400 italic">Tidak diisi</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
         </div>
 
         {{-- INFO PEMERIKSAAN --}}
         <div class="grid grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
             <div>
                 <p class="text-sm text-gray-600">Kesimpulan</p>
-                <p class="font-semibold text-lg
-                    @if($kartu->kesimpulan === 'baik') text-green-600
-                    @else text-red-600 @endif">
+                @php
+                    $kLow = strtolower($kartu->kesimpulan ?? '');
+                    $kColor = match(true) {
+                        $kLow === 'baik'                                          => 'text-green-600',
+                        in_array($kLow, ['tidak baik','tidak_baik','rusak'])      => 'text-red-600',
+                        $kLow === 'isi ulang'                                     => 'text-amber-600',
+                        default                                                   => 'text-gray-700',
+                    };
+                @endphp
+                <p class="font-semibold text-lg {{ $kColor }}">
                     {{ strtoupper($kartu->kesimpulan) }}
                 </p>
             </div>

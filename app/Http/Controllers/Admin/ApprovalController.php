@@ -9,7 +9,9 @@ use App\Models\KartuApar;
 use App\Models\KartuApat;
 use App\Models\KartuBoxHydrant;
 use App\Models\KartuFireAlarm;
-use App\Models\KartuP3k;
+use App\Models\KartuP3kPemeriksaan;
+use App\Models\KartuP3kPemakaian;
+use App\Models\KartuP3kStock;
 use App\Models\KartuRumahPompa;
 use App\Models\Signature;
 use App\Models\Unit;
@@ -28,7 +30,8 @@ class ApprovalController extends Controller
             'fire-alarm' => 'fireAlarm',
             'box-hydrant' => 'boxHydrant',
             'rumah-pompa' => 'rumahPompa',
-            'p3k' => 'p3k',
+            'p3k-pemeriksaan', 'p3k-pemakaian', 'p3k-stock' => 'p3k',
+            'p3k' => 'p3k', // backward compatibility
             default => 'apar',
         };
     }
@@ -40,7 +43,7 @@ class ApprovalController extends Controller
         $units = Unit::orderBy('code')->get();
         $currentViewingUnit = $this->getCurrentViewingUnit();
 
-        $aparKartu = KartuApar::with(['apar.unit', 'user', 'approver'])
+        $aparKartu = KartuApar::with(['apar.unit', 'user', 'approver'])->whereHas('apar')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -56,11 +59,14 @@ class ApprovalController extends Controller
                 $unit = $kartu->apar?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'apar']);
+                // Tandai jenis: pemeriksaan jika catatan diawali "[PMK]"
+                $kartu->jenis_kartu = ($kartu->catatan && str_starts_with($kartu->catatan, '[PMK]'))
+                    ? 'pemeriksaan' : 'kendali';
 
                 return $kartu;
             });
 
-        $apatKartu = KartuApat::with(['apat.unit', 'user', 'approver'])
+        $apatKartu = KartuApat::with(['apat.unit', 'user', 'approver'])->whereHas('apat')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -76,11 +82,12 @@ class ApprovalController extends Controller
                 $unit = $kartu->apat?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'apat']);
+                $kartu->jenis_kartu = 'kendali';
 
                 return $kartu;
             });
 
-        $apabKartu = KartuApab::with(['apab.unit', 'user', 'approver'])
+        $apabKartu = KartuApab::with(['apab.unit', 'user', 'approver'])->whereHas('apab')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -96,11 +103,12 @@ class ApprovalController extends Controller
                 $unit = $kartu->apab?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'apab']);
+                $kartu->jenis_kartu = 'kendali';
 
                 return $kartu;
             });
 
-        $fireAlarmKartu = KartuFireAlarm::with(['fireAlarm.unit', 'user', 'approver'])
+        $fireAlarmKartu = KartuFireAlarm::with(['fireAlarm.unit', 'user', 'approver'])->whereHas('fireAlarm')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -116,11 +124,12 @@ class ApprovalController extends Controller
                 $unit = $kartu->fireAlarm?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'fire-alarm']);
+                $kartu->jenis_kartu = 'kendali';
 
                 return $kartu;
             });
 
-        $boxHydrantKartu = KartuBoxHydrant::with(['boxHydrant.unit', 'user', 'approver'])
+        $boxHydrantKartu = KartuBoxHydrant::with(['boxHydrant.unit', 'user', 'approver'])->whereHas('boxHydrant')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -136,11 +145,12 @@ class ApprovalController extends Controller
                 $unit = $kartu->boxHydrant?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'box-hydrant']);
+                $kartu->jenis_kartu = 'kendali';
 
                 return $kartu;
             });
 
-        $rumahPompaKartu = KartuRumahPompa::with(['rumahPompa.unit', 'user', 'approver'])
+        $rumahPompaKartu = KartuRumahPompa::with(['rumahPompa.unit', 'user', 'approver'])->whereHas('rumahPompa')
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
@@ -156,29 +166,71 @@ class ApprovalController extends Controller
                 $unit = $kartu->rumahPompa?->unit;
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
                 $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'rumah-pompa']);
+                $kartu->jenis_kartu = 'kendali';
 
                 return $kartu;
             });
 
-        $p3kKartu = KartuP3k::with(['p3k.unit', 'user', 'approver'])
+        $p3kPemeriksaanKartu = KartuP3kPemeriksaan::with(['p3k', 'user', 'approver'])
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNull('leader_rejected_at')
             ->when($unitId, function ($query) use ($unitId) {
-                $query->whereHas('p3k', function ($q) use ($unitId) {
-                    $q->where('unit_id', $unitId);
-                });
+                $query->where('unit_id', $unitId);
             })
             ->get()
             ->map(function ($kartu) {
                 $kartu->module = 'P3K';
-                $kartu->equipment_name = $kartu->p3k->barcode ?? $kartu->p3k->serial_no ?? '-';
-                $unit = $kartu->p3k?->unit;
+                $kartu->equipment_name = $kartu->p3k ? ($kartu->p3k->serial_no ?? '-') : $kartu->nomor_kartu;
+                $unit = $kartu->p3k?->unit ?? \App\Models\Unit::find($kartu->unit_id);
                 $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
-                $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'p3k']);
+                $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'p3k-pemeriksaan']);
+                $kartu->jenis_kartu = 'pemeriksaan';
 
                 return $kartu;
             });
+
+        $p3kPemakaianKartu = KartuP3kPemakaian::with(['p3k', 'user', 'approver'])
+            ->whereNull('approved_at')
+            ->whereNull('rejected_at')
+            ->whereNull('leader_rejected_at')
+            ->when($unitId, function ($query) use ($unitId) {
+                $query->where('unit_id', $unitId);
+            })
+            ->get()
+            ->map(function ($kartu) {
+                $kartu->module = 'P3K';
+                $kartu->equipment_name = $kartu->p3k ? ($kartu->p3k->serial_no ?? '-') : $kartu->nomor_kartu;
+                $unit = $kartu->p3k?->unit ?? \App\Models\Unit::find($kartu->unit_id);
+                $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
+                $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'p3k-pemakaian']);
+                $kartu->jenis_kartu = 'pemakaian';
+
+                return $kartu;
+            });
+
+        $p3kStockKartu = KartuP3kStock::with(['p3k', 'user', 'approver'])
+            ->whereNull('approved_at')
+            ->whereNull('rejected_at')
+            ->whereNull('leader_rejected_at')
+            ->when($unitId, function ($query) use ($unitId) {
+                $query->where('unit_id', $unitId);
+            })
+            ->get()
+            ->map(function ($kartu) {
+                $kartu->module = 'P3K';
+                $kartu->equipment_name = $kartu->p3k ? ($kartu->p3k->serial_no ?? '-') : $kartu->nomor_kartu;
+                $unit = $kartu->p3k?->unit ?? \App\Models\Unit::find($kartu->unit_id);
+                $kartu->unit_label = $unit ? "{$unit->code} - {$unit->name}" : '-';
+                $kartu->route_show = route('admin.approvals.show', ['id' => $kartu->id, 'type' => 'p3k-stock']);
+                $kartu->jenis_kartu = 'stock';
+
+                return $kartu;
+            });
+
+        // Filter jenis (kendali / pemeriksaan) dan modul dari request
+        $filterJenis = request('jenis_kartu');
+        $filterModul = request('filter_modul');
 
         $pendingApprovals = $aparKartu
             ->concat($apatKartu)
@@ -186,7 +238,11 @@ class ApprovalController extends Controller
             ->concat($fireAlarmKartu)
             ->concat($boxHydrantKartu)
             ->concat($rumahPompaKartu)
-            ->concat($p3kKartu)
+            ->concat($p3kPemeriksaanKartu)
+            ->concat($p3kPemakaianKartu)
+            ->concat($p3kStockKartu)
+            ->when($filterJenis, fn($c) => $c->filter(fn($k) => ($k->jenis_kartu ?? 'kendali') === $filterJenis))
+            ->when($filterModul, fn($c) => $c->filter(fn($k) => strtolower($k->module) === strtolower($filterModul)))
             ->sortByDesc('created_at');
 
         $signatures = \App\Models\Signature::where('is_active', true)->get();
@@ -227,7 +283,10 @@ class ApprovalController extends Controller
                         'fire-alarm' => \App\Models\KartuFireAlarm::with([$equipmentRelation])->find($id),
                         'box-hydrant' => \App\Models\KartuBoxHydrant::with([$equipmentRelation])->find($id),
                         'rumah-pompa' => \App\Models\KartuRumahPompa::with([$equipmentRelation])->find($id),
-                        'p3k' => \App\Models\KartuP3k::with([$equipmentRelation])->find($id),
+                        'p3k-pemeriksaan' => \App\Models\KartuP3kPemeriksaan::with([$equipmentRelation])->find($id),
+                        'p3k-pemakaian' => \App\Models\KartuP3kPemakaian::with([$equipmentRelation])->find($id),
+                        'p3k-stock' => \App\Models\KartuP3kStock::with([$equipmentRelation])->find($id),
+                        'p3k' => \App\Models\KartuP3kPemeriksaan::with([$equipmentRelation])->find($id), // backward compatibility
                         default => \App\Models\KartuApar::with([$equipmentRelation])->find($id),
                     };
 
@@ -239,17 +298,34 @@ class ApprovalController extends Controller
                         continue;
                     }
 
-                    // Check unit access
-                    if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-                        $skippedCount++;
-                        $skippedReasons[] = "ID #{$id} ({$type}): Tidak memiliki akses ke unit ini";
-                        \Log::warning("Batch Approve: Unit access denied", [
-                            'id' => $id,
-                            'type' => $type,
-                            'user_unit' => $unitId,
-                            'kartu_unit' => $kartu->{$equipmentRelation}->unit_id
-                        ]);
-                        continue;
+                    // Check unit access (superadmin bypass)
+                    if ($unitId && !auth()->user()->hasRole('superadmin')) {
+                        // P3K kartu punya unit_id langsung
+                        if (str_starts_with($type, 'p3k-')) {
+                            if ((int) $kartu->unit_id !== (int) $unitId) {
+                                $skippedCount++;
+                                $skippedReasons[] = "ID #{$id} ({$type}): Tidak memiliki akses ke unit ini";
+                                \Log::warning("Batch Approve: Unit access denied", [
+                                    'id' => $id,
+                                    'type' => $type,
+                                    'user_unit' => $unitId,
+                                    'kartu_unit' => $kartu->unit_id
+                                ]);
+                                continue;
+                            }
+                        } else {
+                            if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                                $skippedCount++;
+                                $skippedReasons[] = "ID #{$id} ({$type}): Tidak memiliki akses ke unit ini";
+                                \Log::warning("Batch Approve: Unit access denied", [
+                                    'id' => $id,
+                                    'type' => $type,
+                                    'user_unit' => $unitId,
+                                    'kartu_unit' => $kartu->{$equipmentRelation}->unit_id
+                                ]);
+                                continue;
+                            }
+                        }
                     }
 
                     // Check if rejected by leader
@@ -363,12 +439,25 @@ class ApprovalController extends Controller
             'fire-alarm' => KartuFireAlarm::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
             'box-hydrant' => KartuBoxHydrant::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
             'rumah-pompa' => KartuRumahPompa::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
-            'p3k' => KartuP3k::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
+            'p3k-pemeriksaan' => KartuP3kPemeriksaan::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
+            'p3k-pemakaian' => KartuP3kPemakaian::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
+            'p3k-stock' => KartuP3kStock::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
+            'p3k' => KartuP3kPemeriksaan::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
             default => KartuApar::with([$equipmentRelation, 'user', 'approver'])->findOrFail($id),
         };
 
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // Superadmin bisa akses semua unit; unit filter hanya berlaku untuk non-superadmin
+        if ($unitId && !auth()->user()->hasRole('superadmin')) {
+            // P3K kartu punya unit_id langsung
+            if (str_starts_with($type, 'p3k-')) {
+                if ((int) $kartu->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
         }
 
         $kartu->module_type = $type;
@@ -399,8 +488,11 @@ class ApprovalController extends Controller
             default => KartuApar::with([$equipmentRelation])->findOrFail($id),
         };
 
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // Superadmin bisa akses semua unit
+        if ($unitId && !auth()->user()->hasRole('superadmin')) {
+            if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                abort(403, 'Unauthorized action.');
+            }
         }
 
         if ($kartu->leader_rejected_at) {
@@ -447,8 +539,11 @@ class ApprovalController extends Controller
             default => KartuApar::with([$equipmentRelation])->findOrFail($id),
         };
 
-        if ($unitId && $kartu->{$equipmentRelation}->unit_id !== $unitId) {
-            abort(403, 'Unauthorized action.');
+        // Superadmin bisa akses semua unit
+        if ($unitId && !auth()->user()->hasRole('superadmin')) {
+            if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                abort(403, 'Unauthorized action.');
+            }
         }
 
         $currentRevisi = isset($kartu->revisi) ? (int) $kartu->revisi : 0;

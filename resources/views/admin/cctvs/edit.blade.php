@@ -52,6 +52,77 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Stream URL --}}
+                    <div class="md:col-span-2">
+                        <label for="stream_url" class="block text-sm font-medium text-slate-700 mb-1">
+                            Streaming URL (HLS/WebRTC) <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="url" name="stream_url" id="stream_url" value="{{ old('stream_url', $cctv->stream_url) }}"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors sm:text-sm p-3 border"
+                            placeholder="https://example.com/stream.m3u8">
+                        @error('stream_url') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Unit --}}
+                    <div>
+                        <label for="unit_id" class="block text-sm font-medium text-slate-700 mb-1">
+                            Unit Kerja <span class="text-red-500">*</span>
+                        </label>
+                        <select name="unit_id" id="unit_id" required
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors sm:text-sm p-3 border">
+                            <option value="">Pilih Unit</option>
+                            @foreach($units as $unit)
+                                <option value="{{ $unit->id }}" {{ old('unit_id', $cctv->unit_id) == $unit->id ? 'selected' : '' }}>
+                                    {{ $unit->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('unit_id') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Floor Plan --}}
+                    <div>
+                        <label for="floor_plan_id" class="block text-sm font-medium text-slate-700 mb-1">
+                            Denah / Lantai <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <select name="floor_plan_id" id="floor_plan_id"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors sm:text-sm p-3 border">
+                            <option value="">Pilih Denah</option>
+                            @foreach($floorPlans as $plan)
+                                <option value="{{ $plan->id }}" {{ old('floor_plan_id', $cctv->floor_plan_id) == $plan->id ? 'selected' : '' }}>
+                                    {{ $plan->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('floor_plan_id') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Koordinat X --}}
+                    <div>
+                        <label for="floor_plan_x" class="block text-sm font-medium text-slate-700 mb-1">
+                            Koordinat X (%) <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="number" step="0.01" name="floor_plan_x" id="floor_plan_x" value="{{ old('floor_plan_x', $cctv->floor_plan_x) }}"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors sm:text-sm p-3 border"
+                            placeholder="Contoh: 45.50">
+                        @error('floor_plan_x') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Koordinat Y --}}
+                    <div>
+                        <label for="floor_plan_y" class="block text-sm font-medium text-slate-700 mb-1">
+                            Koordinat Y (%) <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="number" step="0.01" name="floor_plan_y" id="floor_plan_y" value="{{ old('floor_plan_y', $cctv->floor_plan_y) }}"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:border-indigo-500 focus:ring-indigo-500 transition-colors sm:text-sm p-3 border"
+                            placeholder="Contoh: 30.20">
+                        @error('floor_plan_y') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
                 {{-- Status --}}
                 <div class="pt-2">
                     <label class="block text-sm font-medium text-slate-700 mb-2">

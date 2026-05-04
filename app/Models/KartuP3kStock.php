@@ -12,6 +12,8 @@ class KartuP3kStock extends Model
     protected $table = 'kartu_p3k_stock';
 
     protected $fillable = [
+        'nomor_kartu',
+        'unit_id',
         'p3k_id',
         'user_id',
         'stock_items',
@@ -22,6 +24,15 @@ class KartuP3kStock extends Model
         'approved_by',
         'approved_at',
         'signature_id',
+        'leader_approved_by',
+        'leader_approved_at',
+        'leader_signature_id',
+        'leader_rejected_by',
+        'leader_rejected_at',
+        'leader_rejection_reason',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
     ];
 
     protected $casts = [

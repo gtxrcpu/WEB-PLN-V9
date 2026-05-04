@@ -158,7 +158,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Tren Inspeksi</h3>
               <p class="text-xs text-slate-600 mt-0.5">6 bulan terakhir</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
               </svg>
@@ -180,7 +180,7 @@
     @php
       $totalBaik = ($aparData['baik'] ?? 0) + ($apatData['baik'] ?? 0) + ($apabData['baik'] ?? 0) + 
                    ($fireAlarmData['baik'] ?? 0) + ($boxHydrantData['baik'] ?? 0) + ($rumahPompaData['baik'] ?? 0);
-      $totalRusak = ($aparData['rusak'] ?? 0) + ($apatData['rusak'] ?? 0) + ($apabData['tidak_baik'] ?? 0) + 
+      $totalRusak = ($aparData['rusak'] ?? 0) + ($aparData['isi_ulang'] ?? 0) + ($apatData['rusak'] ?? 0) + ($apabData['tidak_baik'] ?? 0) + 
                     ($fireAlarmData['rusak'] ?? 0) + ($boxHydrantData['rusak'] ?? 0) + ($rumahPompaData['rusak'] ?? 0);
     @endphp
     <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -304,13 +304,8 @@
         <a href="{{ route('leader.approvals.index') }}" class="group relative rounded-lg bg-white p-3 sm:p-4 shadow-sm ring-1 ring-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden" id="pending-approvals-card">
           {{-- Notification Badge --}}
           @php
-            $pendingCount = \App\Models\KartuApar::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuApat::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuApab::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuFireAlarm::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuBoxHydrant::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuRumahPompa::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count() +
-                           \App\Models\KartuP3k::whereNull('approved_at')->whereNull('rejected_at')->whereNull('leader_rejected_at')->count();
+            // Use the stats array from Controller to keep logic centralized
+            $pendingCount = $stats['pending_approvals'] ?? 0;
           @endphp
           <div id="leader-approval-badge" class="absolute -top-2 -right-2 z-10 {{ $pendingCount > 0 ? '' : 'hidden' }}">
             <span class="flex items-center justify-center w-8 h-8 bg-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse ring-4 ring-white">
@@ -347,14 +342,15 @@
     {{-- Modules with grid layout --}}
     @php
       $modules = [
-        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        true,  'apar.index',     'from-blue-500 to-teal-500',    'from-blue-50 to-teal-50'],
-        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        true,  'apat.index',     'from-cyan-500 to-sky-500',   'from-cyan-50 to-sky-50'],
-        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        true,  'apab.index',     'from-red-500 to-orange-500',   'from-red-50 to-orange-50'],
-        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  true,  'fire-alarm.index', 'from-red-500 to-pink-500',       'from-red-50 to-pink-50'],
-        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', true,  'box-hydrant.index', 'from-blue-700 to-cyan-500',      'from-blue-50 to-cyan-50'],
-        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', true,  'rumah-pompa.index', 'from-purple-600 to-indigo-600',  'from-purple-50 to-indigo-50'],
-        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         true, 'p3k.pilih-jenis',       'from-emerald-500 to-teal-500',   'from-emerald-50 to-teal-50'],
-        ['Video Referensi', 'Panduan & tutorial', 'images/referensi.png', true, 'leader.reference-videos.index', 'from-purple-500 to-indigo-500', 'from-purple-50 to-indigo-50'],
+        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        true,  'apar.index',     'from-cyan-500 to-blue-500',    'from-blue-50 to-teal-50'],
+        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        true,  'apat.index',     'from-cyan-500 to-blue-500',   'from-cyan-50 to-sky-50'],
+        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        true,  'apab.index',     'from-cyan-500 to-blue-500',   'from-red-50 to-orange-50'],
+        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  true,  'fire-alarm.index', 'from-cyan-500 to-blue-500',       'from-red-50 to-pink-50'],
+        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', true,  'box-hydrant.index', 'from-cyan-500 to-blue-500',      'from-blue-50 to-cyan-50'],
+        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', true,  'rumah-pompa.index', 'from-cyan-500 to-blue-500',  'from-purple-50 to-indigo-50'],
+        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         true, 'p3k.pilih-jenis',       'from-red-500 to-rose-500',   'from-red-50 to-rose-50'],
+        ['CCTV', 'Monitoring Real-time', 'images/cctv.png', true, 'cctv.dashboard', 'from-cyan-500 to-blue-500', 'from-slate-50 to-slate-100'],
+        ['Video Referensi', 'Panduan & tutorial', 'images/referensi.png', true, 'leader.reference-videos.index', 'from-cyan-500 to-blue-500', 'from-purple-50 to-indigo-50'],
       ];
     @endphp
 
@@ -665,7 +661,17 @@
       
       // Update Status Chart
       if (statusChart) {
-        statusChart.data.datasets[0].data = [data.baik, data.rusak, isiUlang];
+        if (module === 'apar' || module === 'all') {
+          statusChart.data.labels = ['Baik', 'Rusak', 'Isi Ulang'];
+          statusChart.data.datasets[0].data = [data.baik, data.rusak, isiUlang];
+          statusChart.data.datasets[0].backgroundColor = ['rgba(52, 211, 153, 0.85)', 'rgba(248, 113, 113, 0.85)', 'rgba(251, 191, 36, 0.85)'];
+          statusChart.data.datasets[0].borderColor = ['rgb(16, 185, 129)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)'];
+        } else {
+          statusChart.data.labels = ['Baik', 'Rusak'];
+          statusChart.data.datasets[0].data = [data.baik, data.rusak];
+          statusChart.data.datasets[0].backgroundColor = ['rgba(52, 211, 153, 0.85)', 'rgba(248, 113, 113, 0.85)'];
+          statusChart.data.datasets[0].borderColor = ['rgb(16, 185, 129)', 'rgb(239, 68, 68)'];
+        }
         statusChart.update('active');
       }
 
@@ -701,7 +707,7 @@
 
         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-emerald-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
-            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -719,6 +725,7 @@
           </div>
         </div>
 
+        ${(module === 'apar' || module === 'all') ? `
         <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-amber-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
             <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center shadow-md">
@@ -738,6 +745,7 @@
             <span class="text-xs font-bold text-amber-700">${data.total > 0 ? Math.round((isiUlang / data.total) * 100) : 0}%</span>
           </div>
         </div>
+        ` : ''}
 
         <div class="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-5 shadow-sm ring-1 ring-rose-100">
           <div class="flex items-center gap-3 mb-2">

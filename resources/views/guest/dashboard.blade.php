@@ -63,7 +63,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Tren Inspeksi</h3>
               <p class="text-xs text-slate-600 mt-0.5">6 bulan terakhir</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
               </svg>
@@ -130,13 +130,13 @@
     {{-- Modules with grid layout (NO Quick Actions for Guest) --}}
     @php
       $modules = [
-        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        'guest.apar',     'from-blue-500 to-teal-500'],
-        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        'guest.apat',     'from-cyan-500 to-sky-500'],
-        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        'guest.apab',     'from-red-500 to-orange-500'],
-        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  'guest.fire-alarm', 'from-red-500 to-pink-500'],
-        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', 'guest.box-hydrant', 'from-blue-700 to-cyan-500'],
-        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', 'guest.rumah-pompa', 'from-purple-600 to-indigo-600'],
-        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         'guest.p3k',       'from-emerald-500 to-teal-500'],
+        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        'guest.apar',     'from-cyan-500 to-blue-500'],
+        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        'guest.apat',     'from-cyan-500 to-blue-500'],
+        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        'guest.apab',     'from-cyan-500 to-blue-500'],
+        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  'guest.fire-alarm', 'from-cyan-500 to-blue-500'],
+        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', 'guest.box-hydrant', 'from-cyan-500 to-blue-500'],
+        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', 'guest.rumah-pompa', 'from-cyan-500 to-blue-500'],
+        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         'guest.p3k',       'from-cyan-500 to-blue-500'],
       ];
     @endphp
 
@@ -485,7 +485,7 @@
 
         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-emerald-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
-            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>

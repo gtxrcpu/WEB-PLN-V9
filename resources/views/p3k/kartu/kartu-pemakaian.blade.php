@@ -1,7 +1,8 @@
 ﻿<x-kartu-layout
     title="Kartu Kendali Pemakaian P3K"
     :subtitle="$template->subtitle ?? ''"
-    backRoute="p3k.pilih-jenis"
+    back-route="p3k.list-by-jenis"
+    :back-params="['jenis' => 'pemakaian']"
     module="p3k-pemakaian"
     :next-revisi="$nextRevisi ?? null"
     :template="$template">
@@ -17,9 +18,30 @@
         </div>
     @endif
 
+    {{-- P3K Info Banner --}}
+    @if(isset($selectedP3k) && $selectedP3k)
+        <div class="no-print mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-xs text-blue-600 font-medium">Membuat kartu untuk:</p>
+                <p class="text-sm font-bold text-blue-900">{{ $selectedP3k->serial_no }}
+                    @if($selectedP3k->location_code) — {{ $selectedP3k->location_code }} @endif
+                    @if($selectedP3k->unit) ({{ $selectedP3k->unit->name }}) @endif
+                </p>
+            </div>
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('p3k.kartu.store') }}">
         @csrf
         <input type="hidden" name="jenis" value="pemakaian">
+        @if(isset($selectedP3k) && $selectedP3k)
+            <input type="hidden" name="p3k_id" value="{{ $selectedP3k->id }}">
+        @endif
 
         <div class="grid grid-cols-3 gap-4 mb-6 text-sm">
             <div class="flex items-center">
@@ -146,7 +168,7 @@
         <div class="no-print pt-6 mt-6 border-t border-dashed border-slate-200 flex items-center justify-between gap-3 text-sm">
             <p class="text-slate-500">Data akan disimpan dan bisa dicetak ulang dari modul P3K.</p>
             <div class="flex gap-2">
-                <a href="{{ route('p3k.pilih-jenis') }}" class="px-4 py-2 rounded-lg border text-sm hover:bg-slate-50">Batal</a>
+                <a href="{{ route('p3k.list-by-jenis', 'pemakaian') }}" class="px-4 py-2 rounded-lg border text-sm hover:bg-slate-50">Batal</a>
                 <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium hover:from-blue-700 hover:to-indigo-700">Simpan Kartu</button>
             </div>
         </div>

@@ -24,6 +24,7 @@ class KartuApar extends Model
         'tgl_periksa',
         'revisi',
         'petugas',
+        'catatan',
         'leader_signature_id',
         'leader_approved_by',
         'leader_approved_at',

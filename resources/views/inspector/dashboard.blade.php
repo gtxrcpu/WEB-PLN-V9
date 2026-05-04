@@ -83,7 +83,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Tren Inspeksi</h3>
               <p class="text-xs text-slate-600 mt-0.5">6 bulan terakhir</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
               </svg>
@@ -213,14 +213,14 @@
     {{-- Modules with grid layout --}}
     @php
       $modules = [
-        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        true,  'apar.index',     'from-blue-500 to-teal-500',    'from-blue-50 to-teal-50'],
-        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        true,  'apat.index',     'from-cyan-500 to-sky-500',   'from-cyan-50 to-sky-50'],
-        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        true,  'apab.index',     'from-red-500 to-orange-500',   'from-red-50 to-orange-50'],
-        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  true,  'fire-alarm.index', 'from-red-500 to-pink-500',       'from-red-50 to-pink-50'],
-        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', true,  'box-hydrant.index', 'from-blue-700 to-cyan-500',      'from-blue-50 to-cyan-50'],
-        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', true,  'rumah-pompa.index', 'from-purple-600 to-indigo-600',  'from-purple-50 to-indigo-50'],
-        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         true, 'p3k.pilih-jenis',       'from-emerald-500 to-teal-500',   'from-emerald-50 to-teal-50'],
-        ['Referensi',  'Kategori/Lokasi/Petugas',      'images/referensi.png',   false,  'referensi.index', 'from-purple-500 to-indigo-500',  'from-purple-50 to-indigo-50'],
+        ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        true,  'apar.index',     'from-cyan-500 to-blue-500',    'from-blue-50 to-teal-50'],
+        ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        true,  'apat.index',     'from-cyan-500 to-blue-500',   'from-cyan-50 to-sky-50'],
+        ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        true,  'apab.index',     'from-cyan-500 to-blue-500',   'from-red-50 to-orange-50'],
+        ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  true,  'fire-alarm.index', 'from-cyan-500 to-blue-500',       'from-red-50 to-pink-50'],
+        ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', true,  'box-hydrant.index', 'from-cyan-500 to-blue-500',      'from-blue-50 to-cyan-50'],
+        ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', true,  'rumah-pompa.index', 'from-cyan-500 to-blue-500',  'from-purple-50 to-indigo-50'],
+        ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         true, 'p3k.pilih-jenis',       'from-red-500 to-rose-500',   'from-red-50 to-rose-50'],
+        ['Referensi',  'Kategori/Lokasi/Petugas',      'images/referensi.png',   false,  'referensi.index', 'from-cyan-500 to-blue-500',  'from-purple-50 to-indigo-50'],
       ];
     @endphp
 
@@ -550,7 +550,7 @@
 
         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-emerald-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
-            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>

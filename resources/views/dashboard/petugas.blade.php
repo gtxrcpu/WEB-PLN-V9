@@ -257,14 +257,15 @@
     {{-- Modules with grid layout --}}
     @php
       $modules = [
-        ['APAR', 'Alat Pemadam Api Ringan', 'images/apar.png', true, 'apar.index', 'from-blue-500 to-teal-500', 'from-blue-50 to-teal-50'],
-        ['APAT', 'Alat Pemadam Api Tradisional', 'images/apat.png', true, 'apat.index', 'from-cyan-500 to-sky-500', 'from-cyan-50 to-sky-50'],
-        ['APAB', 'Alat Pemadam Api Berat', 'images/apab.png', true, 'apab.index', 'from-red-500 to-orange-500', 'from-red-50 to-orange-50'],
-        ['Fire Alarm', 'Panel & titik alarm', 'images/fire-alarm.png', true, 'fire-alarm.index', 'from-red-500 to-pink-500', 'from-red-50 to-pink-50'],
-        ['Box Hydrant', 'Box, hose, nozzle', 'images/box-hydrant.png', true, 'box-hydrant.index', 'from-blue-700 to-cyan-500', 'from-blue-50 to-cyan-50'],
-        ['Rumah Pompa', 'Hydrant Rumah Pompa', 'images/box-hydrant.png', true, 'rumah-pompa.index', 'from-purple-600 to-indigo-600', 'from-purple-50 to-indigo-50'],
-        ['P3K', 'Kotak & isi P3K', 'images/p3k.png', true, 'p3k.pilih-jenis', 'from-emerald-500 to-teal-500', 'from-emerald-50 to-teal-50'],
-        ['Referensi', 'Video panduan & tutorial', 'images/referensi.png', true, 'reference-videos.index', 'from-purple-500 to-pink-500', 'from-purple-50 to-pink-50'],
+        ['APAR', 'Alat Pemadam Api Ringan', 'images/apar.png', true, 'apar.index', 'from-cyan-500 to-blue-500', 'from-blue-50 to-teal-50'],
+        ['APAT', 'Alat Pemadam Api Tradisional', 'images/apat.png', true, 'apat.index', 'from-cyan-500 to-blue-500', 'from-cyan-50 to-sky-50'],
+        ['APAB', 'Alat Pemadam Api Berat', 'images/apab.png', true, 'apab.index', 'from-cyan-500 to-blue-500', 'from-red-50 to-orange-50'],
+        ['Fire Alarm', 'Panel & titik alarm', 'images/fire-alarm.png', true, 'fire-alarm.index', 'from-cyan-500 to-blue-500', 'from-red-50 to-pink-50'],
+        ['Box Hydrant', 'Box, hose, nozzle', 'images/box-hydrant.png', true, 'box-hydrant.index', 'from-cyan-500 to-blue-500', 'from-blue-50 to-cyan-50'],
+        ['Rumah Pompa', 'Hydrant Rumah Pompa', 'images/box-hydrant.png', true, 'rumah-pompa.index', 'from-cyan-500 to-blue-500', 'from-purple-50 to-indigo-50'],
+        ['P3K', 'Kotak & isi P3K', 'images/p3k.png', true, 'p3k.pilih-jenis', 'from-cyan-500 to-blue-500', 'from-emerald-50 to-teal-50'],
+        ['CCTV', 'Monitoring Real-time', 'images/cctv.png', true, 'petugas.cctvs.index', 'from-cyan-500 to-blue-500', 'from-slate-50 to-slate-100'],
+        ['Referensi', 'Video panduan & tutorial', 'images/referensi.png', true, 'reference-videos.index', 'from-cyan-500 to-blue-500', 'from-purple-50 to-pink-50'],
       ];
     @endphp
 

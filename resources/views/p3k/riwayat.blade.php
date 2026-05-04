@@ -4,7 +4,7 @@
 
     {{-- Back Button --}}
     <div class="mb-4">
-        <a href="{{ route('p3k.pilih-jenis') }}"
+        <a href="{{ route('p3k.list-by-jenis', request('jenis', 'pemeriksaan')) }}"
            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -42,7 +42,7 @@
                     <p class="text-white font-semibold">{{ $riwayatInspeksi->count() }} kali</p>
                 </div>
                 <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                    <a href="{{ route('p3k.pilih-jenis') }}" 
+                    <a href="{{ route('p3k.list-by-jenis', request('jenis', 'pemeriksaan')) }}" 
                        class="flex items-center gap-2 text-white hover:text-green-100 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -138,16 +138,18 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         <h3 class="text-lg font-bold text-slate-900">
                                             {{ $jenisLabel['label'] }}
                                         </h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-{{ $jenisLabel['color'] }}-100 text-{{ $jenisLabel['color'] }}-700">
-                                            {{ $jenisLabel['label'] }}
-                                        </span>
+                                        @if(!empty($kartu->nomor_kartu))
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-white font-mono tracking-wide">
+                                                {{ $kartu->nomor_kartu }}
+                                            </span>
+                                        @endif
                                     </div>
                                     <p class="text-sm text-slate-600">
-                                        {{ $kartu->tanggal->format('d M Y') }} â€¢ {{ $kartu->tanggal->diffForHumans() }}
+                                        {{ $kartu->tanggal ? $kartu->tanggal->format('d M Y') : '—' }}
                                     </p>
                                 </div>
                             </div>
@@ -166,30 +168,27 @@
 
                         {{-- Detail berdasarkan jenis --}}
                         @if(($kartu->jenis ?? '') === 'pemakaian')
+                            @php
+                                $entries = $kartu->usage_entries ?? [];
+                                $filledEntries = array_filter($entries, fn($e) => !empty($e['nama']) || !empty($e['item']));
+                            @endphp
+                            @if(!empty($filledEntries))
                             <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                <div class="grid grid-cols-3 gap-4 text-sm">
-                                    <div>
-                                        <p class="text-blue-600 text-xs mb-1">Item Digunakan</p>
-                                        <p class="font-semibold text-blue-900">{{ $kartu->item_digunakan }}</p>
+                                <p class="text-blue-600 text-xs font-semibold mb-2">Pemakaian ({{ count($filledEntries) }} entri)</p>
+                                @foreach(array_slice($filledEntries, 0, 3) as $entry)
+                                    <div class="flex items-center gap-2 text-sm mb-1">
+                                        <span class="font-semibold text-blue-900">{{ $entry['item'] ?? '-' }}</span>
+                                        <span class="text-blue-600">×{{ $entry['jumlah'] ?? 1 }}</span>
+                                        @if(!empty($entry['nama']))
+                                            <span class="text-blue-500 text-xs">({{ $entry['nama'] }})</span>
+                                        @endif
                                     </div>
-                                    <div>
-                                        <p class="text-blue-600 text-xs mb-1">Jumlah</p>
-                                        <p class="font-semibold text-blue-900">{{ $kartu->jumlah }}</p>
-                                    </div>
-                                    @if($kartu->nama_pengguna)
-                                    <div>
-                                        <p class="text-blue-600 text-xs mb-1">Pengguna</p>
-                                        <p class="font-semibold text-blue-900">{{ $kartu->nama_pengguna }}</p>
-                                    </div>
-                                    @endif
-                                </div>
-                                @if($kartu->keperluan)
-                                    <div class="mt-2 pt-2 border-t border-blue-200">
-                                        <p class="text-blue-600 text-xs mb-1">Keperluan</p>
-                                        <p class="text-sm text-blue-900">{{ $kartu->keperluan }}</p>
-                                    </div>
+                                @endforeach
+                                @if(count($filledEntries) > 3)
+                                    <p class="text-xs text-blue-500 mt-1">+{{ count($filledEntries) - 3 }} entri lainnya</p>
                                 @endif
                             </div>
+                            @endif
                         @endif
 
                         @if($kartu->catatan)
@@ -281,6 +280,18 @@
                                     <p class="text-sm text-slate-600 italic">Menunggu approval Leader & Admin</p>
                                 </div>
                             @endif
+                        </div>
+
+                        {{-- View Detail Link --}}
+                        <div class="mt-4 pt-3 border-t border-slate-100">
+                            <a href="{{ route('p3k.view-kartu', ['p3k' => $p3k->id, 'kartuId' => $kartu->id, 'jenis' => $kartu->jenis]) }}"
+                               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                Lihat Detail Kartu
+                            </a>
                         </div>
                     </div>
                 </div>

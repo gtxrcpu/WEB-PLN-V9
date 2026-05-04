@@ -1,0 +1,35 @@
+Schema::table('kartu_p3k_pemeriksaan', function (Blueprint $table) {
+    $table->unsignedBigInteger('leader_signature_id')->nullable();
+    $table->unsignedBigInteger('leader_approved_by')->nullable();
+    $table->timestamp('leader_approved_at')->nullable();
+    $table->unsignedBigInteger('leader_rejected_by')->nullable();
+    $table->timestamp('leader_rejected_at')->nullable();
+    $table->text('leader_rejection_reason')->nullable();
+    $table->unsignedBigInteger('rejected_by')->nullable();
+    $table->timestamp('rejected_at')->nullable();
+    $table->text('rejection_reason')->nullable();
+});
+
+Schema::table('kartu_p3k_pemakaian', function (Blueprint $table) {
+    $table->unsignedBigInteger('leader_signature_id')->nullable();
+    $table->unsignedBigInteger('leader_approved_by')->nullable();
+    $table->timestamp('leader_approved_at')->nullable();
+    $table->unsignedBigInteger('leader_rejected_by')->nullable();
+    $table->timestamp('leader_rejected_at')->nullable();
+    $table->text('leader_rejection_reason')->nullable();
+    $table->unsignedBigInteger('rejected_by')->nullable();
+    $table->timestamp('rejected_at')->nullable();
+    $table->text('rejection_reason')->nullable();
+});
+
+Schema::table('kartu_p3k_stock', function (Blueprint $table) {
+    $table->unsignedBigInteger('leader_signature_id')->nullable();
+    $table->unsignedBigInteger('leader_approved_by')->nullable();
+    $table->timestamp('leader_approved_at')->nullable();
+    $table->unsignedBigInteger('leader_rejected_by')->nullable();
+    $table->timestamp('leader_rejected_at')->nullable();
+    $table->text('leader_rejection_reason')->nullable();
+    $table->unsignedBigInteger('rejected_by')->nullable();
+    $table->timestamp('rejected_at')->nullable();
+    $table->text('rejection_reason')->nullable();
+});

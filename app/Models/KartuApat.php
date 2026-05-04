@@ -25,6 +25,7 @@ class KartuApat extends Model
         'revisi',
         'tgl_surat',
         'petugas',
+        'catatan',
         'pengawas',
         'leader_signature_id',
         'leader_approved_by',

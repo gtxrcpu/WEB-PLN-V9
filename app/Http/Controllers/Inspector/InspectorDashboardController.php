@@ -16,42 +16,41 @@ class InspectorDashboardController extends Controller
 {
     public function index()
     {
-        // Get all equipment data (not filtered by unit - Inspector can see all)
         $aparData = [
-            'total' => Apar::count(),
-            'baik' => Apar::where('status', 'baik')->count(),
-            'isi_ulang' => Apar::where('status', 'isi ulang')->count(),
-            'rusak' => Apar::where('status', 'rusak')->count(),
+            'total' => Apar::forAuthUser()->count(),
+            'baik' => Apar::forAuthUser()->where('status', 'baik')->count(),
+            'isi_ulang' => Apar::forAuthUser()->where('status', 'isi ulang')->count(),
+            'rusak' => Apar::forAuthUser()->where('status', 'rusak')->count(),
         ];
 
         $apatData = [
-            'total' => Apat::count(),
-            'baik' => Apat::where('status', 'baik')->count(),
-            'rusak' => Apat::where('status', 'rusak')->count(),
+            'total' => Apat::forAuthUser()->count(),
+            'baik' => Apat::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => Apat::forAuthUser()->where('status', 'rusak')->count(),
         ];
 
         $apabData = [
-            'total' => Apab::count(),
-            'baik' => Apab::where('status', 'baik')->count(),
-            'tidak_baik' => Apab::where('status', '!=', 'baik')->count(),
+            'total' => Apab::forAuthUser()->count(),
+            'baik' => Apab::forAuthUser()->where('status', 'baik')->count(),
+            'tidak_baik' => Apab::forAuthUser()->where('status', '!=', 'baik')->count(),
         ];
 
         $fireAlarmData = [
-            'total' => FireAlarm::count(),
-            'baik' => FireAlarm::where('status', 'baik')->count(),
-            'rusak' => FireAlarm::where('status', 'rusak')->count(),
+            'total' => FireAlarm::forAuthUser()->count(),
+            'baik' => FireAlarm::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => FireAlarm::forAuthUser()->where('status', 'rusak')->count(),
         ];
 
         $boxHydrantData = [
-            'total' => BoxHydrant::count(),
-            'baik' => BoxHydrant::where('status', 'baik')->count(),
-            'rusak' => BoxHydrant::where('status', 'rusak')->count(),
+            'total' => BoxHydrant::forAuthUser()->count(),
+            'baik' => BoxHydrant::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => BoxHydrant::forAuthUser()->where('status', 'rusak')->count(),
         ];
 
         $rumahPompaData = [
-            'total' => RumahPompa::count(),
-            'baik' => RumahPompa::where('status', 'baik')->count(),
-            'rusak' => RumahPompa::where('status', 'rusak')->count(),
+            'total' => RumahPompa::forAuthUser()->count(),
+            'baik' => RumahPompa::forAuthUser()->where('status', 'baik')->count(),
+            'rusak' => RumahPompa::forAuthUser()->where('status', 'rusak')->count(),
         ];
 
         $totalItems = $aparData['total'] + $apatData['total'] + $apabData['total'] + 
@@ -81,7 +80,7 @@ class InspectorDashboardController extends Controller
     // APAR
     public function apar()
     {
-        $apars = Apar::orderBy('serial_no')->get();
+        $apars = Apar::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.apar.index', compact('apars'));
     }
 
@@ -97,7 +96,7 @@ class InspectorDashboardController extends Controller
     // APAT
     public function apat()
     {
-        $apats = Apat::orderBy('serial_no')->get();
+        $apats = Apat::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.apat.index', compact('apats'));
     }
 
@@ -110,7 +109,7 @@ class InspectorDashboardController extends Controller
     // P3K
     public function p3k()
     {
-        $p3ks = P3k::orderBy('serial_no')->get();
+        $p3ks = P3k::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.p3k.index', compact('p3ks'));
     }
 
@@ -123,7 +122,7 @@ class InspectorDashboardController extends Controller
     // APAB
     public function apab()
     {
-        $apabs = Apab::orderBy('serial_no')->get();
+        $apabs = Apab::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.apab.index', compact('apabs'));
     }
 
@@ -136,7 +135,7 @@ class InspectorDashboardController extends Controller
     // Fire Alarm
     public function fireAlarm()
     {
-        $fireAlarms = FireAlarm::orderBy('serial_no')->get();
+        $fireAlarms = FireAlarm::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.fire-alarm.index', compact('fireAlarms'));
     }
 
@@ -149,7 +148,7 @@ class InspectorDashboardController extends Controller
     // Box Hydrant
     public function boxHydrant()
     {
-        $boxHydrants = BoxHydrant::orderBy('serial_no')->get();
+        $boxHydrants = BoxHydrant::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.box-hydrant.index', compact('boxHydrants'));
     }
 
@@ -162,7 +161,7 @@ class InspectorDashboardController extends Controller
     // Rumah Pompa
     public function rumahPompa()
     {
-        $rumahPompas = RumahPompa::orderBy('serial_no')->get();
+        $rumahPompas = RumahPompa::forAuthUser()->orderBy('serial_no')->get();
         return view('inspector.rumah-pompa.index', compact('rumahPompas'));
     }
 

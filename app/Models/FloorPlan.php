@@ -112,7 +112,20 @@ class FloorPlan extends Model
             ->whereNotNull('floor_plan_y')
             ->get();
 
+        $equipment['cctv'] = Cctv::where('floor_plan_id', $this->id)
+            ->whereNotNull('floor_plan_x')
+            ->whereNotNull('floor_plan_y')
+            ->get();
+
         return $equipment;
+    }
+
+    /**
+     * Get all CCTV on this floor plan
+     */
+    public function cctvs()
+    {
+        return $this->hasMany(Cctv::class);
     }
 
     /**

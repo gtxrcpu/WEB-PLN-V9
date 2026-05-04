@@ -162,7 +162,7 @@ class BoxHydrantController extends Controller
             }
         }
 
-        $kartu = \App\Models\KartuBoxHydrant::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
+        $kartu = \App\Models\KartuBoxHydrant::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
         $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
 
         if ($template) {
@@ -184,5 +184,95 @@ class BoxHydrantController extends Controller
         }
 
         return view('box-hydrant.view-kartu', compact('boxHydrant', 'kartu', 'template'));
+    }
+
+    /**
+     * Form kartu pemeriksaan Box Hydrant
+     */
+    public function createPemeriksaan(Request $request)
+    {
+        $boxHydrantId = $request->query('box_hydrant_id');
+        $boxHydrant   = BoxHydrant::findOrFail($boxHydrantId);
+
+        $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
+
+        $latestKartu = \App\Models\KartuBoxHydrant::where('box_hydrant_id', $boxHydrantId)
+            ->where(function ($q) {
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at)) {
+            $nextRevisi = str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT);
+        } else {
+            $nextRevisi = '00';
+        }
+
+        return view('box-hydrant.kartu-pemeriksaan', compact('boxHydrant', 'template', 'nextRevisi'));
+    }
+
+    /**
+     * Simpan kartu pemeriksaan Box Hydrant
+     */
+    public function storePemeriksaan(Request $request)
+    {
+        $request->validate([
+            'box_hydrant_id' => ['required', 'exists:box_hydrants,id'],
+            'tgl_periksa'    => ['required', 'date'],
+            'petugas'        => ['required', 'string', 'max:100'],
+            'rows'           => ['required', 'array', 'min:1'],
+            'rows.*.nama_barang' => ['nullable', 'string', 'max:255'],
+            'rows.*.lokasi'      => ['nullable', 'string', 'max:255'],
+            'rows.*.no_seri'     => ['nullable', 'string', 'max:100'],
+            'rows.*.kondisi'     => ['nullable', 'string', 'max:50'],
+            'rows.*.keterangan'  => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $boxHydrant = BoxHydrant::findOrFail($request->box_hydrant_id);
+
+        $latestKartu = \App\Models\KartuBoxHydrant::where('box_hydrant_id', $boxHydrant->id)
+            ->where(function ($q) {
+                $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+            })
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $revisi = ($latestKartu && ($latestKartu->leader_rejected_at || $latestKartu->rejected_at))
+            ? str_pad((int)($latestKartu->revisi ?? 0) + 1, 2, '0', STR_PAD_LEFT)
+            : '00';
+
+        $saved = 0;
+        foreach ($request->rows as $row) {
+            if (empty($row['kondisi'])) continue;
+
+            $parts = [];
+            if (!empty($row['nama_barang'])) $parts[] = 'Nama Barang: ' . $row['nama_barang'];
+            if (!empty($row['lokasi']))      $parts[] = 'Lokasi: '      . $row['lokasi'];
+            if (!empty($row['no_seri']))     $parts[] = 'No. Seri: '    . $row['no_seri'];
+            if (!empty($row['keterangan']))  $parts[] = 'Ket: '         . $row['keterangan'];
+
+            $catatan = '[PMK] ' . implode(' | ', $parts);
+
+            \App\Models\KartuBoxHydrant::create([
+                'box_hydrant_id'  => $boxHydrant->id,
+                'user_id'         => auth()->id(),
+                'pilar_hydrant'   => $row['kondisi'],
+                'box_hydrant'     => $row['kondisi'],
+                'nozzle'          => $row['kondisi'],
+                'selang'          => $row['kondisi'],
+                'uji_fungsi'      => $row['kondisi'],
+                'kesimpulan'      => $row['kondisi'],
+                'tgl_periksa'     => $request->tgl_periksa,
+                'petugas'         => $request->petugas,
+                'catatan'         => $catatan,
+                'revisi'          => $revisi,
+            ]);
+            $saved++;
+        }
+
+        return redirect()
+            ->route('box-hydrant.index')
+            ->with('success', "Kartu Pemeriksaan Box Hydrant {$boxHydrant->serial_no} berhasil disimpan ({$saved} baris).");
     }
 }

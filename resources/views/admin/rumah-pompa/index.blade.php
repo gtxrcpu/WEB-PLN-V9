@@ -38,12 +38,12 @@
       {{-- Stats Cards --}}
       @php
         $totalRumahPompa = $rumahPompas->count();
-        $statusBaik = $rumahPompas->where('status', 'baik')->count();
-        $statusPerbaikan = $rumahPompas->where('status', 'perbaikan')->count();
-        $statusRusak = $rumahPompas->where('status', 'rusak')->count();
+        $statusBaik = $rumahPompas->filter(fn($a) => strtolower($a->status) === 'baik')->count();
+        $statusPerbaikan = 0; // Rumah Pompa has no 'perbaikan' status
+        $statusRusak = $rumahPompas->filter(fn($a) => strtolower($a->status) === 'rusak' || strtolower($a->status) === 'tidak baik')->count();
       @endphp
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
           <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
           <div class="relative">
@@ -71,21 +71,6 @@
             </div>
             <p class="text-white/80 text-sm font-medium">Kondisi Baik</p>
             <p class="text-3xl font-bold text-white mt-1">{{ $statusBaik }}</p>
-          </div>
-        </div>
-
-        <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-          <div class="relative">
-            <div class="flex items-center gap-3 mb-2">
-              <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-            </div>
-            <p class="text-white/80 text-sm font-medium">Perbaikan</p>
-            <p class="text-3xl font-bold text-white mt-1">{{ $statusPerbaikan }}</p>
           </div>
         </div>
 

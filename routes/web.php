@@ -24,6 +24,9 @@ Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(funct
     Route::get('/', [\App\Http\Controllers\GuestController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/data', [\App\Http\Controllers\GuestController::class, 'getDashboardData'])->name('dashboard.data');
 
+    // Equipment by Unit API
+    Route::get('/equipment/by-unit', [\App\Http\Controllers\GuestController::class, 'getEquipmentByUnit'])->name('equipment.by-unit');
+
     // Laporan Keseluruhan
     Route::get('/report', [\App\Http\Controllers\GuestController::class, 'report'])->name('report');
     Route::get('/report/data', [\App\Http\Controllers\GuestController::class, 'getReportData'])->name('report.data');
@@ -36,11 +39,8 @@ Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(funct
     Route::get('/apat', [\App\Http\Controllers\GuestController::class, 'apat'])->name('apat');
     Route::get('/apat/{apat}/riwayat', [\App\Http\Controllers\GuestController::class, 'apatRiwayat'])->name('apat.riwayat');
 
-    // P3K
+    // P3K - Direct list with QR codes (like APAR)
     Route::get('/p3k', [\App\Http\Controllers\GuestController::class, 'p3k'])->name('p3k');
-    Route::get('/p3k/pilih-jenis', [\App\Http\Controllers\GuestController::class, 'p3kPilihJenis'])->name('p3k.pilih-jenis');
-    Route::get('/p3k/pilih-lokasi', [\App\Http\Controllers\GuestController::class, 'p3kPilihLokasi'])->name('p3k.pilih-lokasi');
-    Route::get('/p3k/by-lokasi', [\App\Http\Controllers\GuestController::class, 'p3kByLokasi'])->name('p3k.by-lokasi');
     Route::get('/p3k/{p3k}/riwayat', [\App\Http\Controllers\GuestController::class, 'p3kRiwayat'])->name('p3k.riwayat');
 
     // APAB
@@ -234,13 +234,16 @@ Route::get('/search/items', [SearchController::class, 'userItems'])
 Route::middleware(['auth'])->group(function () {
     Route::get('/apar', [AparController::class, 'index'])->name('apar.index');
     Route::get('/apar/create', [AparController::class, 'create'])->name('apar.create');
+    Route::get('/apar/list', [AparController::class, 'list'])->name('apar.list');
+    // Kartu Pemeriksaan APAR (bulk â€” semua APAR dalam satu form) â€” harus sebelum route {apar}
+    Route::get('/apar/kartu-pemeriksaan', [AparController::class, 'createPemeriksaan'])->name('apar.kartu-pemeriksaan.create');
+    Route::post('/apar/kartu-pemeriksaan', [AparController::class, 'storePemeriksaan'])->name('apar.kartu-pemeriksaan.store');
     Route::post('/apar', [AparController::class, 'store'])->name('apar.store');
     Route::get('/apar/{apar}/riwayat', [AparController::class, 'riwayat'])->name('apar.riwayat');
     Route::get('/apar/{apar}/kartu/{kartu}', [AparController::class, 'viewKartu'])->name('apar.view-kartu');
     Route::get('/kartu/create', [KartuKendaliController::class, 'create'])->name('kartu.create');
     Route::post('/kartu', [KartuKendaliController::class, 'store'])->name('kartu.store');
     Route::get('/scan', [ScanController::class, 'index'])->name('user.scan');
-    Route::get('/apar/list', [AparController::class, 'list'])->name('apar.list');
     Route::get('/apar/{apar}/qr.svg', [AparController::class, 'qrSvg'])->name('apar.qr');
     Route::get('/apar/{apar}/edit', [AparController::class, 'edit'])->name('apar.edit');
     Route::put('/apar/{apar}', [AparController::class, 'update'])->name('apar.update');
@@ -258,6 +261,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/apat/kartu/create', [ApatKartuController::class, 'create'])->name('apat.kartu.create');
     Route::post('/apat/kartu', [ApatKartuController::class, 'store'])->name('apat.kartu.store');
 });
+    
+    // Kartu Pemeriksaan APAT
+    Route::get('/apat/kartu-pemeriksaan/create', [\App\Http\Controllers\ApatController::class, 'createPemeriksaan'])->name('apat.kartu-pemeriksaan.create');
+    Route::post('/apat/kartu-pemeriksaan', [\App\Http\Controllers\ApatController::class, 'storePemeriksaan'])->name('apat.kartu-pemeriksaan.store');
 
 // Ini Modul Fire Alarm
 Route::middleware(['auth'])->group(function () {
@@ -270,6 +277,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/fire-alarm/{fireAlarm}/kartu/{kartu}', [\App\Http\Controllers\FireAlarmController::class, 'viewKartu'])->name('fire-alarm.view-kartu');
     Route::get('/fire-alarm/kartu/create', [\App\Http\Controllers\FireAlarmKartuController::class, 'create'])->name('fire-alarm.kartu.create');
     Route::post('/fire-alarm/kartu', [\App\Http\Controllers\FireAlarmKartuController::class, 'store'])->name('fire-alarm.kartu.store');
+    
+    // Kartu Pemeriksaan Fire Alarm (tabel NO/LOKASI/NO.SERI/KONDISI/KETERANGAN)
+    Route::get('/fire-alarm/kartu-pemeriksaan/create', [\App\Http\Controllers\FireAlarmController::class, 'createPemeriksaan'])->name('fire-alarm.kartu-pemeriksaan.create');
+    Route::post('/fire-alarm/kartu-pemeriksaan', [\App\Http\Controllers\FireAlarmController::class, 'storePemeriksaan'])->name('fire-alarm.kartu-pemeriksaan.store');
 });
 
 // Ini Modul Box Hydrant
@@ -283,6 +294,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/box-hydrant/{boxHydrant}/kartu/{kartu}', [\App\Http\Controllers\BoxHydrantController::class, 'viewKartu'])->name('box-hydrant.view-kartu');
     Route::get('/box-hydrant/kartu/create', [\App\Http\Controllers\BoxHydrantKartuController::class, 'create'])->name('box-hydrant.kartu.create');
     Route::post('/box-hydrant/kartu', [\App\Http\Controllers\BoxHydrantKartuController::class, 'store'])->name('box-hydrant.kartu.store');
+    Route::get('/box-hydrant/kartu-pemeriksaan/create', [\App\Http\Controllers\BoxHydrantController::class, 'createPemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.create');
+    Route::post('/box-hydrant/kartu-pemeriksaan', [\App\Http\Controllers\BoxHydrantController::class, 'storePemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.store');
 });
 
 // Ini Modul Rumah Pompa
@@ -338,9 +351,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/p3k/{p3k}/edit', [\App\Http\Controllers\P3kController::class, 'edit'])->name('p3k.edit');
     Route::get('/p3k/{p3k}/riwayat', [\App\Http\Controllers\P3kController::class, 'riwayat'])->name('p3k.riwayat');
     Route::put('/p3k/{p3k}', [\App\Http\Controllers\P3kController::class, 'update'])->name('p3k.update');
+    Route::delete('/p3k/{p3k}', [\App\Http\Controllers\P3kController::class, 'destroy'])->name('p3k.destroy');
 
-    // Alur baru: Pilih Jenis â†’ Pilih Lokasi â†’ Isi Kartu
+    // Alur baru: Pilih Jenis Ã¢â€ â€™ Pilih Lokasi Ã¢â€ â€™ Isi Kartu
     Route::get('/p3k/pilih-jenis', [\App\Http\Controllers\P3kController::class, 'pilihJenis'])->name('p3k.pilih-jenis');
+    Route::get('/p3k/pilih-jenis/{jenis}', [\App\Http\Controllers\P3kController::class, 'listByJenis'])->name('p3k.list-by-jenis');
     Route::get('/p3k/pilih-lokasi', [\App\Http\Controllers\P3kController::class, 'pilihLokasi'])->name('p3k.pilih-lokasi');
     Route::get('/p3k/kartu/create', [\App\Http\Controllers\KartuP3kController::class, 'create'])->name('p3k.kartu.create');
     Route::post('/p3k/kartu', [\App\Http\Controllers\KartuP3kController::class, 'store'])->name('p3k.kartu.store');
@@ -365,6 +380,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/floor-plan', [\App\Http\Controllers\FloorPlanController::class, 'index'])->name('floor-plan.index');
     Route::get('/floor-plan/{floorPlan}/equipment-data', [\App\Http\Controllers\FloorPlanController::class, 'getEquipmentData'])->name('floor-plan.equipment-data');
     Route::post('/floor-plan/equipment/update-coordinates', [\App\Http\Controllers\FloorPlanController::class, 'updateEquipmentCoordinates'])->name('floor-plan.update-coordinates');
+});
+
+// CCTV Dashboard (Real-time monitoring for Petugas & Leader)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/cctv-dashboard', [\App\Http\Controllers\CctvDashboardController::class, 'index'])->name('cctv.dashboard');
+});
+
+// Petugas CCTV Management (unit-scoped, no delete)
+Route::middleware(['auth'])->prefix('petugas/cctvs')->name('petugas.cctvs.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\PetugasCctvController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\PetugasCctvController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\PetugasCctvController::class, 'store'])->name('store');
+    Route::get('/{cctv}/edit', [\App\Http\Controllers\PetugasCctvController::class, 'edit'])->name('edit');
+    Route::put('/{cctv}', [\App\Http\Controllers\PetugasCctvController::class, 'update'])->name('update');
+    Route::post('/{cctv}/toggle-status', [\App\Http\Controllers\PetugasCctvController::class, 'toggleStatus'])->name('toggle-status');
 });
 
 // API Search

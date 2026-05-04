@@ -40,7 +40,9 @@ class CctvController extends Controller
      */
     public function create()
     {
-        return view('admin.cctvs.create');
+        $floorPlans = \App\Models\FloorPlan::all();
+        $units = \App\Models\Unit::all();
+        return view('admin.cctvs.create', compact('floorPlans', 'units'));
     }
 
     /**
@@ -51,6 +53,10 @@ class CctvController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'location_code' => 'required|string|max:100',
+            'stream_url' => 'nullable|url',
+            'floor_plan_id' => 'nullable|exists:floor_plans,id',
+            'floor_plan_x' => 'nullable|numeric',
+            'floor_plan_y' => 'nullable|numeric',
             'status' => 'required|in:Baik,Jelek',
             'notes' => 'nullable|string',
             'unit_id' => 'nullable|exists:units,id',
@@ -68,7 +74,9 @@ class CctvController extends Controller
      */
     public function edit(Cctv $cctv)
     {
-        return view('admin.cctvs.edit', compact('cctv'));
+        $floorPlans = \App\Models\FloorPlan::all();
+        $units = \App\Models\Unit::all();
+        return view('admin.cctvs.edit', compact('cctv', 'floorPlans', 'units'));
     }
 
     /**
@@ -79,6 +87,10 @@ class CctvController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'location_code' => 'required|string|max:100',
+            'stream_url' => 'nullable|url',
+            'floor_plan_id' => 'nullable|exists:floor_plans,id',
+            'floor_plan_x' => 'nullable|numeric',
+            'floor_plan_y' => 'nullable|numeric',
             'status' => 'required|in:Baik,Jelek',
             'notes' => 'nullable|string',
             'unit_id' => 'nullable|exists:units,id',

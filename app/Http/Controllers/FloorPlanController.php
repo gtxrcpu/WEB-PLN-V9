@@ -182,6 +182,8 @@ class FloorPlanController extends Controller
                     'name'      => $item->name ?? $item->barcode ?? $item->serial_no,
                     'serial_no' => $item->serial_no ?? $item->barcode,
                     'status'    => $item->status ?? 'unknown',
+                    'is_online' => $item->is_online ?? null,
+                    'stream_url'=> $item->stream_url ?? null,
                     'x'         => (float) $item->floor_plan_x,
                     'y'         => (float) $item->floor_plan_y,
                     'location'  => $item->location_code ?? $item->lokasi ?? '-',
@@ -209,6 +211,7 @@ class FloorPlanController extends Controller
             'rumah_pompa' => RumahPompa::class,
             'apab'        => Apab::class,
             'p3k'         => P3k::class,
+            'cctv'        => \App\Models\Cctv::class,
         ];
 
         return $models[$type] ?? null;
@@ -231,12 +234,14 @@ class FloorPlanController extends Controller
             'rumah_pompa' => 'rumah-pompa.riwayat',
             'apab'        => 'apab.riwayat',
             'p3k'         => 'p3k.riwayat',
+            'cctv'        => 'cctv.dashboard', // CCTV redirects to dashboard
         ];
 
         $routeName = $routes[$type] ?? null;
 
         if ($routeName && \Route::has($routeName)) {
-            return route($routeName, $id);
+            // For CCTV, we might want to pass the unit_id or just go to dashboard
+            return route($routeName);
         }
 
         return '#';

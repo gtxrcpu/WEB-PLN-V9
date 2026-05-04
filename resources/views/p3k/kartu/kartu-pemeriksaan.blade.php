@@ -1,7 +1,8 @@
 <x-kartu-layout
     title="Kartu Kendali Pemeriksaan P3K"
     :subtitle="$template->subtitle ?? ''"
-    back-route="p3k.pilih-jenis"
+    back-route="p3k.list-by-jenis"
+    :back-params="['jenis' => 'pemeriksaan']"
     module="p3k-pemeriksaan"
     :next-revisi="$nextRevisi ?? null"
     :template="$template">
@@ -22,50 +23,11 @@
     <form method="POST" action="{{ route('p3k.kartu.store') }}">
         @csrf
         <input type="hidden" name="jenis" value="pemeriksaan">
+        @if(isset($selectedP3k) && $selectedP3k)
+            <input type="hidden" name="p3k_id" value="{{ $selectedP3k->id }}">
+        @endif
 
-        {{-- Header Section --}}
-        <div class="grid grid-cols-2 gap-6 mb-6 text-sm">
-            <div>
-                <label class="block font-semibold text-gray-700 mb-2">Unit Kerja / Lokasi</label>
-                <input type="text" name="unit_kerja" value="{{ old('unit_kerja') }}" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="Contoh: Area Limbah B3">
-                @error('unit_kerja')
-                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block font-semibold text-gray-700 mb-2">Tanggal Pemeriksaan</label>
-                <input type="date" name="tgl_periksa" value="{{ old('tgl_periksa', now()->toDateString()) }}"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                @error('tgl_periksa')
-                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block font-semibold text-gray-700 mb-2">Bulan dan Tahun</label>
-                <input type="month" name="bulan_tahun" value="{{ old('bulan_tahun', now()->format('Y-m')) }}"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
-                @error('bulan_tahun')
-                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block font-semibold text-gray-700 mb-2">Petugas Pemeriksa</label>
-                <input type="text" name="petugas" value="{{ old('petugas', auth()->user()->name ?? '') }}"
-                    required
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="Nama Petugas">
-                @error('petugas')
-                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
+        {{-- Header Section — dipindah ke bawah tabel --}}
 
         {{-- Main Inspection Table --}}
         <div class="border border-gray-400 rounded-lg overflow-hidden mb-6">
@@ -184,29 +146,57 @@
             <p><strong>**)</strong> Saat pemeriksaan bulanan diisi sesuai dengan standar.</p>
         </div>
 
+        {{-- Header Fields — dipindah ke bawah tabel --}}
+        <div class="grid grid-cols-2 gap-6 mb-8 text-sm">
+            <div>
+                <label class="block font-semibold text-gray-700 mb-2">Unit Kerja / Lokasi <span class="text-red-500">*</span></label>
+                <input type="text" name="unit_kerja" value="{{ old('unit_kerja') }}" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="Contoh: Area Limbah B3">
+                @error('unit_kerja')
+                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block font-semibold text-gray-700 mb-2">Tanggal Pemeriksaan <span class="text-red-500">*</span></label>
+                <input type="date" name="tgl_periksa" value="{{ old('tgl_periksa', now()->toDateString()) }}"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
+                @error('tgl_periksa')
+                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block font-semibold text-gray-700 mb-2">Bulan dan Tahun <span class="text-red-500">*</span></label>
+                <input type="month" name="bulan_tahun" value="{{ old('bulan_tahun', now()->format('Y-m')) }}"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500">
+                @error('bulan_tahun')
+                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block font-semibold text-gray-700 mb-2">Petugas Pemeriksa <span class="text-red-500">*</span></label>
+                <input type="text" name="petugas" value="{{ old('petugas', auth()->user()->name ?? '') }}"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder="Nama Petugas">
+                @error('petugas')
+                    <p class="text-xs text-rose-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
         {{-- Signature Section --}}
         <div class="mt-8 pt-6 border-t-2 border-gray-200">
-            <div class="grid grid-cols-3 gap-8 text-center text-sm">
-                <div>
-                    <p class="font-semibold text-gray-700 mb-1">Kota, Tanggal</p>
-                    <p class="text-gray-600 mb-1">{{ now()->format('d-m-Y') }}</p>
-                    <p class="font-semibold text-gray-900 mb-16">Assistant Manager K3L & KAM</p>
-                    <div class="border-t-2 border-gray-400 pt-2 mx-auto" style="width: 200px;">
-                        <p class="text-gray-600">(Tanda Tangan & Nama)</p>
-                    </div>
-                </div>
-                <div>
+            <div class="flex justify-end">
+                <div class="text-center">
                     <p class="font-semibold text-gray-700 mb-1">Kota, Tanggal</p>
                     <p class="text-gray-600 mb-1">{{ now()->format('d-m-Y') }}</p>
                     <p class="font-semibold text-gray-900 mb-16">Team Leader K3L & KAM</p>
-                    <div class="border-t-2 border-gray-400 pt-2 mx-auto" style="width: 200px;">
-                        <p class="text-gray-600">(Tanda Tangan & Nama)</p>
-                    </div>
-                </div>
-                <div>
-                    <p class="font-semibold text-gray-700 mb-1">Kota, Tanggal</p>
-                    <p class="text-gray-600 mb-1">{{ now()->format('d-m-Y') }}</p>
-                    <p class="font-semibold text-gray-900 mb-16">Petugas Pemeriksa</p>
                     <div class="border-t-2 border-gray-400 pt-2 mx-auto" style="width: 200px;">
                         <p class="text-gray-600">(Tanda Tangan & Nama)</p>
                     </div>
@@ -221,7 +211,7 @@
                 Data akan disimpan dan bisa dicetak ulang dari modul P3K.
             </p>
             <div class="flex gap-2">
-                <a href="{{ route('p3k.pilih-jenis') }}"
+                <a href="{{ route('p3k.list-by-jenis', 'pemeriksaan') }}"
                     class="px-4 py-2 rounded-lg border text-sm hover:bg-slate-50">
                     Batal
                 </a>

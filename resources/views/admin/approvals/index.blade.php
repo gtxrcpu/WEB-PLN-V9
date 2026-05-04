@@ -59,6 +59,41 @@
             </div>
           </form>
         @endif
+
+        {{-- Filter Jenis Kartu --}}
+        <form method="GET" action="{{ route('admin.approvals.index') }}" id="filterForm">
+          <div class="flex gap-2">
+            <div class="relative">
+              <select name="jenis_kartu"
+                class="block pl-3 pr-8 py-2.5 sm:text-sm border-gray-300 rounded-xl focus:ring-purple-500 focus:border-purple-500 shadow-sm cursor-pointer bg-white"
+                onchange="document.getElementById('filterForm').submit()">
+                <option value="">Semua Jenis</option>
+                <option value="kendali"     {{ request('jenis_kartu') === 'kendali'     ? 'selected' : '' }}>Kartu Kendali</option>
+                <option value="pemeriksaan" {{ request('jenis_kartu') === 'pemeriksaan' ? 'selected' : '' }}>Kartu Pemeriksaan</option>
+              </select>
+            </div>
+            <div class="relative">
+              <select name="filter_modul"
+                class="block pl-3 pr-8 py-2.5 sm:text-sm border-gray-300 rounded-xl focus:ring-purple-500 focus:border-purple-500 shadow-sm cursor-pointer bg-white"
+                onchange="document.getElementById('filterForm').submit()">
+                <option value="">Semua Modul</option>
+                <option value="APAR"        {{ request('filter_modul') === 'APAR'        ? 'selected' : '' }}>APAR</option>
+                <option value="APAT"        {{ request('filter_modul') === 'APAT'        ? 'selected' : '' }}>APAT</option>
+                <option value="APAB"        {{ request('filter_modul') === 'APAB'        ? 'selected' : '' }}>APAB</option>
+                <option value="Fire Alarm"  {{ request('filter_modul') === 'Fire Alarm'  ? 'selected' : '' }}>Fire Alarm</option>
+                <option value="Box Hydrant" {{ request('filter_modul') === 'Box Hydrant' ? 'selected' : '' }}>Box Hydrant</option>
+                <option value="Rumah Pompa" {{ request('filter_modul') === 'Rumah Pompa' ? 'selected' : '' }}>Rumah Pompa</option>
+                <option value="P3K"         {{ request('filter_modul') === 'P3K'         ? 'selected' : '' }}>P3K</option>
+              </select>
+            </div>
+            @if(request()->hasAny(['jenis_kartu', 'filter_modul']))
+              <a href="{{ route('admin.approvals.index') }}"
+                 class="inline-flex items-center px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+                ✕ Reset
+              </a>
+            @endif
+          </div>
+        </form>
       </div>
     </div>
 
@@ -90,6 +125,7 @@
                 <input type="checkbox" id="selectAllCheckbox" onclick="window.toggleAllCheckboxes(this)" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer transition-all">
               </th>
               <th class="px-6 py-4">Informasi Modul</th>
+              <th class="px-6 py-4">Jenis</th>
               <th class="px-6 py-4">Equipment</th>
               <th class="px-6 py-4">Lokasi & Unit</th>
               <th class="px-6 py-4">Inspeksi</th>
@@ -122,6 +158,24 @@
                     </div>
                   </div>
                 </td>
+                {{-- JENIS KARTU --}}
+                <td class="px-6 py-4">
+                  @if(($kartu->jenis_kartu ?? 'kendali') === 'pemeriksaan')
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                      </svg>
+                      Pemeriksaan
+                    </span>
+                  @else
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      Kendali
+                    </span>
+                  @endif
+                </td>
                 <td class="px-6 py-4">
                   <div class="text-sm font-semibold text-gray-900">{{ $kartu->equipment_name }}</div>
                 </td>
@@ -136,14 +190,17 @@
                   </div>
                 </td>
                 <td class="px-6 py-4">
+                  @php $kLow = strtolower($kartu->kesimpulan ?? ''); @endphp
                   <div class="flex items-center">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-                            @if($kartu->kesimpulan === 'baik') bg-green-50 text-green-700 border-green-200
-                            @elseif($kartu->kesimpulan === 'rusak') bg-red-50 text-red-700 border-red-200
+                            @if($kLow === 'baik') bg-green-50 text-green-700 border-green-200
+                            @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-50 text-red-700 border-red-200
+                            @elseif($kLow === 'isi ulang') bg-amber-50 text-amber-700 border-amber-200
                             @else bg-yellow-50 text-yellow-700 border-yellow-200 @endif">
                       <span class="w-1.5 h-1.5 mr-1.5 rounded-full
-                              @if($kartu->kesimpulan === 'baik') bg-green-500
-                              @elseif($kartu->kesimpulan === 'rusak') bg-red-500
+                              @if($kLow === 'baik') bg-green-500
+                              @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-500
+                              @elseif($kLow === 'isi ulang') bg-amber-500
                               @else bg-yellow-500 @endif"></span>
                       {{ strtoupper($kartu->kesimpulan) }}
                     </span>
@@ -161,7 +218,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="7">
+                <td colspan="8">
                   <div class="flex flex-col items-center justify-center py-16 text-center">
                     <div class="bg-gray-50 rounded-full p-4 mb-4">
                       <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -3,7 +3,7 @@
   @if(session('viewing_unit_id'))
     @php $viewingUnit = \App\Models\Unit::find(session('viewing_unit_id')); @endphp
     @if($viewingUnit)
-      <div class="mb-4 sm:mb-6 p-4 sm:p-6 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl shadow-lg">
+      <div class="mb-4 sm:mb-6 p-4 sm:p-6 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl shadow-lg">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
@@ -73,7 +73,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Status Peralatan</h3>
               <p class="text-xs text-slate-600 mt-0.5" id="statusChartSubtitle">Kondisi semua modul</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
               </svg>
@@ -112,7 +112,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Perbandingan Modul</h3>
               <p class="text-xs text-slate-600 mt-0.5">Total equipment per modul</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
               </svg>
@@ -151,7 +151,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Tren Inspeksi Bulanan</h3>
               <p class="text-xs text-slate-600 mt-0.5">Aktivitas inspeksi 12 bulan terakhir</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
               </svg>
@@ -172,7 +172,7 @@
               <h3 class="text-sm sm:text-base font-bold text-slate-900">Status Kondisi per Modul</h3>
               <p class="text-xs text-slate-600 mt-0.5">Baik vs Rusak</p>
             </div>
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg">
               <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
               </svg>
@@ -238,7 +238,7 @@
           @if($tone==='blue') text-blue-600 
           @elseif($tone==='cyan') text-cyan-600 
           @elseif($tone==='emerald') text-emerald-600
-          @else text-rose-800 @endif">
+          @else text-red-600 @endif">
           {{ $val }}
         </p>
         <div class="flex items-center gap-1.5 text-xs sm:text-sm 
@@ -258,7 +258,7 @@
     {{-- Equipment by Type --}}
     <div class="bg-white rounded-xl p-4 sm:p-6 shadow-lg ring-1 ring-slate-200">
       <h3 class="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-        <span class="w-1.5 h-5 sm:h-6 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full"></span>
+        <span class="w-1.5 h-5 sm:h-6 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full"></span>
         Equipment by Type
       </h3>
       <div class="space-y-3">
@@ -304,7 +304,7 @@
   {{-- Quick Admin Actions --}}
   <section class="mb-6 sm:mb-8">
     <h2 class="text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
-      <span class="w-1.5 h-5 sm:h-6 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full"></span>
+      <span class="w-1.5 h-5 sm:h-6 bg-gradient-to-b from-cyan-500 to-blue-500 rounded-full"></span>
       Admin Actions
     </h2>
     <div class="grid md:grid-cols-3 gap-5">
@@ -428,71 +428,84 @@
     </div>
   </section>
 
-  {{-- All Modules Access --}}
-  <section class="mb-8">
-    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
-      <span class="w-1.5 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></span>
-      Manage Equipment Modules
-    </h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      @php
-        $modules = [
-          ['APAR', 'apar.index', 'from-blue-500 to-teal-500', 'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z'],
-          ['APAT', 'apat.index', 'from-cyan-500 to-sky-500', 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
-          ['APAB', 'apab.index', 'from-red-500 to-orange-500', 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
-          ['Fire Alarm', 'fire-alarm.index', 'from-red-500 to-pink-500', 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
-          ['Box Hydrant', 'box-hydrant.index', 'from-blue-700 to-cyan-500', 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z'],
-          ['Rumah Pompa', 'rumah-pompa.index', 'from-purple-600 to-indigo-600', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
-          ['P3K', 'p3k.pilih-jenis', 'from-emerald-500 to-teal-500', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-          ['CCTV', 'admin.cctvs.index', 'from-indigo-500 to-purple-500', 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
-          ['Referensi', 'reference-videos.index', 'from-purple-500 to-pink-500', 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z'],
-        ];
-      @endphp
+    {{-- All Modules Access --}}
+  @php
+    $modulesAdmin = [
+      ['APAR',       'Alat Pemadam Api Ringan',      'images/apar.png',        true,  'admin.apar.index',     'from-cyan-500 to-blue-500',    'from-blue-50 to-teal-50'],
+      ['APAT',       'Alat Pemadam Api Tradisional', 'images/apat.png',        true,  'admin.apat.index',     'from-cyan-500 to-blue-500',   'from-cyan-50 to-sky-50'],
+      ['APAB',       'Alat Pemadam Api Berat',       'images/apab.png',        true,  'admin.apab.index',     'from-cyan-500 to-blue-500',   'from-red-50 to-orange-50'],
+      ['Fire Alarm', 'Panel & titik alarm',          'images/fire-alarm.png',  true,  'admin.fire-alarm.index', 'from-cyan-500 to-blue-500',       'from-red-50 to-pink-50'],
+      ['Box Hydrant','Box, hose, nozzle',            'images/box-hydrant.png', true,  'admin.box-hydrant.index', 'from-cyan-500 to-blue-500',      'from-blue-50 to-cyan-50'],
+      ['Rumah Pompa','Hydrant Rumah Pompa',          'images/box-hydrant.png', true,  'admin.rumah-pompa.index', 'from-cyan-500 to-blue-500',  'from-purple-50 to-indigo-50'],
+      ['P3K',        'Kotak & isi P3K',              'images/p3k.png',         true,  'p3k.pilih-jenis',       'from-cyan-500 to-blue-500',   'from-emerald-50 to-teal-50'],
+      ['CCTV',       'Surveillance Cameras',         'images/cctv.png',        true,  'admin.cctvs.index',     'from-cyan-500 to-blue-500',  'from-indigo-50 to-purple-50'],
+      ['Referensi',  'Video panduan & tutorial',     'images/referensi.png',   true,  'admin.reference-videos.index', 'from-cyan-500 to-blue-500', 'from-purple-50 to-pink-50'],
+    ];
+  @endphp
 
-      @foreach($modules as [$name, $route, $gradient, $icon])
+  <section id="modules" class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></span>
+          Manage Equipment Modules
+        </h2>
+        <p class="text-sm text-gray-600 mt-1">Pilih modul untuk dikelola</p>
+      </div>
+    </div>
+
+    {{-- Grid: Modules --}}
+    <div class="grid lg:grid-cols-12 gap-3 sm:gap-5">
+      @foreach ($modulesAdmin as $idx => [$name, $desc, $img, $unlocked, $routeName, $gradient, $bgGradient])
         @php
-          // Admin routes untuk equipment
-          $adminRoute = match($name) {
-            'APAR' => 'admin.apar.index',
-            'APAT' => 'admin.apat.index',
-            'APAB' => 'admin.apab.index',
-            'Fire Alarm' => 'admin.fire-alarm.index',
-            'Box Hydrant' => 'admin.box-hydrant.index',
-             'Rumah Pompa' => 'admin.rumah-pompa.index',
-            'P3K' => 'p3k.pilih-jenis',
-            'CCTV' => 'admin.cctvs.index',
-            'Referensi' => 'admin.reference-videos.index',
-            default => $route
-          };
-          
-          // Map nama modul ke gambar
-          $imagePath = match($name) {
-            'APAR' => 'images/apar.png',
-            'APAT' => 'images/apat.png',
-            'APAB' => 'images/apab.png',
-            'Fire Alarm' => 'images/fire-alarm.png',
-            'Box Hydrant' => 'images/box-hydrant.png',
-             'Rumah Pompa' => 'images/box-hydrant.png',
-            'P3K' => 'images/p3k.png',
-            'CCTV' => 'images/cctv.png',
-            'Referensi' => 'images/referensi.png',
-            default => null
-          };
+          $href = $unlocked && $routeName ? route($routeName) : '#';
+          $spanClass = $idx < 2 ? 'lg:col-span-6' : 'lg:col-span-3';
+          $isLarge = $idx < 2;
         @endphp
-        <a href="{{ route($adminRoute) }}" class="group relative rounded-xl bg-white p-5 shadow-md ring-1 ring-slate-200 hover:shadow-xl transition-all hover:scale-105">
-          <div class="flex flex-col items-center text-center gap-3">
-            <div class="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform p-2">
-              @if($imagePath)
-                <img src="{{ asset($imagePath) }}" alt="{{ $name }}" class="w-full h-full object-contain">
-              @else
-                <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
-                </svg>
-              @endif
+
+        <a href="{{$href}}"
+           class="group relative {{$spanClass}} col-span-12 sm:col-span-6 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 
+             {{$isLarge ? 'min-h-[320px]' : 'min-h-[280px]'}}
+             @if($unlocked) hover:scale-[1.02] @else opacity-80 @endif">
+          
+          <div class="absolute inset-0 transition-all duration-500"></div>
+
+          <div class="absolute inset-0 flex items-center justify-center z-10 {{$isLarge ? 'p-12' : 'p-8'}}">
+            <div class="relative w-full h-full flex items-center justify-center">
+              <img src="{{ asset($img) }}" alt="{{ $name }}" class="relative z-10 {{$isLarge ? 'max-h-48' : 'max-h-32'}} w-auto object-contain 
+                @if($unlocked)
+                  group-hover:scale-110 group-hover:rotate-3
+                @else
+                  grayscale opacity-40
+                @endif
+                transition-all duration-700 drop-shadow-2xl">
             </div>
-            <div>
-              <h3 class="font-bold text-gray-900">{{ $name }}</h3>
-              <p class="text-xs text-gray-500 mt-1">Manage</p>
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 z-20 p-5 {{$isLarge ? 'pb-6' : 'pb-5'}}">
+            <div class="relative backdrop-blur-xl bg-white/95 rounded-2xl p-5 shadow-xl ring-1 ring-black/5
+              @if($unlocked) group-hover:bg-white @else bg-white/70 @endif
+              transition-all duration-300">
+              
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-bold {{$isLarge ? 'text-2xl mb-2' : 'text-lg mb-1.5'}} truncate">
+                    {{ $name }}
+                  </h3>
+                  <p class="text-sm text-gray-600 {{$isLarge ? 'line-clamp-2' : 'line-clamp-1'}}">
+                    {{ $desc }}
+                  </p>
+                </div>
+
+                @if($unlocked)
+                  <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br {{$gradient}} 
+                    flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                @endif
+              </div>
             </div>
           </div>
         </a>
@@ -734,7 +747,17 @@
       
       // Update Status Chart
       if (statusChart) {
-        statusChart.data.datasets[0].data = [data.baik, data.rusak, isiUlang];
+        if (module === 'apar' || module === 'all') {
+          statusChart.data.labels = ['Baik', 'Rusak', 'Isi Ulang'];
+          statusChart.data.datasets[0].data = [data.baik, data.rusak, isiUlang];
+          statusChart.data.datasets[0].backgroundColor = ['rgba(52, 211, 153, 0.85)', 'rgba(248, 113, 113, 0.85)', 'rgba(251, 191, 36, 0.85)'];
+          statusChart.data.datasets[0].borderColor = ['rgb(16, 185, 129)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)'];
+        } else {
+          statusChart.data.labels = ['Baik', 'Rusak'];
+          statusChart.data.datasets[0].data = [data.baik, data.rusak];
+          statusChart.data.datasets[0].backgroundColor = ['rgba(52, 211, 153, 0.85)', 'rgba(248, 113, 113, 0.85)'];
+          statusChart.data.datasets[0].borderColor = ['rgb(16, 185, 129)', 'rgb(239, 68, 68)'];
+        }
         statusChart.update('active');
       }
 
@@ -760,7 +783,7 @@
 
         <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-emerald-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
-            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-md">
               <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -778,6 +801,7 @@
           </div>
         </div>
 
+        ${(module === 'apar' || module === 'all') ? `
         <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-amber-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
             <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center shadow-md">
@@ -787,7 +811,7 @@
             </div>
             <div class="flex-1">
               <p class="text-xs text-amber-700 font-medium">Perlu Isi Ulang</p>
-              <p class="text-xl sm:text-2xl font-bold text-amber-900">${isiUlang}</p>
+              <p class="text-xl sm:text-2xl font-bold text-amber-600">${isiUlang}</p>
             </div>
           </div>
           <div class="flex items-center justify-between mt-1 sm:mt-2">
@@ -797,6 +821,7 @@
             <span class="text-xs font-bold text-amber-700">${data.total > 0 ? Math.round((isiUlang / data.total) * 100) : 0}%</span>
           </div>
         </div>
+        ` : ''}
 
         <div class="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-3 sm:p-5 shadow-sm ring-1 ring-rose-100">
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-2">
@@ -807,7 +832,7 @@
             </div>
             <div class="flex-1">
               <p class="text-xs text-rose-700 font-medium">Rusak / Tidak Baik</p>
-              <p class="text-xl sm:text-2xl font-bold text-rose-900">${data.rusak}</p>
+              <p class="text-xl sm:text-2xl font-bold text-red-600">${data.rusak}</p>
             </div>
           </div>
           <div class="flex items-center justify-between mt-1 sm:mt-2">

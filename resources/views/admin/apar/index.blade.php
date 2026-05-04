@@ -39,11 +39,11 @@
       </div>
 
       {{-- Stats Cards --}}
-      @php
+            @php
         $totalApar = $apars->count();
-        $statusBaik = $apars->where('status', 'baik')->count();
-        $statusPerbaikan = $apars->where('status', 'perbaikan')->count();
-        $statusRusak = $apars->where('status', 'rusak')->count();
+        $statusBaik = $apars->filter(fn($a) => strtolower($a->status) === 'baik')->count();
+        $statusIsiUlang = $apars->filter(fn($a) => strtolower($a->status) === 'isi ulang')->count();
+        $statusRusak = $apars->filter(fn($a) => strtolower($a->status) === 'rusak')->count();
       @endphp
 
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,8 +93,8 @@
                 </svg>
               </div>
             </div>
-            <p class="text-white/80 text-sm font-medium">Perbaikan</p>
-            <p class="text-3xl font-bold text-white mt-1">{{ $statusPerbaikan }}</p>
+            <p class="text-white/80 text-sm font-medium">Perlu Isi Ulang</p>
+            <p class="text-3xl font-bold text-white mt-1">{{ $statusIsiUlang }}</p>
           </div>
         </div>
 
@@ -156,7 +156,7 @@
                 'gradient' => 'from-emerald-500 to-teal-500',
                 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
               ],
-              'perbaikan' => [
+              'isi ulang' => [
                 'badge' => 'bg-amber-100 text-amber-700 border-amber-200',
                 'ring' => 'ring-amber-500/20',
                 'gradient' => 'from-amber-500 to-orange-500',

@@ -27,13 +27,20 @@ trait HasUnit
 
     /**
      * Scope untuk user yang punya unit
+     * Mendukung viewing_unit_id untuk superadmin/leader
      */
     public function scopeForAuthUser($query)
     {
         $user = auth()->user();
         
         if ($user && $user->unit_id) {
+            // Petugas: selalu pakai unit_id sendiri
             return $query->where('unit_id', $user->unit_id);
+        }
+        
+        // Superadmin/Leader: cek session viewing_unit_id
+        if ($user && !$user->unit_id && session('viewing_unit_id')) {
+            return $query->where('unit_id', session('viewing_unit_id'));
         }
         
         return $query;
