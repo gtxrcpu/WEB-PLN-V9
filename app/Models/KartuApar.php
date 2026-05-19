@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasApprovalStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class KartuApar extends Model
 {
-    use HasFactory;
+    use HasFactory, HasApprovalStatus;
 
     protected $table = 'kartu_apars';
 
@@ -92,14 +93,5 @@ class KartuApar extends Model
     public function leaderRejector()
     {
         return $this->belongsTo(User::class, 'leader_rejected_by');
-    }
-
-    /**
-     * Check if approved (by leader OR admin/superadmin)
-     */
-    public function isApproved()
-    {
-        // Approved if EITHER leader OR admin has approved
-        return !is_null($this->leader_approved_at) || !is_null($this->approved_at);
     }
 }

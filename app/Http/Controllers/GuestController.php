@@ -17,80 +17,26 @@ use App\Models\KartuBoxHydrant;
 use App\Models\KartuRumahPompa;
 use App\Models\KartuP3k;
 use App\Models\Unit;
+use App\Services\EquipmentStatsService;
 use Illuminate\Http\Request;
 
 class GuestController extends Controller
 {
     public function index()
     {
-        // Get real-time statistics without caching
-        // Optimize: Use single query with groupBy for each model
-        $aparStats = Apar::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
+        $statsService = new EquipmentStatsService();
 
-        $apatStats = Apat::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
+        // Determine unit context (guest may have auth user with unit)
+        $user = auth()->user();
+        $unitId = null;
+        if ($user && $user->unit_id) {
+            $unitId = $user->unit_id;
+        } elseif ($user && !$user->unit_id && session('viewing_unit_id')) {
+            $unitId = session('viewing_unit_id');
+        }
 
-        $apabStats = Apab::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $fireAlarmStats = FireAlarm::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $boxHydrantStats = BoxHydrant::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $rumahPompaStats = RumahPompa::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $p3kStats = P3k::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $stats = [
-            'apar' => [
-                'total' => $aparStats->sum(),
-                'baik' => $aparStats->get('baik', 0),
-                'isi_ulang' => $aparStats->get('isi ulang', 0),
-                'rusak' => $aparStats->get('rusak', 0),
-            ],
-            'apat' => [
-                'total' => $apatStats->sum(),
-                'baik' => $apatStats->get('baik', 0),
-                'rusak' => $apatStats->get('rusak', 0),
-            ],
-            'apab' => [
-                'total' => $apabStats->sum(),
-                'baik' => $apabStats->get('baik', 0),
-                'tidak_baik' => $apabStats->sum() - $apabStats->get('baik', 0),
-            ],
-            'fireAlarm' => [
-                'total' => $fireAlarmStats->sum(),
-                'baik' => $fireAlarmStats->get('baik', 0),
-                'rusak' => $fireAlarmStats->get('rusak', 0),
-            ],
-            'boxHydrant' => [
-                'total' => $boxHydrantStats->sum(),
-                'baik' => $boxHydrantStats->get('baik', 0),
-                'rusak' => $boxHydrantStats->get('rusak', 0),
-            ],
-            'rumahPompa' => [
-                'total' => $rumahPompaStats->sum(),
-                'baik' => $rumahPompaStats->get('baik', 0),
-                'rusak' => $rumahPompaStats->get('rusak', 0),
-            ],
-            'p3k' => [
-                'total' => $p3kStats->sum(),
-                'baik' => $p3kStats->get('baik', 0),
-                'rusak' => $p3kStats->get('rusak', 0),
-            ],
-        ];
+        // Equipment stats from centralized service (case-insensitive, consistent)
+        $stats = $statsService->getStatusBreakdown($unitId);
 
         $aparData = $stats['apar'];
         $apatData = $stats['apat'];
@@ -105,43 +51,8 @@ class GuestController extends Controller
 
         $totalEquipment = $totalItems;
 
-        // Generate real-time trend data for the last 6 months
-        $months = [];
-        $monthLabels = [];
-        $now = now();
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = $now->copy()->subMonths($i);
-            $months[] = [
-                'start' => $date->copy()->startOfMonth(),
-                'end' => $date->copy()->endOfMonth(),
-            ];
-            // Indonesian month names
-            $monthLabels[] = $date->locale('id')->format('M');
-        }
-
-        $trendData = [
-            'labels' => $monthLabels,
-            'datasets' => [
-                'APAR' => [],
-                'APAT' => [],
-                'APAB' => [],
-                'Fire Alarm' => [],
-                'Box Hydrant' => [],
-                'Rumah Pompa' => [],
-                'P3K' => [],
-            ]
-        ];
-
-        foreach ($months as $month) {
-            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-        }
+        // Inspection trend from centralized service
+        $trendData = $statsService->getInspectionTrend($unitId, 6);
 
         return view('guest.dashboard', compact(
             'aparData',
@@ -182,10 +93,23 @@ class GuestController extends Controller
         
         $apars = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data (not just paginated) - case insensitive
+        $statsQuery = Apar::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.apar.index', compact('apars', 'units', 'selectedUnit'));
+        return view('guest.apar.index', compact('apars', 'units', 'selectedUnit', 'stats'));
     }
 
     public function aparRiwayat(Apar $apar)
@@ -231,10 +155,22 @@ class GuestController extends Controller
         
         $apats = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data (not just paginated)
+        $statsQuery = Apat::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.apat.index', compact('apats', 'units', 'selectedUnit'));
+        return view('guest.apat.index', compact('apats', 'units', 'selectedUnit', 'stats'));
     }
 
     public function apatRiwayat(Apat $apat)
@@ -275,9 +211,22 @@ class GuestController extends Controller
         }
         
         $p3ks = $query->orderBy('serial_no')->paginate(20);
+        
+        // Calculate stats from ALL data
+        $statsQuery = P3k::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['LENGKAP'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['KURANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.p3k.index', compact('p3ks', 'units', 'selectedUnit'));
+        return view('guest.p3k.index', compact('p3ks', 'units', 'selectedUnit', 'stats'));
     }
 
     public function p3kRiwayat(P3k $p3k, Request $request)
@@ -377,10 +326,22 @@ class GuestController extends Controller
         
         $apabs = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data
+        $statsQuery = Apab::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.apab.index', compact('apabs', 'units', 'selectedUnit'));
+        return view('guest.apab.index', compact('apabs', 'units', 'selectedUnit', 'stats'));
     }
 
     public function apabRiwayat(Apab $apab)
@@ -426,10 +387,22 @@ class GuestController extends Controller
         
         $fireAlarms = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data
+        $statsQuery = FireAlarm::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.fire-alarm.index', compact('fireAlarms', 'units', 'selectedUnit'));
+        return view('guest.fire-alarm.index', compact('fireAlarms', 'units', 'selectedUnit', 'stats'));
     }
 
     public function fireAlarmRiwayat(FireAlarm $fireAlarm)
@@ -475,10 +448,22 @@ class GuestController extends Controller
         
         $boxHydrants = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data
+        $statsQuery = BoxHydrant::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.box-hydrant.index', compact('boxHydrants', 'units', 'selectedUnit'));
+        return view('guest.box-hydrant.index', compact('boxHydrants', 'units', 'selectedUnit', 'stats'));
     }
 
     public function boxHydrantRiwayat(BoxHydrant $boxHydrant)
@@ -524,10 +509,22 @@ class GuestController extends Controller
         
         $rumahPompas = $query->orderBy('serial_no')->paginate(20);
         
+        // Calculate stats from ALL data
+        $statsQuery = RumahPompa::forAuthUser();
+        if ($unitId) {
+            $statsQuery->where('unit_id', $unitId);
+        }
+        $stats = [
+            'total' => $statsQuery->count(),
+            'baik' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['BAIK'])->count(),
+            'isi_ulang' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['ISI ULANG'])->count(),
+            'rusak' => (clone $statsQuery)->whereRaw('UPPER(status) = ?', ['RUSAK'])->count(),
+        ];
+        
         // Get selected unit info
         $selectedUnit = $unitId ? Unit::find($unitId) : null;
         
-        return view('guest.rumah-pompa.index', compact('rumahPompas', 'units', 'selectedUnit'));
+        return view('guest.rumah-pompa.index', compact('rumahPompas', 'units', 'selectedUnit', 'stats'));
     }
 
     public function rumahPompaRiwayat(RumahPompa $rumahPompa)
@@ -638,25 +635,25 @@ class GuestController extends Controller
             ->orderBy('serial_no')
             ->get();
 
-        // Calculate summary
+        // Calculate summary using case-insensitive comparison
         $summary = [
             'total_equipment' => $apars->count() + $apats->count() + $p3ks->count() +
                 $apabs->count() + $fireAlarms->count() + $boxHydrants->count() +
                 $rumahPompas->count(),
-            'total_baik' => $apars->where('status', 'baik')->count() +
-                $apats->where('status', 'baik')->count() +
-                $p3ks->where('status', 'baik')->count() +
-                $apabs->where('status', 'baik')->count() +
-                $fireAlarms->where('status', 'baik')->count() +
-                $boxHydrants->where('status', 'baik')->count() +
-                $rumahPompas->where('status', 'baik')->count(),
-            'total_rusak' => $apars->where('status', 'rusak')->count() +
-                $apats->where('status', 'rusak')->count() +
-                $p3ks->where('status', 'rusak')->count() +
-                $apabs->where('status', '!=', 'baik')->count() +
-                $fireAlarms->where('status', 'rusak')->count() +
-                $boxHydrants->where('status', 'rusak')->count() +
-                $rumahPompas->where('status', 'rusak')->count(),
+            'total_baik' => $apars->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $apats->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $p3ks->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $apabs->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $fireAlarms->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $boxHydrants->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $rumahPompas->filter(fn($i) => strtolower($i->status) === 'baik')->count(),
+            'total_rusak' => $apars->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $apats->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $p3ks->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $apabs->filter(fn($i) => strtolower($i->status) !== 'baik')->count() +
+                $fireAlarms->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $boxHydrants->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $rumahPompas->filter(fn($i) => strtolower($i->status) === 'rusak')->count(),
         ];
 
         return view('guest.report', compact('apars', 'apats', 'p3ks', 'apabs', 'fireAlarms', 'boxHydrants', 'rumahPompas', 'summary'));
@@ -750,25 +747,25 @@ class GuestController extends Controller
             ->orderBy('serial_no')
             ->get();
 
-        // Calculate summary
+        // Calculate summary using case-insensitive comparison
         $summary = [
             'total_equipment' => $apars->count() + $apats->count() + $p3ks->count() +
                 $apabs->count() + $fireAlarms->count() + $boxHydrants->count() +
                 $rumahPompas->count(),
-            'total_baik' => $apars->where('status', 'baik')->count() +
-                $apats->where('status', 'baik')->count() +
-                $p3ks->where('status', 'baik')->count() +
-                $apabs->where('status', 'baik')->count() +
-                $fireAlarms->where('status', 'baik')->count() +
-                $boxHydrants->where('status', 'baik')->count() +
-                $rumahPompas->where('status', 'baik')->count(),
-            'total_rusak' => $apars->where('status', 'rusak')->count() +
-                $apats->where('status', 'rusak')->count() +
-                $p3ks->where('status', 'rusak')->count() +
-                $apabs->where('status', '!=', 'baik')->count() +
-                $fireAlarms->where('status', 'rusak')->count() +
-                $boxHydrants->where('status', 'rusak')->count() +
-                $rumahPompas->where('status', 'rusak')->count(),
+            'total_baik' => $apars->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $apats->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $p3ks->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $apabs->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $fireAlarms->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $boxHydrants->filter(fn($i) => strtolower($i->status) === 'baik')->count() +
+                $rumahPompas->filter(fn($i) => strtolower($i->status) === 'baik')->count(),
+            'total_rusak' => $apars->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $apats->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $p3ks->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $apabs->filter(fn($i) => strtolower($i->status) !== 'baik')->count() +
+                $fireAlarms->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $boxHydrants->filter(fn($i) => strtolower($i->status) === 'rusak')->count() +
+                $rumahPompas->filter(fn($i) => strtolower($i->status) === 'rusak')->count(),
         ];
 
         return response()->json([
@@ -781,110 +778,22 @@ class GuestController extends Controller
     // API endpoint for real-time dashboard data
     public function getDashboardData()
     {
-        // Get real-time statistics without caching
-        $aparStats = Apar::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
+        $statsService = new EquipmentStatsService();
 
-        $apatStats = Apat::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $apabStats = Apab::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $fireAlarmStats = FireAlarm::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $boxHydrantStats = BoxHydrant::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $rumahPompaStats = RumahPompa::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $p3kStats = P3k::forAuthUser()->selectRaw('LOWER(status) as status_lower, COUNT(*) as count')
-            ->groupBy('status_lower')
-            ->pluck('count', 'status_lower');
-
-        $stats = [
-            'apar' => [
-                'total' => $aparStats->sum(),
-                'baik' => $aparStats->get('baik', 0),
-                'isi_ulang' => $aparStats->get('isi ulang', 0),
-                'rusak' => $aparStats->get('rusak', 0),
-            ],
-            'apat' => [
-                'total' => $apatStats->sum(),
-                'baik' => $apatStats->get('baik', 0),
-                'rusak' => $apatStats->get('rusak', 0),
-            ],
-            'apab' => [
-                'total' => $apabStats->sum(),
-                'baik' => $apabStats->get('baik', 0),
-                'tidak_baik' => $apabStats->sum() - $apabStats->get('baik', 0),
-            ],
-            'fireAlarm' => [
-                'total' => $fireAlarmStats->sum(),
-                'baik' => $fireAlarmStats->get('baik', 0),
-                'rusak' => $fireAlarmStats->get('rusak', 0),
-            ],
-            'boxHydrant' => [
-                'total' => $boxHydrantStats->sum(),
-                'baik' => $boxHydrantStats->get('baik', 0),
-                'rusak' => $boxHydrantStats->get('rusak', 0),
-            ],
-            'rumahPompa' => [
-                'total' => $rumahPompaStats->sum(),
-                'baik' => $rumahPompaStats->get('baik', 0),
-                'rusak' => $rumahPompaStats->get('rusak', 0),
-            ],
-            'p3k' => [
-                'total' => $p3kStats->sum(),
-                'baik' => $p3kStats->get('baik', 0),
-                'rusak' => $p3kStats->get('rusak', 0),
-            ],
-        ];
-
-        // Generate trend data for the last 6 months
-        $months = [];
-        $monthLabels = [];
-        $now = now();
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = $now->copy()->subMonths($i);
-            $months[] = [
-                'start' => $date->copy()->startOfMonth(),
-                'end' => $date->copy()->endOfMonth(),
-            ];
-            $monthLabels[] = $date->locale('id')->format('M');
+        // Determine unit context
+        $user = auth()->user();
+        $unitId = null;
+        if ($user && $user->unit_id) {
+            $unitId = $user->unit_id;
+        } elseif ($user && !$user->unit_id && session('viewing_unit_id')) {
+            $unitId = session('viewing_unit_id');
         }
 
-        $trendData = [
-            'labels' => $monthLabels,
-            'datasets' => [
-                'APAR' => [],
-                'APAT' => [],
-                'APAB' => [],
-                'Fire Alarm' => [],
-                'Box Hydrant' => [],
-                'Rumah Pompa' => [],
-                'P3K' => [],
-            ]
-        ];
+        // Stats from centralized service
+        $stats = $statsService->getStatusBreakdown($unitId);
 
-        foreach ($months as $month) {
-            $trendData['datasets']['APAR'][] = \App\Models\KartuApar::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAT'][] = \App\Models\KartuApat::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['APAB'][] = \App\Models\KartuApab::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Fire Alarm'][] = \App\Models\KartuFireAlarm::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Box Hydrant'][] = \App\Models\KartuBoxHydrant::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['Rumah Pompa'][] = \App\Models\KartuRumahPompa::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-            $trendData['datasets']['P3K'][] = \App\Models\KartuP3k::whereBetween('tgl_periksa', [$month['start'], $month['end']])->count();
-        }
+        // Trend from centralized service
+        $trendData = $statsService->getInspectionTrend($unitId, 6);
 
         return response()->json([
             'success' => true,

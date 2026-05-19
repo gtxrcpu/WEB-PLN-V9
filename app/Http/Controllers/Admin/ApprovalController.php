@@ -484,14 +484,24 @@ class ApprovalController extends Controller
             'fire-alarm' => KartuFireAlarm::with([$equipmentRelation])->findOrFail($id),
             'box-hydrant' => KartuBoxHydrant::with([$equipmentRelation])->findOrFail($id),
             'rumah-pompa' => KartuRumahPompa::with([$equipmentRelation])->findOrFail($id),
-            'p3k' => KartuP3k::with([$equipmentRelation])->findOrFail($id),
+            'p3k-pemeriksaan' => KartuP3kPemeriksaan::with([$equipmentRelation])->findOrFail($id),
+            'p3k-pemakaian' => KartuP3kPemakaian::with([$equipmentRelation])->findOrFail($id),
+            'p3k-stock' => KartuP3kStock::with([$equipmentRelation])->findOrFail($id),
+            'p3k' => KartuP3kPemeriksaan::with([$equipmentRelation])->findOrFail($id),
             default => KartuApar::with([$equipmentRelation])->findOrFail($id),
         };
 
         // Superadmin bisa akses semua unit
         if ($unitId && !auth()->user()->hasRole('superadmin')) {
-            if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
-                abort(403, 'Unauthorized action.');
+            // P3K kartu punya unit_id langsung
+            if (str_starts_with($type, 'p3k-')) {
+                if ((int) $kartu->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
             }
         }
 
@@ -535,14 +545,24 @@ class ApprovalController extends Controller
             'fire-alarm' => KartuFireAlarm::with([$equipmentRelation])->findOrFail($id),
             'box-hydrant' => KartuBoxHydrant::with([$equipmentRelation])->findOrFail($id),
             'rumah-pompa' => KartuRumahPompa::with([$equipmentRelation])->findOrFail($id),
-            'p3k' => KartuP3k::with([$equipmentRelation])->findOrFail($id),
+            'p3k-pemeriksaan' => KartuP3kPemeriksaan::with([$equipmentRelation])->findOrFail($id),
+            'p3k-pemakaian' => KartuP3kPemakaian::with([$equipmentRelation])->findOrFail($id),
+            'p3k-stock' => KartuP3kStock::with([$equipmentRelation])->findOrFail($id),
+            'p3k' => KartuP3kPemeriksaan::with([$equipmentRelation])->findOrFail($id),
             default => KartuApar::with([$equipmentRelation])->findOrFail($id),
         };
 
         // Superadmin bisa akses semua unit
         if ($unitId && !auth()->user()->hasRole('superadmin')) {
-            if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
-                abort(403, 'Unauthorized action.');
+            // P3K kartu punya unit_id langsung
+            if (str_starts_with($type, 'p3k-')) {
+                if ((int) $kartu->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } else {
+                if ((int) $kartu->{$equipmentRelation}->unit_id !== (int) $unitId) {
+                    abort(403, 'Unauthorized action.');
+                }
             }
         }
 
@@ -616,7 +636,9 @@ class ApprovalController extends Controller
                 'fire-alarm' => [KartuFireAlarm::class, 'fireAlarm'],
                 'box-hydrant' => [KartuBoxHydrant::class, 'boxHydrant'],
                 'rumah-pompa' => [KartuRumahPompa::class, 'rumahPompa'],
-                'p3k' => [KartuP3k::class, 'p3k'],
+                'p3k-pemeriksaan' => [KartuP3kPemeriksaan::class, null],
+                'p3k-pemakaian' => [KartuP3kPemakaian::class, null],
+                'p3k-stock' => [KartuP3kStock::class, null],
             ];
 
             $newCount = 0;
@@ -631,9 +653,14 @@ class ApprovalController extends Controller
 
                     // Apply unit filter
                     if ($unitId) {
-                        $query->whereHas($relation, function ($q) use ($unitId) {
-                            $q->where('unit_id', $unitId);
-                        });
+                        // P3K kartu punya unit_id langsung
+                        if (str_starts_with($type, 'p3k-')) {
+                            $query->where('unit_id', $unitId);
+                        } else {
+                            $query->whereHas($relation, function ($q) use ($unitId) {
+                                $q->where('unit_id', $unitId);
+                            });
+                        }
                     }
 
                     $count = $query->count();
@@ -660,9 +687,14 @@ class ApprovalController extends Controller
                         ->whereNull('leader_rejected_at');
 
                     if ($unitId) {
-                        $q->whereHas($relation, function ($sq) use ($unitId) {
-                            $sq->where('unit_id', $unitId);
-                        });
+                        // P3K kartu punya unit_id langsung
+                        if (str_starts_with($type, 'p3k-')) {
+                            $q->where('unit_id', $unitId);
+                        } else {
+                            $q->whereHas($relation, function ($sq) use ($unitId) {
+                                $sq->where('unit_id', $unitId);
+                            });
+                        }
                     }
                     $totalPending += $q->count();
                 } catch (\Exception $e) {

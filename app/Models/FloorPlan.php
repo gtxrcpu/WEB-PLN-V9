@@ -32,41 +32,41 @@ class FloorPlan extends Model
     }
 
     /**
-     * Get the image URL attribute
+     * Get the image URL attribute.
+     *
+     * Simplified logic: images are ALWAYS stored in storage/app/public/floor-plans/
+     * and served via the public disk URL (which respects APP_URL/ASSET_URL for subpath).
+     *
+     * Fallback order:
+     * 1. Storage disk (storage/app/public/{image_path}) — primary
+     * 2. Public folder (public/{image_path}) — legacy uploads
+     * 3. Placeholder image
      */
     public function getImageUrlAttribute()
     {
-        // Jika image_path kosong, return placeholder
         if (empty($this->image_path)) {
             return asset('images/placeholder-floor-plan.png');
         }
 
-        // Jika path dimulai dengan 'storage/', gunakan asset() langsung
-        if (str_starts_with($this->image_path, 'storage/')) {
+        // Primary: check storage disk (handles subpath via filesystems.php 'url' config)
+        if (Storage::disk('public')->exists($this->image_path)) {
+            return Storage::disk('public')->url($this->image_path);
+        }
+
+        // Legacy: check public folder directly (for old uploads before storage refactor)
+        if (file_exists(public_path($this->image_path))) {
             return asset($this->image_path);
         }
 
-        // Jika path dimulai dengan 'floor-plans/', prioritaskan public folder dulu
-        if (str_starts_with($this->image_path, 'floor-plans/')) {
-            // Cek di public folder dulu (untuk upload dari admin)
-            $publicPath = public_path($this->image_path);
-            if (file_exists($publicPath)) {
-                return asset($this->image_path);
-            }
+        // Also check with 'storage/' prefix stripped (in case path was saved with it)
+        $strippedPath = str_starts_with($this->image_path, 'storage/')
+            ? substr($this->image_path, 8)
+            : $this->image_path;
 
-            // Jika tidak ada di public, coba di storage
-            if (Storage::disk('public')->exists($this->image_path)) {
-                return asset('storage/' . $this->image_path);
-            }
+        if ($strippedPath !== $this->image_path && Storage::disk('public')->exists($strippedPath)) {
+            return Storage::disk('public')->url($strippedPath);
         }
 
-        // Untuk path lain, cek apakah file exists di public folder
-        $fullPath = public_path($this->image_path);
-        if (file_exists($fullPath)) {
-            return asset($this->image_path);
-        }
-
-        // Jika file tidak ada di mana-mana, return placeholder
         return asset('images/placeholder-floor-plan.png');
     }
 

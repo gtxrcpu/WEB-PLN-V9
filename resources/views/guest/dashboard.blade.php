@@ -547,4 +547,165 @@
     }
 
   </script>
+
+  {{-- Auto-Refresh Script for Real-Time Data --}}
+  <script>
+    let autoRefreshInterval;
+    let lastUpdateTime = new Date();
+
+    // Function to fetch fresh data from API
+    async function refreshDashboardData() {
+      try {
+        console.log('🔄 Fetching fresh data from server...');
+        
+        const response = await fetch('{{ route("guest.dashboard.data") }}', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          console.log('✅ Fresh data received:', result.data);
+          
+          // Update moduleData with fresh data
+          const freshStats = result.data.stats;
+          const freshTrend = result.data.trendData;
+          
+          // Update APAR data
+          if (freshStats.apar) {
+            moduleData['apar'].baik = freshStats.apar.baik;
+            moduleData['apar'].isi_ulang = freshStats.apar.isi_ulang;
+            moduleData['apar'].rusak = freshStats.apar.rusak;
+            moduleData['apar'].total = freshStats.apar.total;
+            moduleData['apar'].trendData = freshTrend.datasets['APAR'] || [0,0,0,0,0,0];
+          }
+          
+          // Update APAT data
+          if (freshStats.apat) {
+            moduleData['apat'].baik = freshStats.apat.baik;
+            moduleData['apat'].rusak = freshStats.apat.rusak;
+            moduleData['apat'].total = freshStats.apat.total;
+            moduleData['apat'].trendData = freshTrend.datasets['APAT'] || [0,0,0,0,0,0];
+          }
+          
+          // Update APAB data
+          if (freshStats.apab) {
+            moduleData['apab'].baik = freshStats.apab.baik;
+            moduleData['apab'].rusak = freshStats.apab.tidak_baik;
+            moduleData['apab'].total = freshStats.apab.total;
+            moduleData['apab'].trendData = freshTrend.datasets['APAB'] || [0,0,0,0,0,0];
+          }
+          
+          // Update Fire Alarm data
+          if (freshStats.fireAlarm) {
+            moduleData['fire-alarm'].baik = freshStats.fireAlarm.baik;
+            moduleData['fire-alarm'].rusak = freshStats.fireAlarm.rusak;
+            moduleData['fire-alarm'].total = freshStats.fireAlarm.total;
+            moduleData['fire-alarm'].trendData = freshTrend.datasets['Fire Alarm'] || [0,0,0,0,0,0];
+          }
+          
+          // Update Box Hydrant data
+          if (freshStats.boxHydrant) {
+            moduleData['box-hydrant'].baik = freshStats.boxHydrant.baik;
+            moduleData['box-hydrant'].rusak = freshStats.boxHydrant.rusak;
+            moduleData['box-hydrant'].total = freshStats.boxHydrant.total;
+            moduleData['box-hydrant'].trendData = freshTrend.datasets['Box Hydrant'] || [0,0,0,0,0,0];
+          }
+          
+          // Update Rumah Pompa data
+          if (freshStats.rumahPompa) {
+            moduleData['rumah-pompa'].baik = freshStats.rumahPompa.baik;
+            moduleData['rumah-pompa'].rusak = freshStats.rumahPompa.rusak;
+            moduleData['rumah-pompa'].total = freshStats.rumahPompa.total;
+            moduleData['rumah-pompa'].trendData = freshTrend.datasets['Rumah Pompa'] || [0,0,0,0,0,0];
+          }
+          
+          // Update P3K data
+          if (freshStats.p3k) {
+            moduleData['p3k'].baik = freshStats.p3k.baik;
+            moduleData['p3k'].rusak = freshStats.p3k.rusak;
+            moduleData['p3k'].total = freshStats.p3k.total;
+            moduleData['p3k'].trendData = freshTrend.datasets['P3K'] || [0,0,0,0,0,0];
+          }
+          
+          // Refresh current module display
+          switchModule(currentModule);
+          
+          // Update last refresh time
+          lastUpdateTime = new Date();
+          console.log('✅ Dashboard updated at:', lastUpdateTime.toLocaleTimeString('id-ID'));
+          
+          // Show success notification (optional)
+          showRefreshNotification('Data diperbarui');
+        }
+      } catch (error) {
+        console.error('❌ Error refreshing dashboard data:', error);
+        showRefreshNotification('Gagal memperbarui data', true);
+      }
+    }
+
+    // Show refresh notification
+    function showRefreshNotification(message, isError = false) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm font-medium transition-all duration-300 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 2000);
+    }
+
+    // Start auto-refresh (every 30 seconds)
+    function startAutoRefresh() {
+      // Initial refresh after 5 seconds
+      setTimeout(() => {
+        refreshDashboardData();
+      }, 5000);
+      
+      // Then refresh every 30 seconds
+      autoRefreshInterval = setInterval(() => {
+        refreshDashboardData();
+      }, 30000); // 30 seconds
+      
+      console.log('🔄 Auto-refresh activated - updating every 30 seconds');
+    }
+
+    // Stop auto-refresh
+    function stopAutoRefresh() {
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        console.log('⏸️ Auto-refresh stopped');
+      }
+    }
+
+    // Start auto-refresh when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      startAutoRefresh();
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', function() {
+      stopAutoRefresh();
+    });
+
+    // Pause auto-refresh when tab is hidden, resume when visible
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        stopAutoRefresh();
+      } else {
+        startAutoRefresh();
+      }
+    });
+  </script>
 </x-guest.layouts.guest>

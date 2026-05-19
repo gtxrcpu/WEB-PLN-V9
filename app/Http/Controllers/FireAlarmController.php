@@ -297,6 +297,11 @@ class FireAlarmController extends Controller
 
         $kartu = \App\Models\KartuFireAlarm::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
 
+        // Verify kartu actually belongs to this Fire Alarm (prevent IDOR)
+        if ((int) $kartu->fire_alarm_id !== (int) $fireAlarmId) {
+            abort(404, 'Kartu tidak ditemukan untuk equipment ini.');
+        }
+
         // Get template for Fire Alarm module with unit-specific address
         $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
 

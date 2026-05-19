@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class KartuApat extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Traits\HasApprovalStatus;
 
     protected $table = 'kartu_apats';
 
@@ -91,14 +91,5 @@ class KartuApat extends Model
     public function leaderSignature()
     {
         return $this->belongsTo(Signature::class, 'leader_signature_id');
-    }
-
-    /**
-     * Check if approved (by leader OR admin/superadmin)
-     */
-    public function isApproved()
-    {
-        // Approved if EITHER leader OR admin has approved
-        return !is_null($this->leader_approved_at) || !is_null($this->approved_at);
     }
 }

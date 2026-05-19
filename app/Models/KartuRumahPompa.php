@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasApprovalStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KartuRumahPompa extends Model
 {
+    use HasApprovalStatus;
+
     protected $guarded = [];
 
     protected $casts = [
@@ -51,11 +54,5 @@ class KartuRumahPompa extends Model
     public function leaderSignature(): BelongsTo
     {
         return $this->belongsTo(Signature::class, 'leader_signature_id');
-    }
-
-    public function isApproved(): bool
-    {
-        // Approved if EITHER leader OR admin has approved
-        return !is_null($this->leader_approved_at) || !is_null($this->approved_at);
     }
 }

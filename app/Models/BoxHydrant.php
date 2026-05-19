@@ -36,7 +36,8 @@ class BoxHydrant extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+        // Use regular route instead of signed route for public QR access
+        $url = route('equipment.status', [
             'module' => 'box-hydrant', 
             'id' => $this->id
         ]);
@@ -162,7 +163,8 @@ class BoxHydrant extends Model
             return;
         }
 
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+        // Use regular route instead of signed route
+        $url = route('equipment.status', [
             'module' => 'box-hydrant',
             'id' => $this->id
         ]);

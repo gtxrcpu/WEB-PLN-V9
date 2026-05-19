@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
+use App\Http\Controllers\Traits\HasRevisionLogic;
 use App\Models\BoxHydrant;
 use App\Models\KartuBoxHydrant;
 use Illuminate\Http\Request;
 
 class BoxHydrantKartuController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess, HasRevisionLogic;
+
     public function create(Request $request)
     {
         $boxHydrantId = $request->query('box_hydrant_id');
@@ -19,6 +24,9 @@ class BoxHydrantKartuController extends Controller
         }
 
         $boxHydrant = BoxHydrant::findOrFail($boxHydrantId);
+
+        // Verify user has access to this Box Hydrant's unit
+        $this->authorizeEquipmentUnit($boxHydrant, 'Box Hydrant');
         $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
 
         $latestKartu = KartuBoxHydrant::where('box_hydrant_id', $boxHydrantId)
@@ -37,6 +45,10 @@ class BoxHydrantKartuController extends Controller
     public function store(Request $request)
     {
         $boxHydrant = BoxHydrant::findOrFail($request->box_hydrant_id);
+
+        // Verify user has access to this Box Hydrant's unit
+        $this->authorizeEquipmentUnit($boxHydrant, 'Box Hydrant');
+
         $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
         
         // Debug: Log request data
@@ -134,11 +146,7 @@ class BoxHydrantKartuController extends Controller
             ->orderBy('revisi', 'desc')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } else {
-            $data['revisi'] = '00';
-        }
+        $data['revisi'] = $this->computeNextRevisi($latestKartu);
         
         // Log final data before insert
         \Log::info('Final data before insert', ['data' => $data]);

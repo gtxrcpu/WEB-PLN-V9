@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
+use App\Http\Controllers\Traits\HasRevisionLogic;
 use App\Models\KartuRumahPompa;
 use App\Models\RumahPompa;
 use Illuminate\Http\Request;
@@ -9,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
 
 class RumahPompaKartuController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess, HasRevisionLogic;
+
     public function create(Request $request)
     {
         $rumahPompaId = $request->query('rumah_pompa_id');
@@ -20,6 +25,9 @@ class RumahPompaKartuController extends Controller
         }
 
         $rumahPompa = RumahPompa::findOrFail($rumahPompaId);
+
+        // Verify user has access to this Rumah Pompa's unit
+        $this->authorizeEquipmentUnit($rumahPompa, 'Rumah Pompa');
         $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         $latestKartu = KartuRumahPompa::where('rumah_pompa_id', $rumahPompaId)
@@ -38,6 +46,10 @@ class RumahPompaKartuController extends Controller
     public function store(Request $request)
     {
         $rumahPompa = RumahPompa::findOrFail($request->rumah_pompa_id);
+
+        // Verify user has access to this Rumah Pompa's unit
+        $this->authorizeEquipmentUnit($rumahPompa, 'Rumah Pompa');
+
         $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         // Debug: Log request data
@@ -133,11 +145,7 @@ class RumahPompaKartuController extends Controller
             ->orderBy('revisi', 'desc')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } else {
-            $data['revisi'] = '00';
-        }
+        $data['revisi'] = $this->computeNextRevisi($latestKartu);
 
         // Log final data before insert
         \Log::info('Final data before insert', ['data' => $data]);

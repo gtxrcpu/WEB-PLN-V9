@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
+use App\Http\Controllers\Traits\HasRevisionLogic;
 use App\Models\FireAlarm;
 use App\Models\KartuFireAlarm;
 use Illuminate\Http\Request;
 
 class FireAlarmKartuController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess, HasRevisionLogic;
+
     /**
      * Tampilkan form Kartu Kendali Fire Alarm
      */
@@ -22,6 +27,9 @@ class FireAlarmKartuController extends Controller
         }
 
         $fireAlarm = FireAlarm::findOrFail($fireAlarmId);
+
+        // Verify user has access to this Fire Alarm's unit
+        $this->authorizeEquipmentUnit($fireAlarm, 'Fire Alarm');
                 $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
 
         $latestKartu = KartuFireAlarm::where('fire_alarm_id', $fireAlarmId)
@@ -43,6 +51,10 @@ class FireAlarmKartuController extends Controller
     public function store(Request $request)
     {
         $fireAlarm = FireAlarm::findOrFail($request->fire_alarm_id);
+
+        // Verify user has access to this Fire Alarm's unit
+        $this->authorizeEquipmentUnit($fireAlarm, 'Fire Alarm');
+
         $template = \App\Models\KartuTemplate::getTemplate('fire-alarm', $fireAlarm->unit_id);
         
         // Debug: Log request data
@@ -144,11 +156,7 @@ class FireAlarmKartuController extends Controller
             ->orderBy('revisi', 'desc')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } else {
-            $data['revisi'] = '00';
-        }
+        $data['revisi'] = $this->computeNextRevisi($latestKartu);
         
         // Log final data before insert
         \Log::info('Final data before insert', ['data' => $data]);

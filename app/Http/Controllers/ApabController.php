@@ -199,6 +199,12 @@ class ApabController extends Controller
         }
 
         $kartu = \App\Models\KartuApab::with(['user', 'approver', 'signature'])->findOrFail($kartuId);
+
+        // Verify kartu actually belongs to this APAB (prevent IDOR)
+        if ((int) $kartu->apab_id !== (int) $apab->id) {
+            abort(404, 'Kartu tidak ditemukan untuk equipment ini.');
+        }
+
         $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
 
         return view('apab.view-kartu', compact('apab', 'kartu', 'template'));

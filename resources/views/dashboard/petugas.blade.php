@@ -4,18 +4,18 @@
     @php
       $unitDetails = [
         'UP2WIII' => [
-          'address' => 'Jl. Soekarno Hatta No. 123, Kota Jayapura',
-          'phone' => '(0967) 123-4567',
+          'address' => 'Jl. Banten No.10, Kota Bandung, Jawa Barat 40272',
+          'phone' => '-',
           'email' => 'up2wiii@pln.co.id',
         ],
         'UP2WIV' => [
-          'address' => 'Jl. Ahmad Yani No. 456, Kota Jayapura',
-          'phone' => '(0967) 765-4321',
+          'address' => 'Jl. Raya Dayeuhkolot KM.9, Kabupaten Bandung, Jawa Barat 4025',
+          'phone' => '-',
           'email' => 'up2wiv@pln.co.id',
         ],
         'INDUK' => [
-          'address' => 'Jl. Gatot Subroto No. 789, Kota Jayapura',
-          'phone' => '(0967) 111-2222',
+          'address' => 'Jl. Banten No.10, Kota Bandung, Jawa Barat 40272',
+          'phone' => '-',
           'email' => 'upj.jayapura@pln.co.id',
         ],
       ];

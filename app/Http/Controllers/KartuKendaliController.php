@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
 use App\Models\Apar;
 use App\Models\KartuApar;
 use App\Models\KartuTemplate;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class KartuKendaliController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess;
     /**
      * Tampilkan form Kartu Kendali untuk 1 APAR.
      * URL: /kartu/create?apar_id=ID
@@ -21,6 +24,9 @@ class KartuKendaliController extends Controller
 
         // kalau apar_id nggak ada / salah, langsung 404
         $apar = Apar::findOrFail($aparId);
+
+        // Verify user has access to this APAR's unit
+        $this->authorizeEquipmentUnit($apar, 'APAR');
 
         // Get template for APAR module with unit-specific address
         $template = \App\Models\KartuTemplate::getTemplate('apar', $apar->unit_id);
@@ -71,6 +77,12 @@ class KartuKendaliController extends Controller
 
         // Get template untuk validasi dinamis
         $template = KartuTemplate::getTemplate('apar', $request->input('apar_id') ? Apar::find($request->input('apar_id'))->unit_id ?? null : null);
+
+        // Verify user has access to this APAR's unit
+        $aparForAuth = Apar::find($request->input('apar_id'));
+        if ($aparForAuth) {
+            $this->authorizeEquipmentUnit($aparForAuth, 'APAR');
+        }
 
         // Kolom DB valid untuk kartu APAR
         $aparDbColumns = ['pressure_gauge', 'pin_segel', 'selang', 'tabung', 'label', 'kondisi_fisik'];

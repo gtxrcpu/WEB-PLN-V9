@@ -1,5 +1,5 @@
 services:
-    laravel.test:
+    frankenphp:
         build:
             context: './vendor/laravel/sail/runtimes/8.5'
             dockerfile: Dockerfile
@@ -23,7 +23,8 @@ services:
         networks:
             - sail
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
     mysql:
         image: 'mysql:8.4'
         ports:

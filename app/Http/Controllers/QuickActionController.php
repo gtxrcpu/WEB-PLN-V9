@@ -218,6 +218,12 @@ class QuickActionController extends Controller
             } elseif ($module === 'apat') {
                 $equipment = Apat::find($id);
                 if ($equipment) {
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAT dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apat',
@@ -227,6 +233,12 @@ class QuickActionController extends Controller
             } elseif ($module === 'apab') {
                 $equipment = Apab::find($id);
                 if ($equipment) {
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke APAB dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'apab',
@@ -236,6 +248,12 @@ class QuickActionController extends Controller
             } elseif ($module === 'fire-alarm') {
                 $equipment = FireAlarm::find($id);
                 if ($equipment) {
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Fire Alarm dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'fire-alarm',
@@ -245,6 +263,12 @@ class QuickActionController extends Controller
             } elseif ($module === 'box-hydrant') {
                 $equipment = BoxHydrant::find($id);
                 if ($equipment) {
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Box Hydrant dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'box-hydrant',
@@ -254,6 +278,12 @@ class QuickActionController extends Controller
             } elseif ($module === 'rumah-pompa') {
                 $equipment = RumahPompa::find($id);
                 if ($equipment) {
+                    if (!$this->canAccessEquipment($equipment)) {
+                        return back()->withErrors([
+                            'qr' => 'Anda tidak memiliki akses ke Rumah Pompa dari unit lain. QR Code ini untuk unit: ' .
+                                ($equipment->unit ? $equipment->unit->name : 'Induk')
+                        ]);
+                    }
                     return view('quick.scan-result', [
                         'equipment' => $equipment,
                         'type' => 'rumah-pompa',
@@ -283,6 +313,12 @@ class QuickActionController extends Controller
 
         $apat = Apat::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($apat) {
+            if (!$this->canAccessEquipment($apat)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke APAT dari unit lain. QR Code ini untuk unit: ' .
+                        ($apat->unit ? $apat->unit->name : 'Induk')
+                ]);
+            }
             return view('quick.scan-result', [
                 'equipment' => $apat,
                 'type' => 'apat',
@@ -292,6 +328,12 @@ class QuickActionController extends Controller
 
         $apab = Apab::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($apab) {
+            if (!$this->canAccessEquipment($apab)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke APAB dari unit lain. QR Code ini untuk unit: ' .
+                        ($apab->unit ? $apab->unit->name : 'Induk')
+                ]);
+            }
             return view('quick.scan-result', [
                 'equipment' => $apab,
                 'type' => 'apab',
@@ -301,6 +343,12 @@ class QuickActionController extends Controller
 
         $fireAlarm = FireAlarm::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($fireAlarm) {
+            if (!$this->canAccessEquipment($fireAlarm)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke Fire Alarm dari unit lain. QR Code ini untuk unit: ' .
+                        ($fireAlarm->unit ? $fireAlarm->unit->name : 'Induk')
+                ]);
+            }
             return view('quick.scan-result', [
                 'equipment' => $fireAlarm,
                 'type' => 'fire-alarm',
@@ -310,6 +358,12 @@ class QuickActionController extends Controller
 
         $boxHydrant = BoxHydrant::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($boxHydrant) {
+            if (!$this->canAccessEquipment($boxHydrant)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke Box Hydrant dari unit lain. QR Code ini untuk unit: ' .
+                        ($boxHydrant->unit ? $boxHydrant->unit->name : 'Induk')
+                ]);
+            }
             return view('quick.scan-result', [
                 'equipment' => $boxHydrant,
                 'type' => 'box-hydrant',
@@ -319,6 +373,12 @@ class QuickActionController extends Controller
 
         $rumahPompa = RumahPompa::where('barcode', $qr)->orWhere('serial_no', $qr)->first();
         if ($rumahPompa) {
+            if (!$this->canAccessEquipment($rumahPompa)) {
+                return back()->withErrors([
+                    'qr' => 'Anda tidak memiliki akses ke Rumah Pompa dari unit lain. QR Code ini untuk unit: ' .
+                        ($rumahPompa->unit ? $rumahPompa->unit->name : 'Induk')
+                ]);
+            }
             return view('quick.scan-result', [
                 'equipment' => $rumahPompa,
                 'type' => 'rumah-pompa',
@@ -332,13 +392,13 @@ class QuickActionController extends Controller
     // Buat Inspeksi
     public function inspeksi()
     {
-        // Get all items for selection
-        $apars = Apar::orderBy('serial_no')->get();
-        $apats = Apat::orderBy('serial_no')->get();
-        $apabs = Apab::orderBy('serial_no')->get();
-        $fireAlarms = FireAlarm::orderBy('serial_no')->get();
-        $boxHydrants = BoxHydrant::orderBy('serial_no')->get();
-        $rumahPompas = RumahPompa::orderBy('serial_no')->get();
+        // Get items scoped to user's unit
+        $apars = Apar::forAuthUser()->orderBy('serial_no')->get();
+        $apats = Apat::forAuthUser()->orderBy('serial_no')->get();
+        $apabs = Apab::forAuthUser()->orderBy('serial_no')->get();
+        $fireAlarms = FireAlarm::forAuthUser()->orderBy('serial_no')->get();
+        $boxHydrants = BoxHydrant::forAuthUser()->orderBy('serial_no')->get();
+        $rumahPompas = RumahPompa::forAuthUser()->orderBy('serial_no')->get();
 
         return view('quick.inspeksi', compact('apars', 'apats', 'apabs', 'fireAlarms', 'boxHydrants', 'rumahPompas'));
     }
@@ -355,42 +415,42 @@ class QuickActionController extends Controller
             return collect();
         };
 
-        // Get statistics
+        // Get statistics scoped to user's unit
         $stats = [
             'apar' => [
-                'total' => Apar::count(),
-                'baik' => Apar::where('status', 'baik')->count(),
-                'rusak' => Apar::where('status', 'rusak')->count(),
+                'total' => Apar::forAuthUser()->count(),
+                'baik' => Apar::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => Apar::forAuthUser()->where('status', 'rusak')->count(),
                 'inspeksi' => \DB::table('kartu_apars')->count(),
             ],
             'apat' => [
-                'total' => Apat::count(),
-                'baik' => Apat::where('status', 'baik')->count(),
-                'rusak' => Apat::where('status', 'rusak')->count(),
+                'total' => Apat::forAuthUser()->count(),
+                'baik' => Apat::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => Apat::forAuthUser()->where('status', 'rusak')->count(),
                 'inspeksi' => \DB::table('kartu_apats')->count(),
             ],
             'apab' => [
-                'total' => Apab::count(),
-                'baik' => Apab::where('status', 'baik')->count(),
-                'rusak' => Apab::where('status', 'tidak_baik')->count(),
+                'total' => Apab::forAuthUser()->count(),
+                'baik' => Apab::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => Apab::forAuthUser()->where('status', 'tidak_baik')->count(),
                 'inspeksi' => \DB::table('kartu_apabs')->count(),
             ],
             'fire_alarm' => [
-                'total' => FireAlarm::count(),
-                'baik' => FireAlarm::where('status', 'baik')->count(),
-                'rusak' => FireAlarm::where('status', 'rusak')->count(),
+                'total' => FireAlarm::forAuthUser()->count(),
+                'baik' => FireAlarm::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => FireAlarm::forAuthUser()->where('status', 'rusak')->count(),
                 'inspeksi' => \DB::table('kartu_fire_alarms')->count(),
             ],
             'box_hydrant' => [
-                'total' => BoxHydrant::count(),
-                'baik' => BoxHydrant::where('status', 'baik')->count(),
-                'rusak' => BoxHydrant::where('status', 'rusak')->count(),
+                'total' => BoxHydrant::forAuthUser()->count(),
+                'baik' => BoxHydrant::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => BoxHydrant::forAuthUser()->where('status', 'rusak')->count(),
                 'inspeksi' => \DB::table('kartu_box_hydrants')->count(),
             ],
             'rumah_pompa' => [
-                'total' => RumahPompa::count(),
-                'baik' => RumahPompa::where('status', 'baik')->count(),
-                'rusak' => RumahPompa::where('status', 'rusak')->count(),
+                'total' => RumahPompa::forAuthUser()->count(),
+                'baik' => RumahPompa::forAuthUser()->where('status', 'baik')->count(),
+                'rusak' => RumahPompa::forAuthUser()->where('status', 'rusak')->count(),
                 'inspeksi' => \DB::table('kartu_rumah_pompas')->count(),
             ],
         ];
@@ -463,7 +523,7 @@ class QuickActionController extends Controller
         $data = [];
 
         if ($module === 'all' || $module === 'apar') {
-            $items = Apar::all();
+            $items = Apar::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'APAR',
@@ -477,7 +537,7 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'apat') {
-            $items = Apat::all();
+            $items = Apat::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'APAT',
@@ -491,7 +551,7 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'apab') {
-            $items = Apab::all();
+            $items = Apab::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'APAB',
@@ -505,7 +565,7 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'fire_alarm') {
-            $items = FireAlarm::all();
+            $items = FireAlarm::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'Fire Alarm',
@@ -519,7 +579,7 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'box_hydrant') {
-            $items = BoxHydrant::all();
+            $items = BoxHydrant::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'Box Hydrant',
@@ -533,7 +593,7 @@ class QuickActionController extends Controller
         }
 
         if ($module === 'all' || $module === 'rumah_pompa') {
-            $items = RumahPompa::all();
+            $items = RumahPompa::forAuthUser()->get();
             foreach ($items as $item) {
                 $data[] = [
                     'modul' => 'Rumah Pompa',

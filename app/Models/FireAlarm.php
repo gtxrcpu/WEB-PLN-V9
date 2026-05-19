@@ -151,7 +151,8 @@ class FireAlarm extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+        // Use regular route instead of signed route for public QR access
+        $url = route('equipment.status', [
             'module' => 'fire-alarm', 
             'id' => $this->id
         ]);
@@ -168,7 +169,8 @@ class FireAlarm extends Model
             return;
         }
 
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+        // Use regular route instead of signed route
+        $url = route('equipment.status', [
             'module' => 'fire-alarm',
             'id' => $this->id
         ]);

@@ -13,10 +13,14 @@ Route::get('/', fn() => redirect()->route('guest.dashboard'));
 // QR Code Generator (Public - no auth needed for scanning)
 Route::get('/qr', [\App\Http\Controllers\QrCodeController::class, 'generate'])->name('qr.generate');
 
-// Public QR Code Status Scanner Endpoint
+// P3K specific routes with jenis (pemeriksaan/pemakaian/stock) - MUST be before generic route
+Route::get('/scan/p3k/{jenis}/{id}', [\App\Http\Controllers\EquipmentStatusController::class, 'showP3k'])
+    ->where('jenis', 'pks|pmk|stk|pemeriksaan|pemakaian|stock')
+    ->name('equipment.status.p3k');
+
+// Public QR Code Status Scanner Endpoint (generic - catches all other modules)
 Route::get('/scan/{module}/{id}', [\App\Http\Controllers\EquipmentStatusController::class, 'show'])
-    ->name('equipment.status')
-    ->middleware('signed');
+    ->name('equipment.status');
 
 // Guest Routes (No Authentication Required)
 Route::prefix('guest')->name('guest.')->middleware('throttle:60,1')->group(function () {
@@ -261,10 +265,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/apat/kartu/create', [ApatKartuController::class, 'create'])->name('apat.kartu.create');
     Route::post('/apat/kartu', [ApatKartuController::class, 'store'])->name('apat.kartu.store');
 });
-    
-    // Kartu Pemeriksaan APAT
-    Route::get('/apat/kartu-pemeriksaan/create', [\App\Http\Controllers\ApatController::class, 'createPemeriksaan'])->name('apat.kartu-pemeriksaan.create');
-    Route::post('/apat/kartu-pemeriksaan', [\App\Http\Controllers\ApatController::class, 'storePemeriksaan'])->name('apat.kartu-pemeriksaan.store');
 
 // Ini Modul Fire Alarm
 Route::middleware(['auth'])->group(function () {
@@ -294,8 +294,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/box-hydrant/{boxHydrant}/kartu/{kartu}', [\App\Http\Controllers\BoxHydrantController::class, 'viewKartu'])->name('box-hydrant.view-kartu');
     Route::get('/box-hydrant/kartu/create', [\App\Http\Controllers\BoxHydrantKartuController::class, 'create'])->name('box-hydrant.kartu.create');
     Route::post('/box-hydrant/kartu', [\App\Http\Controllers\BoxHydrantKartuController::class, 'store'])->name('box-hydrant.kartu.store');
-    Route::get('/box-hydrant/kartu-pemeriksaan/create', [\App\Http\Controllers\BoxHydrantController::class, 'createPemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.create');
-    Route::post('/box-hydrant/kartu-pemeriksaan', [\App\Http\Controllers\BoxHydrantController::class, 'storePemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.store');
 });
 
 // Ini Modul Rumah Pompa
@@ -359,6 +357,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/p3k/pilih-lokasi', [\App\Http\Controllers\P3kController::class, 'pilihLokasi'])->name('p3k.pilih-lokasi');
     Route::get('/p3k/kartu/create', [\App\Http\Controllers\KartuP3kController::class, 'create'])->name('p3k.kartu.create');
     Route::post('/p3k/kartu', [\App\Http\Controllers\KartuP3kController::class, 'store'])->name('p3k.kartu.store');
+    Route::get('/p3k/{p3k}/kartu/{kartuId}', [\App\Http\Controllers\P3kController::class, 'viewKartu'])->name('p3k.view-kartu');
 });
 
 // Quick Actions

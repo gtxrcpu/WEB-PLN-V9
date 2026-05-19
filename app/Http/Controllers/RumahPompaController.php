@@ -168,6 +168,11 @@ class RumahPompaController extends Controller
         }
 
         $kartu = \App\Models\KartuRumahPompa::with(['signature', 'user', 'approver'])->findOrFail($kartuId);
+
+        // Verify kartu actually belongs to this Rumah Pompa (prevent IDOR)
+        if ((int) $kartu->rumah_pompa_id !== (int) $rumahPompaId) {
+            abort(404, 'Kartu tidak ditemukan untuk equipment ini.');
+        }
         $template = \App\Models\KartuTemplate::getTemplate('rumah-pompa', $rumahPompa->unit_id);
 
         if ($template) {

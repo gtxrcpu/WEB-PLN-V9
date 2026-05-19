@@ -25,13 +25,6 @@
             </div>
 
             {{-- Stats Cards --}}
-            @php
-                $totalApar = $apars->total();
-                $statusBaik = $apars->where('status', 'baik')->count();
-                $statusIsiUlang = $apars->where('status', 'isi ulang')->count();
-                $statusRusak = $apars->where('status', 'rusak')->count();
-            @endphp
-
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
@@ -44,7 +37,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Total APAR</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $totalApar }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['total'] }}</p>
                     </div>
                 </div>
 
@@ -59,7 +52,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Kondisi Baik</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $statusBaik }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['baik'] }}</p>
                     </div>
                 </div>
 
@@ -74,7 +67,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Perlu Isi Ulang</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $statusIsiUlang }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['isi_ulang'] }}</p>
                     </div>
                 </div>
 
@@ -89,7 +82,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Rusak</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $statusRusak }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['rusak'] }}</p>
                     </div>
                 </div>
             </div>

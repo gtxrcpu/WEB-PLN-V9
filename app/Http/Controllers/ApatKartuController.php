@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
+use App\Http\Controllers\Traits\HasRevisionLogic;
 use App\Models\Apat;
 use App\Models\KartuApat;
 use Illuminate\Http\Request;
 
 class ApatKartuController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess, HasRevisionLogic;
+
     /**
      * Tampilkan form Kartu Kendali APAT (create).
      * URL: /apat/kartu/create?apat_id=...
@@ -17,6 +22,9 @@ class ApatKartuController extends Controller
         $apatId = $request->query('apat_id');
 
         $apat = Apat::findOrFail($apatId);
+
+        // Verify user has access to this APAT's unit
+        $this->authorizeEquipmentUnit($apat, 'APAT');
         
         // Get template for APAT module
         $apat = Apat::findOrFail($apatId);
@@ -45,6 +53,10 @@ class ApatKartuController extends Controller
     public function store(Request $request)
     {
         $apat = Apat::findOrFail($request->apat_id);
+
+        // Verify user has access to this APAT's unit
+        $this->authorizeEquipmentUnit($apat, 'APAT');
+
         $template = \App\Models\KartuTemplate::getTemplate('apat', $apat->unit_id);
         
         // Build validation rules
@@ -112,11 +124,7 @@ class ApatKartuController extends Controller
             ->latest('updated_at')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } else {
-            $data['revisi'] = '00';
-        }
+        $data['revisi'] = $this->computeNextRevisi($latestKartu);
 
         KartuApat::create($data);
 

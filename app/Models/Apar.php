@@ -138,7 +138,11 @@ class Apar extends Model
             return;
         }
 
-        $url = route('apar.riwayat', $this->id);
+        // Use equipment.status route for public QR access (no signature required)
+        $url = route('equipment.status', [
+            'module' => 'apar',
+            'id' => $this->id
+        ]);
 
         try {
             $qrCode = \App\Helpers\QrCodeHelper::generateVisualSvg($url, 'APAR', $this->serial_no);
@@ -166,7 +170,8 @@ class Apar extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
+        // Use regular route instead of signed route for public QR access
+        $url = route('equipment.status', [
             'module' => 'apar', 
             'id' => $this->id
         ]);

@@ -20,8 +20,17 @@ class P3k extends Model
      */
     public function getQrUrlAttribute(): string
     {
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
-            'module' => 'p3k',
+        // Map jenis to abbreviation for URL
+        $jenisMap = [
+            'pemeriksaan' => 'pks',
+            'pemakaian' => 'pmk',
+            'stock' => 'stk',
+        ];
+        
+        $jenisCode = $jenisMap[$this->jenis ?? 'pemeriksaan'] ?? 'pks';
+        
+        $url = route('equipment.status.p3k', [
+            'jenis' => $jenisCode,
             'id' => $this->id
         ]);
         
@@ -37,8 +46,17 @@ class P3k extends Model
             return;
         }
 
-        $url = \Illuminate\Support\Facades\URL::signedRoute('equipment.status', [
-            'module' => 'p3k',
+        // Map jenis to abbreviation for URL
+        $jenisMap = [
+            'pemeriksaan' => 'pks',
+            'pemakaian' => 'pmk',
+            'stock' => 'stk',
+        ];
+        
+        $jenisCode = $jenisMap[$this->jenis ?? 'pemeriksaan'] ?? 'pks';
+        
+        $url = route('equipment.status.p3k', [
+            'jenis' => $jenisCode,
             'id' => $this->id
         ]);
 

@@ -163,6 +163,12 @@ class BoxHydrantController extends Controller
         }
 
         $kartu = \App\Models\KartuBoxHydrant::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
+
+        // Verify kartu actually belongs to this Box Hydrant (prevent IDOR)
+        if ((int) $kartu->box_hydrant_id !== (int) $boxHydrantId) {
+            abort(404, 'Kartu tidak ditemukan untuk equipment ini.');
+        }
+
         $template = \App\Models\KartuTemplate::getTemplate('box-hydrant', $boxHydrant->unit_id);
 
         if ($template) {

@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasApprovalStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class KartuP3kStock extends Model
 {
-    use HasFactory;
+    use HasFactory, HasApprovalStatus;
 
     protected $table = 'kartu_p3k_stock';
 
@@ -38,6 +39,9 @@ class KartuP3kStock extends Model
     protected $casts = [
         'tgl_periksa' => 'date',
         'approved_at' => 'datetime',
+        'leader_approved_at' => 'datetime',
+        'leader_rejected_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'stock_items' => 'array',
     ];
 
@@ -56,13 +60,23 @@ class KartuP3kStock extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function leaderApprover()
+    {
+        return $this->belongsTo(User::class, 'leader_approved_by');
+    }
+
+    public function leaderRejector()
+    {
+        return $this->belongsTo(User::class, 'leader_rejected_by');
+    }
+
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     public function signature()
     {
         return $this->belongsTo(Signature::class);
-    }
-
-    public function isApproved()
-    {
-        return !is_null($this->approved_at);
     }
 }

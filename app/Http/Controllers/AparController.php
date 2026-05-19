@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
 use App\Models\Apar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class AparController extends Controller
 {
-    use FiltersByUnit;
+    use FiltersByUnit, AuthorizesEquipmentAccess;
     /**
      * Tampilkan daftar APAR.
      */
@@ -346,6 +347,9 @@ class AparController extends Controller
         }
 
         $kartu = \App\Models\KartuApar::with(['signature', 'user', 'approver', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
+
+        // Verify kartu actually belongs to this APAR (prevent IDOR)
+        $this->authorizeKartuBelongsToEquipment($kartu, 'apar_id', (int) $aparId);
 
         // Get template for APAR module with unit-specific address
         $template = \App\Models\KartuTemplate::getTemplate('apar', $apar->unit_id);

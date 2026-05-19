@@ -151,6 +151,26 @@ class FloorPlanController extends Controller
         // Find the equipment
         $equipment = $modelClass::findOrFail($request->equipment_id);
 
+        // Verify user has access to this equipment's unit
+        $userUnitId = $this->getAuthUserUnitId();
+        if ($userUnitId && !auth()->user()->hasAnyRole(['superadmin', 'inspector'])) {
+            if ($equipment->unit_id != $userUnitId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses ke equipment dari unit lain.'
+                ], 403);
+            }
+
+            // Also verify the floor plan belongs to the same unit
+            $floorPlan = FloorPlan::findOrFail($request->floor_plan_id);
+            if ($floorPlan->unit_id != $userUnitId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses ke denah dari unit lain.'
+                ], 403);
+            }
+        }
+
         // Update the coordinates
         $equipment->update([
             'floor_plan_id' => $request->floor_plan_id,
@@ -240,8 +260,19 @@ class FloorPlanController extends Controller
         $routeName = $routes[$type] ?? null;
 
         if ($routeName && \Route::has($routeName)) {
-            // For CCTV, we might want to pass the unit_id or just go to dashboard
-            return route($routeName);
+            try {
+                // For CCTV dashboard, no parameter needed
+                if ($type === 'cctv') {
+                    return route($routeName);
+                }
+                
+                // For other equipment, pass the ID as parameter
+                return route($routeName, $id);
+            } catch (\Exception $e) {
+                // If route generation fails, return hash
+                \Log::warning("Failed to generate route for {$type} with ID {$id}: " . $e->getMessage());
+                return '#';
+            }
         }
 
         return '#';

@@ -16,14 +16,10 @@ class EquipmentStatusController extends Controller
     /**
      * Tampilkan status UI (responsive, HTML, meta SEO)
      * Endpoint ini menerima scan eksternal menggunakan kamera HP.
+     * Public access - no signature validation required.
      */
     public function show(Request $request, $module, $id)
     {
-        // 1. Validasi & Authorization dilakukan melalui signed flag
-        if (!$request->hasValidSignature()) {
-            abort(403, 'Akses ditolak: QR Code tidak valid atau telah kadaluarsa. Pastikan Anda melakukan scan QR Code yang resmi.');
-        }
-
         $equipment = null;
         $typeName = strtoupper(str_replace('-', ' ', $module));
 
@@ -59,6 +55,44 @@ class EquipmentStatusController extends Controller
             'equipment' => $equipment,
             'module' => $module,
             'typeName' => $typeName,
+            'fallbackUrl' => route('guest.dashboard')
+        ]);
+    }
+
+    /**
+     * Tampilkan status P3K dengan jenis spesifik (pemeriksaan/pemakaian/stock)
+     * Public access - no signature validation required.
+     */
+    public function showP3k(Request $request, $jenis, $id)
+    {
+        // Map jenis abbreviation to full name
+        $jenisMap = [
+            'pks' => 'pemeriksaan',
+            'pmk' => 'pemakaian',
+            'stk' => 'stock',
+            'pemeriksaan' => 'pemeriksaan',
+            'pemakaian' => 'pemakaian',
+            'stock' => 'stock',
+        ];
+
+        $jenisName = $jenisMap[$jenis] ?? 'pemeriksaan';
+        
+        // Find P3K by ID and validate jenis matches
+        $equipment = P3k::findOrFail($id);
+        
+        // Optional: validate that jenis matches (or just show it regardless)
+        // if ($equipment->jenis !== $jenisName) {
+        //     abort(404, 'P3K jenis tidak sesuai');
+        // }
+        
+        $typeName = 'P3K ' . strtoupper($jenisName);
+
+        // 3. Render responsive mobile-first UI
+        return view('equipment-status', [
+            'equipment' => $equipment,
+            'module' => 'p3k',
+            'typeName' => $typeName,
+            'jenis' => $jenisName,
             'fallbackUrl' => route('guest.dashboard')
         ]);
     }

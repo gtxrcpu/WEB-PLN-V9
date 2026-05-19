@@ -86,7 +86,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {{-- Left Column: Details --}}
-      <div class="lg:col-span-2 space-y-8">
+      <div class="lg:col-span-2 space-y-8 min-w-0 overflow-hidden">
 
         {{-- Card: Detail Equipment --}}
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -179,7 +179,7 @@
         </div>
 
         {{-- Card: Checklist Item --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
           <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
             <h3 class="font-bold text-gray-900">Rincian Pemeriksaan</h3>
           </div>
@@ -207,93 +207,103 @@
 
           @if($isPemeriksaan)
           {{-- KARTU PEMERIKSAAN: tabel sesuai modul --}}
-          <div class="overflow-x-auto px-6 pb-6">
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;">
             @if($moduleKey === 'apar')
-            <table class="w-full text-xs border-collapse" style="min-width: 900px;">
+            <table class="w-full text-xs border-collapse" style="min-width:700px;table-layout:fixed;">
+              <colgroup>
+                <col style="width:4%;">
+                <col style="width:22%;">
+                <col style="width:14%;">
+                <col style="width:12%;">
+                <col style="width:10%;">
+                <col style="width:12%;">
+                <col style="width:13%;">
+                <col style="width:13%;">
+              </colgroup>
               <thead class="bg-gray-50">
                 <tr>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO.</th>
                   <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">NO. SERI</th>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">JENIS KIMIA</th>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-16">BERAT<br>(Kg)</th>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">KONDISI</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO. SERI</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">JENIS KIMIA</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">BERAT (Kg)</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">KONDISI</th>
                   <th colspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">TANGGAL</th>
-                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KETERANGAN</th>
+                  <th rowspan="2" class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[100px]">KETERANGAN</th>
                 </tr>
                 <tr>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">PENGISIAN</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-24">KADALUARSA</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">PENGISIAN</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">KADALUARSA</th>
                 </tr>
               </thead>
               <tbody>
                 <tr class="bg-white">
                   <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium whitespace-normal">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">{{ $catatanParts['Jenis Kimia'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">{{ $catatanParts['Berat'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center">
                     <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
                   </td>
-                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700 text-xs">
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">
                     @php $tglP = $catatanParts['Tgl Pengisian'] ?? ''; @endphp
                     {{ $tglP ? \Carbon\Carbon::parse($tglP)->format('d/m/Y') : '—' }}
                   </td>
-                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700 text-xs">
+                  <td class="border border-gray-200 px-3 py-2 text-center text-gray-700">
                     @php $tglK = $catatanParts['Tgl Kadaluarsa'] ?? ''; @endphp
                     {{ $tglK ? \Carbon\Carbon::parse($tglK)->format('d/m/Y') : '—' }}
                   </td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700 whitespace-normal">{{ $catatanParts['Ket'] ?? '—' }}</td>
                 </tr>
               </tbody>
             </table>
             @elseif($moduleKey === 'box_hydrant')
-            <table class="w-full text-xs border-collapse" style="min-width: 700px;">
+            <table class="w-full text-xs border-collapse whitespace-nowrap">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NAMA BARANG</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">NO. SERI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KONDISI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-36">KETERANGAN</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO.</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[120px]">NAMA BARANG</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[120px]">LOKASI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO. SERI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">KONDISI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[120px]">KETERANGAN</th>
                 </tr>
               </thead>
               <tbody>
                 <tr class="bg-white">
                   <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Nama Barang'] ?? '—' }}</td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-800">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium whitespace-normal">{{ $catatanParts['Nama Barang'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 whitespace-normal">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center">
                     <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
                   </td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700 whitespace-normal">{{ $catatanParts['Ket'] ?? '—' }}</td>
                 </tr>
               </tbody>
             </table>
             @else
             {{-- APAT / Fire Alarm / fallback: NO | LOKASI | NO.SERI | KONDISI | KETERANGAN --}}
-            <table class="w-full text-xs border-collapse" style="min-width: 650px;">
+            <table class="w-full text-xs border-collapse whitespace-nowrap">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-8">NO.</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">LOKASI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">NO. SERI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-28">KONDISI</th>
-                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 w-36">KETERANGAN</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO.</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[150px]">LOKASI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">NO. SERI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700">KONDISI</th>
+                  <th class="border border-gray-300 px-3 py-2 text-center font-bold text-gray-700 min-w-[120px]">KETERANGAN</th>
                 </tr>
               </thead>
               <tbody>
                 <tr class="bg-white">
                   <td class="border border-gray-200 px-3 py-2 text-center text-gray-500">1</td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-800 font-medium whitespace-normal">{{ $catatanParts['Lokasi'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center font-mono text-gray-800">{{ $catatanParts['No. Seri'] ?? '—' }}</td>
                   <td class="border border-gray-200 px-3 py-2 text-center">
                     <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border {{ $kondisiBadge }}">{{ ucfirst($kondisiVal) }}</span>
                   </td>
-                  <td class="border border-gray-200 px-3 py-2 text-gray-700">{{ $catatanParts['Ket'] ?? '—' }}</td>
+                  <td class="border border-gray-200 px-3 py-2 text-gray-700 whitespace-normal">{{ $catatanParts['Ket'] ?? '—' }}</td>
                 </tr>
               </tbody>
             </table>

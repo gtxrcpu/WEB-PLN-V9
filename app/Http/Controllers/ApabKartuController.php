@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Traits\FiltersByUnit;
+use App\Http\Controllers\Traits\AuthorizesEquipmentAccess;
+use App\Http\Controllers\Traits\HasRevisionLogic;
 use App\Models\Apab;
 use Illuminate\Http\Request;
 
 class ApabKartuController extends Controller
 {
+    use FiltersByUnit, AuthorizesEquipmentAccess, HasRevisionLogic;
+
     public function create(Request $request)
     {
         $apabId = $request->query('apab_id');
@@ -18,6 +23,9 @@ class ApabKartuController extends Controller
         }
 
         $apab = Apab::findOrFail($apabId);
+
+        // Verify user has access to this APAB's unit
+        $this->authorizeEquipmentUnit($apab, 'APAB');
         $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
 
         $latestKartu = \App\Models\KartuApab::where('apab_id', $apabId)
@@ -36,6 +44,10 @@ class ApabKartuController extends Controller
     public function store(Request $request)
     {
         $apab = Apab::findOrFail($request->apab_id);
+
+        // Verify user has access to this APAB's unit
+        $this->authorizeEquipmentUnit($apab, 'APAB');
+
         $template = \App\Models\KartuTemplate::getTemplate('apab', $apab->unit_id);
         
         // Build validation rules
@@ -111,11 +123,7 @@ class ApabKartuController extends Controller
             ->latest('updated_at')
             ->first();
 
-        if ($latestKartu && $latestKartu->rejected_at) {
-            $data['revisi'] = str_pad((int) $latestKartu->revisi, 2, '0', STR_PAD_LEFT);
-        } else {
-            $data['revisi'] = '00';
-        }
+        $data['revisi'] = $this->computeNextRevisi($latestKartu);
         \App\Models\KartuApab::create($data);
 
         return redirect()

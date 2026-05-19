@@ -292,6 +292,12 @@ class ApatController extends Controller
         }
 
         $kartu = \App\Models\KartuApat::with(['user', 'approver', 'signature', 'leaderSignature', 'leaderApprover'])->findOrFail($kartuId);
+
+        // Verify kartu actually belongs to this APAT (prevent IDOR)
+        if ((int) $kartu->apat_id !== (int) $apat->id) {
+            abort(404, 'Kartu tidak ditemukan untuk equipment ini.');
+        }
+
         $template = \App\Models\KartuTemplate::getTemplate('apat', $apat->unit_id);
 
         // Fill template with real data

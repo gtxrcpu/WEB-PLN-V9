@@ -25,11 +25,6 @@
             </div>
 
             {{-- Stats Cards --}}
-            @php
-                $totalP3k = $p3ks->total();
-                $statusBaik = $p3ks->where('status', 'baik')->count();
-                $statusRusak = $p3ks->where('status', 'rusak')->count();
-            @endphp
 
             <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 p-5 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -43,7 +38,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Total P3K</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $totalP3k }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['total'] }}</p>
                     </div>
                 </div>
 
@@ -58,7 +53,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Kondisi Baik</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $statusBaik }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['baik'] }}</p>
                     </div>
                 </div>
 
@@ -73,7 +68,7 @@
                             </div>
                         </div>
                         <p class="text-white/80 text-sm font-medium">Rusak</p>
-                        <p class="text-3xl font-bold text-white mt-1">{{ $statusRusak }}</p>
+                        <p class="text-3xl font-bold text-white mt-1">{{ $stats['rusak'] }}</p>
                     </div>
                 </div>
             </div>

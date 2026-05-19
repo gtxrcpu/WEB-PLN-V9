@@ -3,22 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Traits\FiltersByUnit;
 use App\Models\User;
-use App\Models\Apar;
-use App\Models\Apat;
-use App\Models\FireAlarm;
-use App\Models\BoxHydrant;
-use App\Models\RumahPompa;
-use App\Models\Apab;
-use App\Models\P3k;
-use App\Models\Cctv;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
+use App\Services\EquipmentStatsService;
 
 class DashboardController extends Controller
 {
+    use FiltersByUnit;
+
     public function index()
     {
+        $unitId = $this->getAuthUserUnitId();
+        $statsService = new EquipmentStatsService();
+
         // Total users by role
         $totalUsers = User::count();
         $totalSuperadmin = User::role('superadmin')->count();
@@ -26,66 +23,50 @@ class DashboardController extends Controller
         $totalInspector = User::role('inspector')->count();
         $totalPetugas = User::role('petugas')->count();
 
-        // Total equipment
-        $totalApar = Apar::count();
-        $totalApat = Apat::count();
-        $totalFireAlarm = FireAlarm::count();
-        $totalBoxHydrant = BoxHydrant::count();
-        $totalRumahPompa = RumahPompa::count();
-        $totalApab = Apab::count();
-        $totalP3k = P3k::count();
-        $totalCctv = Cctv::count();
-        $totalEquipment = $totalApar + $totalApat + $totalFireAlarm + $totalBoxHydrant + $totalRumahPompa + $totalApab + $totalP3k + $totalCctv;
+        // Equipment stats from centralized service (case-insensitive, consistent)
+        $stats = $statsService->getStatusBreakdown($unitId);
 
-        // APAR status breakdown
-        $aparData = [
-            'baik' => Apar::where('status', 'baik')->count(),
-            'isi_ulang' => Apar::where('status', 'isi ulang')->count(),
-            'rusak' => Apar::where('status', 'rusak')->count(),
-            'total' => $totalApar
-        ];
+        $aparData = $stats['apar'];
+        $apatData = $stats['apat'];
+        $apabData = $stats['apab'];
+        $fireAlarmData = $stats['fireAlarm'];
+        $boxHydrantData = $stats['boxHydrant'];
+        $rumahPompaData = $stats['rumahPompa'];
+        $cctvData = $stats['cctv'];
 
-        // APAT status breakdown
-        $apatData = [
-            'baik' => Apat::where('status', 'baik')->count(),
-            'rusak' => Apat::where('status', 'rusak')->count(),
-            'total' => $totalApat
-        ];
+        // Totals per module
+        $totalApar = $aparData['total'];
+        $totalApat = $apatData['total'];
+        $totalFireAlarm = $fireAlarmData['total'];
+        $totalBoxHydrant = $boxHydrantData['total'];
+        $totalRumahPompa = $rumahPompaData['total'];
+        $totalApab = $apabData['total'];
+        $totalP3k = $stats['p3k']['total'];
+        $totalCctv = $cctvData['total'];
+        $totalEquipment = $statsService->getTotalEquipment($unitId);
 
-        // APAB status breakdown
-        $apabData = [
-            'baik' => Apab::where('status', 'baik')->count(),
-            'tidak_baik' => Apab::where('status', 'tidak baik')->count(),
-            'total' => $totalApab
-        ];
+        // KPI totals
+        $baikRusak = $statsService->getTotalBaikRusak($unitId);
+        $totalBaik = $baikRusak['total_baik'];
+        $totalRusak = $baikRusak['total_rusak'];
 
-        // Fire Alarm status breakdown
-        $fireAlarmData = [
-            'baik' => FireAlarm::where('status', 'baik')->count(),
-            'rusak' => FireAlarm::where('status', 'rusak')->count(),
-            'total' => $totalFireAlarm
-        ];
+        // Pending approvals
+        $pendingApprovals = $statsService->getPendingApprovals($unitId);
 
-        // Box Hydrant status breakdown
-        $boxHydrantData = [
-            'baik' => BoxHydrant::where('status', 'baik')->count(),
-            'rusak' => BoxHydrant::where('status', 'rusak')->count(),
-            'total' => $totalBoxHydrant
-        ];
+        // Inspection trend (12 months for admin)
+        $trendData = $statsService->getInspectionTrend($unitId, 12);
+        $monthLabels = $trendData['labels'];
 
-        // Rumah Pompa status breakdown
-        $rumahPompaData = [
-            'baik' => RumahPompa::where('status', 'baik')->count(),
-            'rusak' => RumahPompa::where('status', 'rusak')->count(),
-            'total' => $totalRumahPompa
-        ];
-
-        // CCTV status breakdown
-        $cctvData = [
-            'baik' => Cctv::where('status', 'Baik')->count(),
-            'rusak' => Cctv::where('status', 'Jelek')->count(),
-            'total' => $totalCctv
-        ];
+        // Flatten trend datasets into single monthly totals for the admin chart
+        $monthlyInspections = [];
+        $monthCount = count($monthLabels);
+        for ($i = 0; $i < $monthCount; $i++) {
+            $total = 0;
+            foreach ($trendData['datasets'] as $dataset) {
+                $total += $dataset[$i] ?? 0;
+            }
+            $monthlyInspections[] = $total;
+        }
 
         // Recent users
         $recentUsers = User::latest()->take(5)->get();
@@ -101,70 +82,6 @@ class DashboardController extends Controller
             ['name' => 'P3K', 'count' => $totalP3k],
             ['name' => 'CCTV', 'count' => $totalCctv],
         ];
-
-        // Total items for KPI
-        $totalBaik = $aparData['baik'] + $apatData['baik'] + $apabData['baik'] +
-            $fireAlarmData['baik'] + $boxHydrantData['baik'] + $rumahPompaData['baik'] + $cctvData['baik'];
-        $totalRusak = $aparData['rusak'] + $apatData['rusak'] + $apabData['tidak_baik'] +
-            $fireAlarmData['rusak'] + $boxHydrantData['rusak'] + $rumahPompaData['rusak'] + $cctvData['rusak'];
-
-
-        // Pending approvals - All modules
-        $pendingApprovals = \App\Models\KartuApar::whereNull('approved_at')->count() +
-            \App\Models\KartuApat::whereNull('approved_at')->count() +
-            \App\Models\KartuApab::whereNull('approved_at')->count() +
-            \App\Models\KartuFireAlarm::whereNull('approved_at')->count() +
-            \App\Models\KartuBoxHydrant::whereNull('approved_at')->count() +
-            \App\Models\KartuRumahPompa::whereNull('approved_at')->count() +
-            \App\Models\KartuP3k::whereNull('approved_at')->count();
-
-
-        // Tren inspeksi 12 bulan terakhir (gabungan semua modul)
-        $monthlyInspections = [];
-        $monthLabels = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $monthLabels[] = $date->format('M Y');
-
-            // Hitung dari semua tabel kartu
-            $countApar = DB::table('kartu_apars')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countApat = DB::table('kartu_apats')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countApab = DB::table('kartu_apabs')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countFireAlarm = DB::table('kartu_fire_alarms')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countBoxHydrant = DB::table('kartu_box_hydrants')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countRumahPompa = DB::table('kartu_rumah_pompas')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $countP3k = DB::table('kartu_p3ks')
-                ->whereYear('tgl_periksa', $date->year)
-                ->whereMonth('tgl_periksa', $date->month)
-                ->count();
-
-            $totalCount = $countApar + $countApat + $countApab + $countFireAlarm + $countBoxHydrant + $countRumahPompa + $countP3k;
-            $monthlyInspections[] = $totalCount;
-        }
 
         $totalItems = $totalEquipment;
 

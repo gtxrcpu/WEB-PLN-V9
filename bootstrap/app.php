@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'prevent.guest' => \App\Http\Middleware\PreventGuestAccess::class,
         ]);
+        
+        // Trust proxies for HTTPS detection behind reverse proxy
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

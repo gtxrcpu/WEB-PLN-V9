@@ -2,14 +2,26 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Kartu Kendali APAB - {{ $apab->barcode }}</title>
+    <title>Kartu Kendali APAB - {{ $apab->barcode ?? $apab->serial_no }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
             body { background: #fff !important; }
-            .sheet-a4 { box-shadow: none !important; border: none !important; margin: 0 !important; }
+            .sheet-a4 {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+            }
+        }
+        @page {
+            margin: 0;
+        }
+        @media print {
+            body {
+                margin: 10mm;
+            }
         }
     </style>
 </head>
@@ -33,6 +45,48 @@
     </div>
 </div>
 
+{{-- APPROVAL STATUS (NO PRINT) --}}
+<div class="no-print max-w-5xl mx-auto px-4 pt-4">
+    <div class="p-4 rounded-lg border
+        @if($kartu->isApproved()) bg-green-50 border-green-200
+        @elseif($kartu->rejected_at) bg-red-50 border-red-200
+        @else bg-yellow-50 border-yellow-200
+        @endif">
+        <div class="flex items-center gap-3">
+            @if($kartu->isApproved())
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <div>
+                    <p class="font-semibold text-green-800">Kartu Telah Disetujui</p>
+                    <p class="text-sm text-green-700">
+                        Disetujui oleh {{ get_user_display_name($kartu->approver, 'User') }}
+                        pada {{ $kartu->approved_at->format('d M Y, H:i') }} WIB
+                    </p>
+                </div>
+            @elseif($kartu->rejected_at)
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <div>
+                    <p class="font-semibold text-red-800">Kartu Ditolak / Perlu Revisi</p>
+                    @if($kartu->rejection_reason)
+                        <p class="text-sm text-red-700 mt-1">Alasan: {{ $kartu->rejection_reason }}</p>
+                    @endif
+                </div>
+            @else
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <p class="font-semibold text-yellow-800">Menunggu Approval</p>
+                    <p class="text-sm text-yellow-700">Kartu belum disetujui</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
 {{-- CONTENT --}}
 <div class="max-w-5xl mx-auto px-4 py-6">
     <div class="sheet-a4 bg-white rounded-xl shadow-lg border p-8">
@@ -46,20 +100,31 @@
                 <div class="flex items-center gap-3">
                     <img src="{{ asset('images/logoo.png') }}" alt="PLN Logo" class="h-16 w-auto object-contain">
                     <div class="text-left">
-                        @if($template->company_name)
-                            <div class="font-bold text-sm">{{ $template->company_name }}</div>
-                        @endif
-                        @if($template->resolved_address ?? $template->company_address)
-                            <div class="text-xs">{{ $template->resolved_address ?? $template->company_address }}</div>
-                        @endif
-                        @if($template->company_phone)
-                            <div class="text-xs">{{ $template->company_phone }}</div>
-                        @endif
-                        @if($template->company_fax)
-                            <div class="text-xs">{{ $template->company_fax }}</div>
-                        @endif
-                        @if($template->company_email)
-                            <div class="text-xs">{{ $template->company_email }}</div>
+                        @php
+                            $resolvedAddr = $template->resolved_address ?? $template->company_address;
+                            $isMultiLine = $resolvedAddr && strpos($resolvedAddr, "\n") !== false;
+                        @endphp
+                        
+                        @if($isMultiLine)
+                            @foreach(explode("\n", $resolvedAddr) as $line)
+                                <div class="text-xs {{ $loop->first ? 'font-bold text-sm' : '' }}">{{ $line }}</div>
+                            @endforeach
+                        @else
+                            @if($template->company_name)
+                                <div class="font-bold text-sm">{{ $template->company_name }}</div>
+                            @endif
+                            @if($resolvedAddr)
+                                <div class="text-xs">{{ $resolvedAddr }}</div>
+                            @endif
+                            @if($template->company_phone)
+                                <div class="text-xs">{{ $template->company_phone }}</div>
+                            @endif
+                            @if($template->company_fax)
+                                <div class="text-xs">{{ $template->company_fax }}</div>
+                            @endif
+                            @if($template->company_email)
+                                <div class="text-xs">{{ $template->company_email }}</div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -80,17 +145,16 @@
                     <td rowspan="{{ count($template->header_fields) }}" class="border-r-2 border-gray-800 p-4 text-center align-middle w-2/3">
                         <div class="font-bold text-2xl">{{ $template->title }}</div>
                         <div class="font-semibold text-lg mt-2">{{ $template->subtitle }}</div>
-                        <div class="font-semibold text-base">TAHUN {{ date('Y') }}</div>
+                        <div class="font-semibold text-base">TAHUN {{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('Y') }}</div>
                     </td>
                     @php
-                        // Override Revisi value with actual revisi from kartu
                         $headerFields = $template->header_fields;
                         foreach ($headerFields as &$field) {
                             if (isset($field['label']) && strtolower($field['label']) === 'revisi') {
-                                $field['value'] = $kartu->revisi ?? '00';
+                                $field['value'] = str_pad((string) ($kartu->revisi ?? '0'), 2, '0', STR_PAD_LEFT);
                             }
                         }
-                        unset($field); // Break reference
+                        unset($field);
                         
                         $firstField = $headerFields[0] ?? null;
                     @endphp
@@ -128,244 +192,167 @@
         </div>
         @endif
 
-        {{-- INFO APAB --}}
-        <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-            <h3 class="font-bold text-gray-900 mb-3">Informasi APAB</h3>
-            <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                <div>
-                    <span class="text-gray-600">Kode/Barcode:</span>
-                    <span class="font-semibold ml-2">{{ $apab->barcode ?? $apab->serial_no }}</span>
-                </div>
-                <div>
-                    <span class="text-gray-600">Lokasi:</span>
-                    <span class="font-semibold ml-2">{{ $apab->lokasi ?? '-' }}</span>
-                </div>
-                <div>
-                    <span class="text-gray-600">Jenis:</span>
-                    <span class="font-semibold ml-2">{{ $apab->jenis ?? '-' }}</span>
-                </div>
-                <div>
-                    <span class="text-gray-600">Kapasitas:</span>
-                    <span class="font-semibold ml-2">{{ $apab->kapasitas ?? '-' }}</span>
-                </div>
-            </div>
-        </div>
-
-        {{-- APPROVAL HISTORY TIMELINE --}}
-        <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                Riwayat Approval
-            </h3>
-            
-            <div class="space-y-4">
-                {{-- Created By --}}
-                <div class="flex items-start gap-3">
-                    <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="font-semibold text-gray-900">Dibuat oleh</span>
-                            @if($kartu->user)
-                                <span class="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                                    {{ get_user_role_display($kartu->user) }}
-                                </span>
-                            @endif
-                        </div>
-                        <p class="text-sm text-gray-700 font-medium">
-                            {{ get_user_display_name($kartu->user, 'User Deleted') }}
-                        </p>
-                        <p class="text-xs text-gray-500 mt-1">
-                            {{ $kartu->created_at->format('d M Y, H:i') }} WIB
-                        </p>
-                    </div>
-                </div>
-
-                {{-- Approval Status --}}
-                @if($kartu->rejected_at)
-                    {{-- Rejection Alert --}}
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-gray-900">Ditolak - Revisi {{ $kartu->revisi }}</span>
-                                @if($kartu->rejectedBy)
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded">
-                                        {{ get_user_role_display($kartu->rejectedBy) }}
-                                    </span>
-                                @endif
-                            </div>
-                            @if($kartu->rejectedBy)
-                                <p class="text-sm text-gray-700 font-medium">
-                                    {{ get_user_display_name($kartu->rejectedBy, 'Unknown') }}
-                                </p>
-                            @endif
-                            <p class="text-xs text-gray-500 mt-1">
-                                {{ $kartu->rejected_at->format('d M Y, H:i') }} WIB
-                            </p>
-                            @if($kartu->rejection_reason)
-                                <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p class="text-xs font-semibold text-red-900 mb-1">Alasan Penolakan:</p>
-                                    <p class="text-sm text-red-800">{{ $kartu->rejection_reason }}</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @elseif($kartu->isApproved())
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-gray-900">Di-approve oleh</span>
-                                @if($kartu->approver)
-                                    <span class="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
-                                        {{ get_user_role_display($kartu->approver) }}
-                                    </span>
-                                @endif
-                            </div>
-                            <p class="text-sm text-gray-700 font-medium">
-                                {{ get_user_display_name($kartu->approver, 'User Deleted') }}
-                            </p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                {{ $kartu->approved_at->format('d M Y, H:i') }} WIB
-                            </p>
-                        </div>
-                    </div>
-                @else
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <span class="font-semibold text-gray-900">Status</span>
-                            <p class="text-sm text-yellow-700 font-medium mt-1">
-                                Menunggu approval dari Leader/Superadmin
-                            </p>
-                        </div>
-                    </div>
-                @endif
-            </div>
-        </div>
+        {{-- INFO APAB (format tabel formal) --}}
+        <table class="w-full text-sm border-collapse border border-gray-800 mb-0">
+            <tr>
+                <td class="border border-gray-800 px-3 py-2 font-bold w-28">LOKASI</td>
+                <td class="border border-gray-800 px-3 py-2">: {{ $apab->lokasi ?? '-' }}</td>
+                <td class="border border-gray-800 px-3 py-2 font-bold w-28">JENIS</td>
+                <td class="border border-gray-800 px-3 py-2">: {{ $apab->jenis ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td class="border border-gray-800 px-3 py-2 font-bold">KAPASITAS</td>
+                <td class="border border-gray-800 px-3 py-2" colspan="3">: {{ $apab->kapasitas ?? '-' }}</td>
+            </tr>
+        </table>
 
         {{-- TABEL PEMERIKSAAN --}}
-        <div class="mb-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-3">Hasil Pemeriksaan</h3>
-            <div class="border border-gray-300 rounded-lg overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700 w-1/3">Komponen</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-700">Kondisi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach([
-                            'pressure_gauge' => 'Pressure Gauge',
-                            'pin_segel' => 'Pin/Segel',
-                            'selang' => 'Selang',
-                            'klem_selang' => 'Klem Selang',
-                            'handle' => 'Handle',
-                            'kondisi_fisik' => 'Kondisi Fisik'
-                        ] as $field => $label)
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $label }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                        @if($kartu->$field === 'baik') bg-green-100 text-green-700
-                                        @else bg-red-100 text-red-700 @endif">
-                                        {{ ucfirst(str_replace('_', ' ', $kartu->$field ?? '-')) }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        {{-- INFO PEMERIKSAAN --}}
-        <div class="grid grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-lg">
-            <div>
-                <p class="text-sm text-gray-600">Kesimpulan</p>
-                <p class="font-semibold text-lg
-                    @if($kartu->kesimpulan === 'baik') text-green-600
-                    @else text-red-600 @endif">
-                    {{ strtoupper($kartu->kesimpulan) }}
-                </p>
-            </div>
-            <div>
-                <p class="text-sm text-gray-600">Tanggal Pemeriksaan</p>
-                <p class="font-semibold">{{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d M Y') }}</p>
-            </div>
-            <div class="col-span-2">
-                <p class="text-sm text-gray-600">Petugas Pemeriksa</p>
-                <p class="font-semibold">{{ $kartu->petugas }}</p>
-            </div>
-        </div>
-
-        {{-- TTD SECTION - USING TEMPLATE --}}
-        <div class="mt-8 pt-6 border-t-2 border-gray-200">
-            <div class="flex justify-end">
-                <div class="text-center">
+        <table class="w-full text-sm border-collapse border border-gray-800 mb-0">
+            <thead>
+                <tr>
+                    <th class="border border-gray-800 px-4 py-3 text-center font-bold w-1/2">PEMERIKSAAN</th>
+                    <th class="border border-gray-800 px-4 py-3 text-center font-bold">KONDISI</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $inspectionFields = [
+                        'pressure_gauge' => 'Pressure Gauge',
+                        'pin_segel' => 'Pin/Segel',
+                        'selang' => 'Selang',
+                        'klem_selang' => 'Klem Selang',
+                        'handle' => 'Handle',
+                        'kondisi_fisik' => 'Kondisi Fisik',
+                    ];
+                @endphp
+                @foreach($inspectionFields as $field => $label)
                     @php
-                        $lokasi = 'Surabaya'; // default
-                        if ($template && $template->footer_fields) {
-                            $lokasiField = collect($template->footer_fields)->firstWhere('label', 'Lokasi');
-                            if ($lokasiField && isset($lokasiField['value'])) {
-                                $lokasi = $lokasiField['value'];
-                            }
-                        }
+                        $val = $kartu->$field ?? null;
+                        $vLow = strtolower($val ?? '');
+                        $isBaik = in_array($vLow, ['baik']);
+                        $isTidakBaik = in_array($vLow, ['tidak_baik', 'tidak baik', 'rusak']);
                     @endphp
-                    <p class="text-sm text-gray-600 mb-1">{{ $lokasi }}, {{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d-m-Y') }}</p>
-                    <p class="text-sm font-semibold text-gray-900 mb-2">
-                        @if($kartu->signature)
-                            {{ $kartu->signature->position }}
-                        @else
-                            Team Leader K3L & KAM
-                        @endif
-                    </p>
-                    
-                    @if($kartu->signature && $kartu->signature->signature_path)
-                        <div class="h-24 flex items-center justify-center mb-2">
-                            <img src="{{ asset('storage/' . $kartu->signature->signature_path) }}" 
-                                 alt="TTD" 
-                                 class="max-h-20 w-auto">
-                        </div>
-                        <div class="border-t-2 border-gray-400 pt-2 w-56">
-                            <p class="text-sm font-bold">{{ $kartu->signature->name }}</p>
-                            @if($kartu->signature->nip)
-                                <p class="text-xs text-gray-500 mt-1">NIP: {{ $kartu->signature->nip }}</p>
+                    <tr>
+                        <td class="border border-gray-800 px-4 py-2 text-center">{{ $label }}</td>
+                        <td class="border border-gray-800 px-4 py-2 text-center">
+                            <span class="inline-flex items-center gap-6 justify-center">
+                                <span class="inline-flex items-center gap-1">
+                                    @if($isBaik)
+                                        <span class="text-base">☑</span>
+                                    @else
+                                        <span class="text-base">☐</span>
+                                    @endif
+                                    <span>Baik</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1">
+                                    @if($isTidakBaik)
+                                        <span class="text-base">☑</span>
+                                    @else
+                                        <span class="text-base">☐</span>
+                                    @endif
+                                    <span>Tidak Baik</span>
+                                </span>
+                            </span>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        {{-- TABEL KESIMPULAN & INFO --}}
+        <table class="w-full text-sm border-collapse border border-gray-800 mb-0">
+            @php
+                $kLow = strtolower($kartu->kesimpulan ?? '');
+                $isBaikKesimpulan = $kLow === 'baik';
+                $isTidakBaikKesimpulan = in_array($kLow, ['tidak baik', 'tidak_baik', 'rusak']);
+            @endphp
+            <tr>
+                <td class="border border-gray-800 px-4 py-2 text-center font-bold w-1/2">KESIMPULAN</td>
+                <td class="border border-gray-800 px-4 py-2 text-center">
+                    <span class="inline-flex items-center gap-6 justify-center">
+                        <span class="inline-flex items-center gap-1">
+                            @if($isBaikKesimpulan)
+                                <span class="text-base">☑</span>
+                            @else
+                                <span class="text-base">☐</span>
                             @endif
-                        </div>
-                    @else
-                        <div class="h-24 flex items-center justify-center mb-2 bg-yellow-50 border-2 border-dashed border-yellow-300 rounded-lg px-6">
-                            <div class="text-center">
-                                <svg class="w-8 h-8 mx-auto mb-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <p class="text-sm font-medium text-yellow-800">Menunggu Approval Admin</p>
-                            </div>
-                        </div>
-                        <div class="border-t-2 border-gray-300 pt-2 w-56">
-                            <p class="text-sm text-gray-400 italic">(Tanda Tangan & Nama)</p>
-                        </div>
-                    @endif
-                </div>
+                            <span>Baik</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1">
+                            @if($isTidakBaikKesimpulan)
+                                <span class="text-base">☑</span>
+                            @else
+                                <span class="text-base">☐</span>
+                            @endif
+                            <span>Tidak Baik</span>
+                        </span>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="border border-gray-800 px-4 py-2 text-center">Tanggal Pemeriksaan</td>
+                <td class="border border-gray-800 px-4 py-2 text-center">{{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <td class="border border-gray-800 px-4 py-2 text-center">Petugas</td>
+                <td class="border border-gray-800 px-4 py-2 text-center">{{ $kartu->petugas }}</td>
+            </tr>
+            <tr>
+                <td class="border border-gray-800 px-4 py-2 text-center">Pengawas</td>
+                <td class="border border-gray-800 px-4 py-2 text-center">{{ $kartu->pengawas ?? '-' }}</td>
+            </tr>
+        </table>
+
+        {{-- FOOTER: Catatan kiri + TTD kanan --}}
+        <div class="mt-6 flex justify-between items-start">
+            {{-- Catatan kiri --}}
+            <div class="text-sm text-gray-800">
+                <p class="font-semibold">Catatan : Bila ada penyimpangan segera dilaporkan</p>
+                <p class="font-semibold">ke Team Leader K3L KAM</p>
+            </div>
+
+            {{-- TTD kanan --}}
+            <div class="text-center">
+                @php
+                    $lokasi = 'Surabaya';
+                    $labelPimpinan = 'Team Leader K3L & Kam';
+                    if ($template && $template->footer_fields) {
+                        $lokasiField = collect($template->footer_fields)->firstWhere('label', 'Lokasi');
+                        if ($lokasiField && isset($lokasiField['value'])) {
+                            $lokasi = $lokasiField['value'];
+                        }
+                        $pimpinanField = collect($template->footer_fields)->firstWhere('label', 'Label Pimpinan');
+                        if ($pimpinanField && isset($pimpinanField['value'])) {
+                            $labelPimpinan = $pimpinanField['value'];
+                        }
+                    }
+
+                    $displaySignature = null;
+                    if ($kartu->signature && $kartu->signature->signature_path) {
+                        $displaySignature = $kartu->signature;
+                    }
+                @endphp
+                <p class="text-sm">{{ $lokasi }}, {{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d F Y') }}</p>
+                <p class="text-sm font-bold mt-1">{{ $labelPimpinan }}</p>
+
+                @if($displaySignature)
+                    <div class="h-20 flex items-center justify-center my-2">
+                        <img src="{{ asset('storage/' . $displaySignature->signature_path) }}" 
+                             alt="Tanda Tangan" 
+                             class="max-h-16 w-auto">
+                    </div>
+                    <div class="border-t border-gray-800 pt-1 mx-auto w-48">
+                        <p class="text-sm font-bold">{{ $displaySignature->name }}</p>
+                        @if($displaySignature->nip)
+                            <p class="text-xs text-gray-600">NIP: {{ $displaySignature->nip }}</p>
+                        @endif
+                    </div>
+                @else
+                    <div class="h-20 my-2"></div>
+                    <div class="border-t border-gray-800 pt-1 mx-auto w-48">
+                        <p class="text-sm text-gray-500">(Tanda Tangan & Nama)</p>
+                    </div>
+                @endif
             </div>
         </div>
 
