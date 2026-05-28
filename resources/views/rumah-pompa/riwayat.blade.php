@@ -102,7 +102,7 @@
               </td>
               <td class="px-6 py-4">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                    @if($kartu->kesimpulan === 'baik') bg-green-100 text-green-700
+                    @if(strtolower($kartu->kesimpulan) === 'baik') bg-green-100 text-green-700
                     @else bg-red-100 text-red-700 @endif">
                   {{ ucfirst($kartu->kesimpulan) }}
                 </span>

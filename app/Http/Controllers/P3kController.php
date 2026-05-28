@@ -188,7 +188,7 @@ class P3kController extends Controller
         $this->authorizeUnit($p3k);
 
         $riwayatPemeriksaan = $p3k->kartuPemeriksaan()
-            ->with(['user', 'approver', 'signature'])
+            ->with(['user', 'approver', 'signature', 'leaderApprover'])
             ->orderBy('tgl_periksa', 'desc')
             ->get()
             ->map(function ($item) {
@@ -198,7 +198,7 @@ class P3kController extends Controller
             });
 
         $riwayatPemakaian = $p3k->kartuPemakaian()
-            ->with(['user', 'approver', 'signature'])
+            ->with(['user', 'approver', 'signature', 'leaderApprover'])
             ->orderBy('tgl_pemakaian', 'desc')
             ->get()
             ->map(function ($item) {
@@ -208,7 +208,7 @@ class P3kController extends Controller
             });
 
         $riwayatStock = $p3k->kartuStock()
-            ->with(['user', 'approver', 'signature'])
+            ->with(['user', 'approver', 'signature', 'leaderApprover'])
             ->orderBy('tgl_periksa', 'desc')
             ->get()
             ->map(function ($item) {
@@ -217,20 +217,15 @@ class P3kController extends Controller
                 return $item;
             });
 
-        $filterJenis = $request->query('jenis');
+        $filterJenis = $request->query('jenis', 'pemeriksaan'); // default pemeriksaan, tidak pernah campur
 
-        if ($filterJenis === 'pemeriksaan') {
-            $riwayatInspeksi = $riwayatPemeriksaan;
-        } elseif ($filterJenis === 'pemakaian') {
+        if ($filterJenis === 'pemakaian') {
             $riwayatInspeksi = $riwayatPemakaian;
         } elseif ($filterJenis === 'stock') {
             $riwayatInspeksi = $riwayatStock;
         } else {
-            $riwayatInspeksi = $riwayatPemeriksaan
-                ->concat($riwayatPemakaian)
-                ->concat($riwayatStock)
-                ->sortByDesc('tanggal')
-                ->values();
+            $filterJenis = 'pemeriksaan';
+            $riwayatInspeksi = $riwayatPemeriksaan;
         }
 
         if ($request->filled('creator')) {
@@ -280,8 +275,13 @@ class P3kController extends Controller
             $unitId = (int) $user->unit_id;
             $units  = Unit::where('id', $unitId)->get();
         } else {
-            // Admin/leader: bisa pilih unit via query string
-            $unitId = $request->query('unit_id') ? (int) $request->query('unit_id') : null;
+            // Admin/leader: prioritas:
+            // 1. query string ?unit_id=X (explicit)
+            // 2. session viewing_unit_id (dari unit switcher)
+            // 3. null = tampil semua unit
+            $unitId = $request->query('unit_id')
+                ? (int) $request->query('unit_id')
+                : (session('viewing_unit_id') ? (int) session('viewing_unit_id') : null);
             $units  = Unit::orderBy('name')->get();
         }
 
@@ -294,7 +294,10 @@ class P3kController extends Controller
 
         // Petugas: SELALU filter unit_id (hard filter, record NULL tidak lolos)
         // Admin tanpa unit: filter opsional via query string
-        $p3kQuery = P3k::with(['unit', $kartuRelation])->orderBy('serial_no');
+        // PENTING: filter jenis agar PMK hanya tampil di halaman pemakaian, dst.
+        $p3kQuery = P3k::with(['unit', $kartuRelation])
+            ->where('jenis', $jenis)
+            ->orderBy('serial_no');
         if ($user && $user->unit_id) {
             $p3kQuery->where('unit_id', $unitId);
         } elseif ($unitId) {
@@ -302,19 +305,21 @@ class P3kController extends Controller
         }
         $p3ks = $p3kQuery->paginate(12);
 
-        // ── Stats: jumlah kartu per unit ─────────────────────────────────────
+        // ── Stats: jumlah kartu per unit + jenis ─────────────────────────────
         $kartuModel = match ($jenis) {
             'pemeriksaan' => KartuP3kPemeriksaan::class,
             'pemakaian'   => KartuP3kPemakaian::class,
             'stock'       => KartuP3kStock::class,
         };
 
-        $kartuQuery = fn () => $kartuModel::query()->when($unitId, fn ($q) => $q->where('unit_id', $unitId));
-        if ($user && $user->unit_id) {
-            $kartuQuery = fn () => $kartuModel::where('unit_id', $unitId);
-        }
+        // Base kartu query — filter by unit_id
+        $kartuQuery = fn () => $kartuModel::query()
+            ->when($user && $user->unit_id, fn ($q) => $q->where('unit_id', $unitId))
+            ->when(!($user && $user->unit_id) && $unitId, fn ($q) => $q->where('unit_id', $unitId));
 
-        $p3kCount = P3k::when($user && $user->unit_id, fn ($q) => $q->where('unit_id', $unitId))
+        // Total P3K — filter by jenis AND unit
+        $p3kCount = P3k::where('jenis', $jenis)
+            ->when($user && $user->unit_id, fn ($q) => $q->where('unit_id', $unitId))
             ->when(!($user && $user->unit_id) && $unitId, fn ($q) => $q->where('unit_id', $unitId))
             ->count();
 
@@ -350,12 +355,17 @@ class P3kController extends Controller
             $unitId = (int) $user->unit_id;
             $units  = Unit::where('id', $unitId)->get();
         } else {
-            $unitId = $request->query('unit_id') ? (int) $request->query('unit_id') : null;
+            // Admin/leader: query string → session → null
+            $unitId = $request->query('unit_id')
+                ? (int) $request->query('unit_id')
+                : (session('viewing_unit_id') ? (int) session('viewing_unit_id') : null);
             $units  = Unit::where('is_active', true)->orderBy('name')->get();
         }
 
         // Hard filter untuk petugas agar record NULL tidak lolos
+        // PENTING: filter jenis agar tidak campur
         $query = P3k::with(['unit', 'kartuPemeriksaan', 'kartuPemakaian', 'kartuStock'])
+            ->where('jenis', $jenis)
             ->orderBy('serial_no');
         if ($user && $user->unit_id) {
             $query->where('unit_id', $unitId); // petugas: strict

@@ -93,6 +93,7 @@ class KartuKendaliController extends Controller
             'kesimpulan'  => ['required', 'string', 'max:50'],
             'tgl_periksa' => ['required', 'date'],
             'petugas'     => ['required', 'string', 'max:100'],
+            'pengawas'    => ['nullable', 'string', 'max:100'],
         ];
 
         // Custom messages
@@ -122,7 +123,7 @@ class KartuKendaliController extends Controller
         }
 
         // Bersihkan key yang tidak ada di kolom DB
-        $allowedKeys = array_merge($aparDbColumns, ['apar_id', 'kesimpulan', 'tgl_periksa', 'petugas']);
+        $allowedKeys = array_merge($aparDbColumns, ['apar_id', 'kesimpulan', 'tgl_periksa', 'petugas', 'pengawas']);
         $saveData    = array_intersect_key($data, array_flip($allowedKeys));
 
         // Pastikan semua kolom APAR minimal ada

@@ -262,6 +262,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/apat/{apat}/riwayat', [ApatController::class, 'riwayat'])->name('apat.riwayat');
     Route::get('/apat/{apat}/kartu/{kartu}', [ApatController::class, 'viewKartu'])->name('apat.view-kartu');
     Route::put('/apat/{apat}', [ApatController::class, 'update'])->name('apat.update');
+    Route::get('/apat/kartu-pemeriksaan', [ApatController::class, 'createPemeriksaan'])->name('apat.kartu-pemeriksaan.create');
+    Route::post('/apat/kartu-pemeriksaan', [ApatController::class, 'storePemeriksaan'])->name('apat.kartu-pemeriksaan.store');
     Route::get('/apat/kartu/create', [ApatKartuController::class, 'create'])->name('apat.kartu.create');
     Route::post('/apat/kartu', [ApatKartuController::class, 'store'])->name('apat.kartu.store');
 });
@@ -292,6 +294,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/box-hydrant/{boxHydrant}', [\App\Http\Controllers\BoxHydrantController::class, 'update'])->name('box-hydrant.update');
     Route::get('/box-hydrant/{boxHydrant}/riwayat', [\App\Http\Controllers\BoxHydrantController::class, 'riwayat'])->name('box-hydrant.riwayat');
     Route::get('/box-hydrant/{boxHydrant}/kartu/{kartu}', [\App\Http\Controllers\BoxHydrantController::class, 'viewKartu'])->name('box-hydrant.view-kartu');
+    Route::get('/box-hydrant/kartu-pemeriksaan', [\App\Http\Controllers\BoxHydrantController::class, 'createPemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.create');
+    Route::post('/box-hydrant/kartu-pemeriksaan', [\App\Http\Controllers\BoxHydrantController::class, 'storePemeriksaan'])->name('box-hydrant.kartu-pemeriksaan.store');
     Route::get('/box-hydrant/kartu/create', [\App\Http\Controllers\BoxHydrantKartuController::class, 'create'])->name('box-hydrant.kartu.create');
     Route::post('/box-hydrant/kartu', [\App\Http\Controllers\BoxHydrantKartuController::class, 'store'])->name('box-hydrant.kartu.store');
 });

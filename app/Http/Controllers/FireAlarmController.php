@@ -150,7 +150,7 @@ class FireAlarmController extends Controller
             }
         }
 
-        $query = $fireAlarm->kartuInspeksi()->with(['user', 'approver', 'signature']);
+        $query = $fireAlarm->kartuInspeksi()->with(['user', 'approver', 'signature', 'leaderApprover']);
 
         // Filter by creator
         if ($request->filled('creator')) {
@@ -172,6 +172,19 @@ class FireAlarmController extends Controller
                 $query->whereNotNull('approved_at');
             } elseif ($request->status === 'pending') {
                 $query->whereNull('approved_at');
+            }
+        }
+
+        // Filter by jenis kartu (kendali vs pemeriksaan)
+        if ($request->filled('jenis')) {
+            if ($request->jenis === 'pemeriksaan') {
+                $query->where(function ($q) {
+                    $q->whereNotNull('catatan')->where('catatan', 'like', '[PMK]%');
+                });
+            } elseif ($request->jenis === 'kendali') {
+                $query->where(function ($q) {
+                    $q->whereNull('catatan')->orWhere('catatan', 'not like', '[PMK]%');
+                });
             }
         }
 

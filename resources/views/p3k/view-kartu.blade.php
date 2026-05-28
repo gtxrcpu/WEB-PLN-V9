@@ -6,12 +6,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: #fff !important; }
-            .sheet-a4 { box-shadow: none !important; border: none !important; margin: 0 !important; }
-        }
-    </style>
+/* ── PRINT: Remove browser header/footer (URL, date, page number) ── */
+@page {
+    size: A4;
+    margin: 0;
+}
+
+@media print {
+    /* Hide non-printable elements */
+    .no-print { display: none !important; }
+
+    /* Clean background + add margin via body padding */
+    body {
+        margin: 0 !important;
+        padding: 15mm !important;
+        background: #fff !important;
+        
+        
+    }
+    html { background: #fff !important; }
+
+    /* Remove card shadows/borders for print */
+    .sheet-a4 {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* TABLE FIT: Force tables to fit A4 width, no overflow */
+    table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        overflow: visible !important;
+        page-break-inside: auto;
+        font-size: 9pt !important;
+    }
+
+    /* Prevent table wrapper from scrolling */
+    .overflow-x-auto,
+    [style*="overflow-x"] {
+        overflow: visible !important;
+        overflow-x: visible !important;
+    }
+
+    /* Table cells wrap text instead of overflowing */
+    th, td {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        font-size: 9pt !important;
+    }
+
+    tr { page-break-inside: avoid; page-break-after: auto; }
+
+    /* Clean form inputs for print */
+    input, select, textarea {
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        -webkit-appearance: none !important;
+    }
+
+    /* Ensure full width */
+    .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-7xl {
+        max-width: 100% !important;
+    }
+
+    /* Hide info & approval sections — only print the kartu content */
+    .print-hide { display: none !important; }
+}
+</style>
 </head>
 <body class="bg-slate-50">
 
@@ -104,7 +170,7 @@
         @endif
 
         {{-- INFO P3K --}}
-        <div class="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <div class="print-hide mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
             <h3 class="font-bold text-gray-900 mb-3">Informasi P3K</h3>
             <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <div><span class="text-gray-600">Serial No:</span> <span class="font-semibold ml-2">{{ $p3k->serial_no }}</span></div>
@@ -115,7 +181,7 @@
         </div>
 
         {{-- APPROVAL HISTORY --}}
-        <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="print-hide mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 class="font-bold text-gray-900 mb-4">Riwayat Approval</h3>
             <div class="space-y-4">
                 <div class="flex items-start gap-3">
@@ -374,5 +440,15 @@
     </div>
 </div>
 
+
+<script>
+    window.addEventListener('beforeprint', () => {
+        document.title = '';
+    });
+    window.addEventListener('afterprint', () => {
+        document.title = 'Kartu P3K';
+    });
+</script>
 </body>
+
 </html>

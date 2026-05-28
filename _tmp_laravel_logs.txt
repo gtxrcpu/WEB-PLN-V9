@@ -1,9 +1,0 @@
-2026-03-31 17:28:06,529 INFO Set uid to user 0 succeeded
-2026-03-31 17:28:06,532 INFO supervisord started with pid 1
-2026-03-31 17:28:07,536 INFO spawned: 'php' with pid 16
-﻿
-   INFO  Server running on [http://0.0.0.0:80].  
-
-  Press Ctrl+C to stop the server
-
-2026-03-31 17:28:09,400 INFO success: php entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)

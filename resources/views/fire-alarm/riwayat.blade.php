@@ -22,7 +22,7 @@
         </svg>
         Filter Riwayat
       </h2>
-      @if(request()->hasAny(['creator', 'approver', 'status']))
+      @if(request()->hasAny(['creator', 'approver', 'status', 'jenis']))
         <a href="{{ route('fire-alarm.riwayat', $fireAlarm->id) }}"
           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,6 +54,15 @@
           <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
         </select>
       </div>
+      <div>
+        <label for="jenis" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kartu</label>
+        <select name="jenis" id="jenis"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+          <option value="">Semua Jenis</option>
+          <option value="kendali" {{ request('jenis') === 'kendali' ? 'selected' : '' }}>Kartu Kendali</option>
+          <option value="pemeriksaan" {{ request('jenis') === 'pemeriksaan' ? 'selected' : '' }}>Kartu Pemeriksaan</option>
+        </select>
+      </div>
       <div class="flex items-end">
         <button type="submit"
           class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold flex items-center justify-center gap-2">
@@ -72,6 +81,7 @@
       <table class="w-full">
         <thead class="bg-slate-50 border-b border-slate-200">
           <tr>
+            <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Jenis</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Tanggal</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Petugas</th>
             <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Dibuat oleh
@@ -86,7 +96,27 @@
         </thead>
         <tbody class="divide-y divide-slate-200">
           @forelse($riwayatInspeksi as $kartu)
+            @php
+              $isPemeriksaan = $kartu->catatan && str_starts_with($kartu->catatan, '[PMK]');
+            @endphp
             <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-6 py-4">
+                @if($isPemeriksaan)
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    Pemeriksaan
+                  </span>
+                @else
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700 border border-sky-200">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Kendali
+                  </span>
+                @endif
+              </td>
               <td class="px-6 py-4 text-sm text-gray-700">
                 {{ \Carbon\Carbon::parse($kartu->tgl_periksa)->format('d M Y') }}
               </td>
@@ -102,7 +132,7 @@
               </td>
               <td class="px-6 py-4">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                    @if($kartu->kesimpulan === 'baik') bg-green-100 text-green-700
+                    @if(strtolower($kartu->kesimpulan) === 'baik') bg-green-100 text-green-700
                     @else bg-red-100 text-red-700 @endif">
                   {{ ucfirst($kartu->kesimpulan) }}
                 </span>
@@ -186,7 +216,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

@@ -104,49 +104,78 @@ class FireAlarmKartuController extends Controller
         
         // Jika menggunakan template, map inspection fields ke kolom database lama
         if ($template && $template->inspection_fields) {
-            // Mapping KEY template ke kolom database
-            $fieldMapping = [
+            // DB columns for fire alarm kartu
+            $dbColumns = ['panel_kontrol', 'detector', 'manual_call_point', 'alarm_bell', 'battery_backup', 'uji_fungsi'];
+
+            // Mapping by KEY (if template has keys set)
+            $keyMapping = [
+                'panel_kontrol' => 'panel_kontrol',
                 'panel' => 'panel_kontrol',
+                'panel_alarm' => 'panel_kontrol',
                 'detector' => 'detector',
-                'kondisi_fisik' => 'panel_kontrol',
-                'fungsi' => 'detector',
                 'manual_call_point' => 'manual_call_point',
                 'alarm_bell' => 'alarm_bell',
+                'bell' => 'alarm_bell',
                 'battery_backup' => 'battery_backup',
                 'uji_fungsi' => 'uji_fungsi',
+                'kondisi_fisik' => 'uji_fungsi',
+                'kabel' => 'battery_backup',
+            ];
+
+            // Mapping by LABEL (case-insensitive, partial match)
+            $labelMapping = [
+                'panel' => 'panel_kontrol',
+                'detector' => 'detector',
+                'bell' => 'alarm_bell',
+                'sirine' => 'alarm_bell',
+                'manual call' => 'manual_call_point',
+                'kabel' => 'battery_backup',
+                'instalasi' => 'battery_backup',
+                'kondisi fisik' => 'uji_fungsi',
+                'uji fungsi' => 'uji_fungsi',
+                'battery' => 'battery_backup',
             ];
             
             // Initialize all required fields with default value
-            $requiredFields = ['panel_kontrol', 'detector', 'manual_call_point', 'alarm_bell', 'battery_backup', 'uji_fungsi'];
-            foreach ($requiredFields as $field) {
+            foreach ($dbColumns as $field) {
                 if (!isset($data[$field])) {
                     $data[$field] = '-';
                 }
             }
             
-            // Log untuk debugging
-            \Log::info('Mapping inspection fields', [
-                'template_fields' => $template->inspection_fields,
-                'data_before_mapping' => $data
-            ]);
-            
             foreach ($template->inspection_fields as $index => $field) {
                 $fieldName = 'inspection_' . $index;
                 if (isset($data[$fieldName])) {
-                    // Map ke kolom database menggunakan KEY
                     $fieldKey = $field['key'] ?? null;
-                    if ($fieldKey && isset($fieldMapping[$fieldKey])) {
-                        $dbColumn = $fieldMapping[$fieldKey];
+                    $fieldLabel = strtolower($field['label'] ?? '');
+                    $dbColumn = null;
+
+                    // Try mapping by key first
+                    if ($fieldKey && isset($keyMapping[$fieldKey])) {
+                        $dbColumn = $keyMapping[$fieldKey];
+                    }
+
+                    // Fallback: map by label using partial match
+                    if (!$dbColumn) {
+                        foreach ($labelMapping as $needle => $col) {
+                            if (str_contains($fieldLabel, $needle)) {
+                                $dbColumn = $col;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Last resort: map by position (index -> dbColumn)
+                    if (!$dbColumn && isset($dbColumns[$index])) {
+                        $dbColumn = $dbColumns[$index];
+                    }
+
+                    if ($dbColumn) {
                         $data[$dbColumn] = $data[$fieldName];
-                        \Log::info("Mapped {$fieldName} (key: {$fieldKey}, label: {$field['label']}) to {$dbColumn} = {$data[$fieldName]}");
-                    } else {
-                        \Log::warning("No mapping found for field key: {$fieldKey}, label: {$field['label']}");
                     }
                     unset($data[$fieldName]);
                 }
             }
-            
-            \Log::info('Data after mapping', ['data' => $data]);
         }
 
         // Tambahkan user_id

@@ -6,25 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: #fff !important; }
-            .sheet-a4 {
-                box-shadow: none !important;
-                border: none !important;
-                margin: 0 !important;
-                padding: 12mm !important;
-            }
-            table { page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            input, select {
-                border: none !important;
-                outline: none !important;
-                background: transparent !important;
-                padding: 0 !important;
-            }
-        }
-    </style>
+/* ── PRINT: Remove browser header/footer (URL, date, page number) ── */
+@page {
+    size: A4;
+    margin: 0;
+}
+
+@media print {
+    /* Hide non-printable elements */
+    .no-print { display: none !important; }
+
+    /* Clean background */
+    body {
+        margin: 0 !important;
+        padding: 15mm !important; background: #fff !important; }
+    html { background: #fff !important; }
+
+    /* Remove card shadows/borders for print */
+    .sheet-a4 {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* TABLE FIT: Force tables to fit A4 width, no overflow */
+    table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        overflow: visible !important;
+        page-break-inside: auto;
+        font-size: 9pt !important;
+    }
+
+    /* Prevent table wrapper from scrolling */
+    .overflow-x-auto,
+    [style*="overflow-x"] {
+        overflow: visible !important;
+        overflow-x: visible !important;
+    }
+
+    /* Table cells wrap text instead of overflowing */
+    th, td {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        font-size: 9pt !important;
+    }
+
+    tr { page-break-inside: avoid; page-break-after: auto; }
+
+    /* Clean form inputs for print */
+    input, select, textarea {
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        -webkit-appearance: none !important;
+    }
+
+    /* Ensure full width */
+    .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-7xl {
+        max-width: 100% !important;
+    }
+}
+</style>
 </head>
 <body class="bg-slate-50">
 
@@ -382,5 +428,15 @@
 })();
 </script>
 
+
+<script>
+    window.addEventListener('beforeprint', () => {
+        document.title = '';
+    });
+    window.addEventListener('afterprint', () => {
+        document.title = 'Kartu P3K';
+    });
+</script>
 </body>
+
 </html>

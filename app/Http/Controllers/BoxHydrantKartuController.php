@@ -97,46 +97,72 @@ class BoxHydrantKartuController extends Controller
         
         // Jika menggunakan template, map inspection fields ke kolom database lama
         if ($template && $template->inspection_fields) {
-            // Mapping KEY template ke kolom database
-            $fieldMapping = [
+            // DB columns for box hydrant kartu
+            $dbColumns = ['pilar_hydrant', 'box_hydrant', 'nozzle', 'selang', 'uji_fungsi'];
+
+            // Mapping by KEY (if template has keys set)
+            $keyMapping = [
                 'pilar_hydrant' => 'pilar_hydrant',
                 'box_hydrant' => 'box_hydrant',
                 'nozzle' => 'nozzle',
                 'selang' => 'selang',
                 'uji_fungsi' => 'uji_fungsi',
+                'kondisi_fisik' => 'uji_fungsi',
+                'coupling' => 'uji_fungsi',
+            ];
+
+            // Mapping by LABEL (partial match, case-insensitive)
+            $labelMapping = [
+                'pilar' => 'pilar_hydrant',
+                'box hydrant' => 'box_hydrant',
+                'nozzle' => 'nozzle',
+                'hose' => 'selang',
+                'selang' => 'selang',
+                'coupling' => 'uji_fungsi',
+                'kondisi fisik' => 'uji_fungsi',
+                'uji fungsi' => 'uji_fungsi',
             ];
             
             // Initialize all required fields with default value
-            $requiredFields = ['pilar_hydrant', 'box_hydrant', 'nozzle', 'selang', 'uji_fungsi'];
-            foreach ($requiredFields as $field) {
+            foreach ($dbColumns as $field) {
                 if (!isset($data[$field])) {
                     $data[$field] = '-';
                 }
             }
             
-            // Log untuk debugging
-            \Log::info('Mapping inspection fields', [
-                'template_fields' => $template->inspection_fields,
-                'data_before_mapping' => $data
-            ]);
-            
             foreach ($template->inspection_fields as $index => $field) {
                 $fieldName = 'inspection_' . $index;
                 if (isset($data[$fieldName])) {
-                    // Map ke kolom database menggunakan KEY
                     $fieldKey = $field['key'] ?? null;
-                    if ($fieldKey && isset($fieldMapping[$fieldKey])) {
-                        $dbColumn = $fieldMapping[$fieldKey];
+                    $fieldLabel = strtolower($field['label'] ?? '');
+                    $dbColumn = null;
+
+                    // Try mapping by key first
+                    if ($fieldKey && isset($keyMapping[$fieldKey])) {
+                        $dbColumn = $keyMapping[$fieldKey];
+                    }
+
+                    // Fallback: map by label using partial match
+                    if (!$dbColumn) {
+                        foreach ($labelMapping as $needle => $col) {
+                            if (str_contains($fieldLabel, $needle)) {
+                                $dbColumn = $col;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Last resort: map by position (index -> dbColumn)
+                    if (!$dbColumn && isset($dbColumns[$index])) {
+                        $dbColumn = $dbColumns[$index];
+                    }
+
+                    if ($dbColumn) {
                         $data[$dbColumn] = $data[$fieldName];
-                        \Log::info("Mapped {$fieldName} (key: {$fieldKey}, label: {$field['label']}) to {$dbColumn} = {$data[$fieldName]}");
-                    } else {
-                        \Log::warning("No mapping found for field key: {$fieldKey}, label: {$field['label']}");
                     }
                     unset($data[$fieldName]);
                 }
             }
-            
-            \Log::info('Data after mapping', ['data' => $data]);
         }
 
         // Tambahkan user_id

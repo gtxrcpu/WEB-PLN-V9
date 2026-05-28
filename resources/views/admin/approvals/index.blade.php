@@ -190,20 +190,42 @@
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  @php $kLow = strtolower($kartu->kesimpulan ?? ''); @endphp
-                  <div class="flex items-center">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-                            @if($kLow === 'baik') bg-green-50 text-green-700 border-green-200
-                            @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-50 text-red-700 border-red-200
-                            @elseif($kLow === 'isi ulang') bg-amber-50 text-amber-700 border-amber-200
-                            @else bg-yellow-50 text-yellow-700 border-yellow-200 @endif">
-                      <span class="w-1.5 h-1.5 mr-1.5 rounded-full
-                              @if($kLow === 'baik') bg-green-500
-                              @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-500
-                              @elseif($kLow === 'isi ulang') bg-amber-500
-                              @else bg-yellow-500 @endif"></span>
-                      {{ strtoupper($kartu->kesimpulan) }}
-                    </span>
+                  @php
+                    $kLow = strtolower($kartu->kesimpulan ?? '');
+                    $hasKesimpulan = !empty($kartu->kesimpulan);
+                  @endphp
+                  <div class="flex flex-col gap-1.5">
+                    {{-- Approval status badge --}}
+                    @if($kartu->leader_approved_at ?? false)
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Menunggu Admin
+                      </span>
+                    @else
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Pending Leader
+                      </span>
+                    @endif
+                    {{-- Kesimpulan badge (only if available) --}}
+                    @if($hasKesimpulan)
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+                              @if(in_array($kLow, ['baik','lengkap'])) bg-green-50 text-green-700 border-green-200
+                              @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-50 text-red-700 border-red-200
+                              @elseif($kLow === 'isi ulang') bg-amber-50 text-amber-700 border-amber-200
+                              @else bg-gray-50 text-gray-700 border-gray-200 @endif">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full
+                                @if(in_array($kLow, ['baik','lengkap'])) bg-green-500
+                                @elseif(in_array($kLow, ['rusak','tidak baik','tidak_baik'])) bg-red-500
+                                @elseif($kLow === 'isi ulang') bg-amber-500
+                                @else bg-gray-400 @endif"></span>
+                        {{ strtoupper($kartu->kesimpulan) }}
+                      </span>
+                    @endif
                   </div>
                 </td>
                 <td class="px-6 py-4 text-right text-sm font-medium">

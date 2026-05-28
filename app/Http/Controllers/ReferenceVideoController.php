@@ -24,8 +24,18 @@ class ReferenceVideoController extends Controller
     {
         $user = auth()->user();
 
-        // Check if user can access this video
-        if ($referenceVideo->unit_id && $referenceVideo->unit_id != $user->unit_id) {
+        // Superadmin dan Inspector bisa akses semua video
+        if ($user->hasAnyRole(['superadmin', 'inspector'])) {
+            return view('reference-videos.show', compact('referenceVideo'));
+        }
+
+        // Video tanpa unit_id = video global, semua bisa akses
+        if (!$referenceVideo->unit_id) {
+            return view('reference-videos.show', compact('referenceVideo'));
+        }
+
+        // Video dengan unit_id = hanya unit yang sama yang bisa akses
+        if ($referenceVideo->unit_id != $user->unit_id) {
             abort(403, 'Anda tidak memiliki akses ke video ini.');
         }
 
